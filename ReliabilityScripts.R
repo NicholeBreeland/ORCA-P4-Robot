@@ -453,4 +453,42 @@ icc(sc.df_SC_AO_contrib, model="twoway", type="consistency", unit = "average")
 
 # Cooperative Ability Reliability -----------------------------------------
 
+ability.data <- read.csv("P4RobotReliabilites.csv", stringsAsFactors = FALSE)
 
+#Recode child category as numeric
+ability.data$Participant_JW[ability.data$Participant_JW == "Child A"] <- 1
+ability.data$Participant_JW[ability.data$Participant_JW == "Child B"] <- 2
+ability.data$Participant_YZ[ability.data$Participant_YZ == "Child A"] <- 1
+ability.data$Participant_YZ[ability.data$Participant_YZ == "Child B"] <- 2
+
+#Recode handle category as numeric
+ability.data$Handle_JW[ability.data$Handle_JW == "CompleteDown_Blue"] <- 1
+ability.data$Handle_JW[ability.data$Handle_JW == "CompleteDown_Green"] <- 2
+ability.data$Handle_YZ[ability.data$Handle_YZ == "CompleteDown_Blue"] <- 1
+ability.data$Handle_YZ[ability.data$Handle_YZ == "CompleteDown_Green"] <- 2
+
+
+#Kappas 
+library(lpSolve)
+library(irr)
+
+#Kappa for participant
+kappa2(ability.data[,c(4,8)], "unweighted")
+
+#Kappa for handle
+kappa2(ability.data[,c(5,9)], "unweighted")
+
+#Percent Agreement
+library(irr)
+library(lpSolve)
+#datasubset
+Onset <- subset(ability.data, select = c("Onset_Time_JW", "Onset_Time_YZ"))
+Offset <- subset(ability.data, select = c("Offset_Time_JW", "Offset_Time_YZ"))
+
+library(lubridate)
+
+JW_ON <- Onset$Onset_Time_JW
+class(JW_ON)
+
+JW_ON_S <-hms(JW_ON)
+class(JW_ON_S)
