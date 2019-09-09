@@ -478,51 +478,26 @@ kappa2(ability.data[,c(4,8)], "unweighted")
 kappa2(ability.data[,c(5,9)], "unweighted")
 
 #Percent Agreement
+##NOTE - Data converted into # of frames based on 25fps in Excel
+
 library(irr)
 library(lpSolve)
 #datasubset
 Onset <- subset(ability.data, select = c("Onset_Time_JW", "Onset_Time_YZ"))
 Offset <- subset(ability.data, select = c("Offset_Time_JW", "Offset_Time_YZ"))
 
-#convert data into seconds
-library(lubridate)
-
-#Coder 1 conversion
-JW_ON <- Onset$Onset_Time_JW
-JW_ON.ct <- as.difftime(JW_ON, units = "mins")
-JW_ON.sec <- as.numeric(JW_ON.ct, units = "secs")
-
-JW_OF <- Offset$Offset_Time_JW
-JW_OF.ct <- as.difftime(JW_OF, units = "mins")
-JW_OF.sec <- as.numeric(JW_OF.ct, units = "secs")
-
-#Coder 2 conversion
-YZ_ON <- Onset$Onset_Time_YZ
-YZ_ON.ct <- as.difftime(YZ_ON, units = "mins")
-YZ_ON.sec <- as.numeric(YZ_ON.ct, units = "secs")
-
-YZ_OF <- Offset$Offset_Time_YZ
-YZ_OF.ct <- as.difftime(YZ_OF, units = "mins")
-YZ_OF.sec <- as.numeric(YZ_OF.ct, units = "secs")
-
-?as.difftime
-
-#Create new data frame in seconds
-Onset.sec <- data.frame(YZ_ON.sec, JW_ON.sec)
-Offset.sec <- data.frame(YZ_OF.sec, JW_OF.sec)
-
 #Percent Agreement for Onset and offset
-agree(Onset.sec, tolerance = 8)
-agree(Offset.sec, tolerance = 8)
+agree(Onset, tolerance = 8)
+agree(Offset, tolerance = 8)
 
 #Percent agreement total
 
-total.time <- data.frame(Onset.sec, Offset.sec)
+total.time <- data.frame(Onset, Offset)
 
-total.time <- data.frame(total.time_YZ = c(total.time[,"YZ_ON.sec"], 
-                                           total.time[,"YZ_OF.sec"]),
-                         total.time_JW = c(total.time[,"JW_ON.sec"],
-                                           total.time[,"JW_OF.sec"]))
+total.time <- data.frame(total.time_YZ = c(total.time[,"Onset_Time_YZ"], 
+                                           total.time[,"Offset_Time_YZ"]),
+                         total.time_JW = c(total.time[,"Onset_Time_JW"],
+                                           total.time[,"Offset_Time_JW"]))
 
 agree(total.time, tolerance = 8)
 
