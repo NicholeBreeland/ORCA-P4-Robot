@@ -21,9 +21,10 @@ library(car)
 library(Hmisc)
 library(corrplot)
 library(MASS)
+library(lavaanPlot)
+library(lavaan)
+library(semPlot)
 ```
-
-
 ```{r main dataframe creation, include = FALSE}
 #Read in main data file
 pp.data = read.csv("ORCA+Parent_AnalysesOnly.csv", stringsAsFactors = FALSE)
@@ -35,153 +36,6 @@ pp.data[pp.data == 888] <- NA
 pp.data[pp.data == 999] <- NA
 
 ```
-```{r temperament and personality scoring, include = FALSE}
-#ORCA child temperament (ECBQ) at P4
-
-#Activity level/energy
-pp.data$act_p4 <- rowMeans(subset(pp.data, select = c("ecbq41r_p4", "ecbq42_p4", "ecbq57_p4", "ecbq69_p4", "ecbq70r_p4", 
-"ecbq101_p4", "ecbq102r_p4")), na.rm = TRUE)
-
-#Attentional Focusing 
-pp.data$atf_p4 <- rowMeans(subset(pp.data, select = c("ecbq49r_p4", "ecbq50_p4", "ecbq90r_p4", "ecbq91_p4", "ecbq92r_p4")), na.rm = TRUE)
-
-#Attentional Shifting 
-pp.data$ats_p4 <- rowMeans(subset(pp.data, select = c("ecbq43_p4", "ecbq51_p4", "ecbq60_p4",  "ecbq61r_p4", "ecbq93_p4", "ecbq95_p4")), na.rm = TRUE)
-
-#Cuddliness
-pp.data$cud_p4 <- rowMeans(subset(pp.data, select = c("ecbq14_p4", "ecbq15r_p4", "ecbq16r_p4", "ecbq17r_p4", "ecbq18_p4", "ecbq80r_p4", "ecbq81r_p4", "ecbq103_p4")), na.rm = TRUE)
-
-#Discomfort
-pp.data$dis_p4 <- rowMeans(subset(pp.data, select = c("ecbq8_p4", "ecbq9_p4", "ecbq33_p4", "ecbq55_p4", "ecbq56_p4", "ecbq94_p4", "ecbq105_p4")), na.rm = TRUE)
-
-#Fear 
-pp.data$fea_p4 <- rowMeans(subset(pp.data, select = c("ecbq6_p4", "ecbq104_p4", "ecbq38_p4", "ecbq39_p4", "ecbq62_p4", "ecbq97_p4", "ecbq98_p4", "ecbq99_p4", "ecbq100_p4")), na.rm = TRUE)
-
-#Frustration
-pp.data$fru_p4 <- rowMeans(subset(pp.data, select = c("ecbq1_p4", "ecbq2_p4", "ecbq19_p4", "ecbq68_p4", "ecbq86_p4", "ecbq87r_p4")), na.rm = TRUE)
-
-#High Intensity Pleasure 
-pp.data$hip_p4 <- rowMeans(subset(pp.data, select = c("ecbq11_p4", "ecbq13_p4", "ecbq44_p4", "ecbq45r_p4", "ecbq74_p4", "ecbq75_p4", "ecbq76_p4")), na.rm = TRUE)
-
-#Impulsivity
-pp.data$imp_p4 <- rowMeans(subset(pp.data, select = c("ecbq23r_p4", "ecbq24_p4", "ecbq25r_p4", "ecbq63_p4", "ecbq64_p4", "ecbq82r_p4", "ecbq83_p4")), na.rm = TRUE)
-
-#Inhibitory Control 
-pp.data$inh_p4 <- rowMeans(subset(pp.data, select = c("ecbq26r_p4", "ecbq27r_p4", "ecbq28r_p4")), na.rm = TRUE)
-
-#Low Intensity Pleasure 
-pp.data$lip_p4 <- rowMeans(subset(pp.data, select = c("ecbq12_p4", "ecbq29_p4", "ecbq30_p4", "ecbq31_p4", "ecbq32_p4", "ecbq67_p4")), na.rm = TRUE)
-
-#Motor Activation 
-pp.data$mot_p4 <- rowMeans(subset(pp.data, select = c("ecbq7_p4", "ecbq36_p4", "ecbq71_p4", "ecbq72_p4", "ecbq73_p4")), na.rm = TRUE)
-
-#Perceptual Sensitivity 
-pp.data$psn_p4 <- rowMeans(subset(pp.data, select = c("ecbq34_p4", "ecbq35_p4", "ecbq58_p4", "ecbq96_p4", "ecbq106_p4", "ecbq107_p4")), na.rm = TRUE)
-
-#Positive Anticipation app_p4" 
-pp.data$app_p4 <- rowMeans(subset(pp.data, select = c("ecbq37_p4", "ecbq65_p4", "ecbq66_p4")), na.rm = TRUE)
-
-#Sadness
-pp.data$sad_p4 <- rowMeans(subset(pp.data, select = c("ecbq20_p4", "ecbq59_p4", "ecbq88_p4", "ecbq89r_p4")), na.rm = TRUE)
-
-#Shyness
-pp.data$shy_p4 <- rowMeans(subset(pp.data, select = c("ecbq3r_p4", "ecbq4_p4", "ecbq5_p4", "ecbq52_p4", "ecbq53_p4", "ecbq54_p4", "ecbq77_p4", "ecbq78_p4", "ecbq79r_p4")), na.rm = TRUE)
-
-#Sociability
-pp.data$soc_p4<- rowMeans(subset(pp.data, select = c("ecbq21_p4", "ecbq22_p4", "ecbq40_p4", "ecbq84_p4", "ecbq85_p4")), na.rm = TRUE)
-
-#Soothability
-pp.data$sth_p4 <- rowMeans(subset(pp.data, select = c("ecbq10_p4", "ecbq46_p4", "ecbq47r_p4", "ecbq48r_p4")), na.rm = TRUE)
-pp.data$sth_p4_reversed = recode(pp.data$sth_p4, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-
-#Surgency
-pp.data$SUR_ECBQ_p4 <- rowMeans(subset(pp.data, select = c("act_p4", "hip_p4", "app_p4", "imp_p4", "soc_p4")), na.rm = TRUE)
-
-#Negative affectivity
-pp.data$NEG_ECBQ_p4 <- rowMeans(subset(pp.data, select = c("dis_p4", "fea_p4", "fru_p4", "mot_p4", "psn_p4", "shy_p4", "sth_p4_reversed", "sad_p4")), na.rm = TRUE)
-
-#Regulation/effortful control
-pp.data$REG_ECBQ_p4 <- rowMeans(subset(pp.data, select = c("inh_p4", "ats_p4", "lip_p4", "cud_p4", "atf_p4")), na.rm = TRUE)
-
-#ORCA parent personality at P5
-pp.data$NeurVol_2 = recode(pp.data$NeurVol_2, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$NeurVol_4 = recode(pp.data$NeurVol_4, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$NeurVol_6 = recode(pp.data$NeurVol_6, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$NeurVol_8 = recode(pp.data$NeurVol_8, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$NeurWith_1 = recode(pp.data$NeurWith_1, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$NeurWith_3 = recode(pp.data$NeurWith_3, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$NeurWith_5 = recode(pp.data$NeurWith_5, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$NeurWith_8 = recode(pp.data$NeurWith_8, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$AgreeComp_1 = recode(pp.data$AgreeComp_1, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$AgreeComp_4 = recode(pp.data$AgreeComp_4, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$AgreeComp_6 = recode(pp.data$AgreeComp_6, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$AgreeComp_7 = recode(pp.data$AgreeComp_7, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$AgreeComp_9 = recode(pp.data$AgreeComp_9, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$AgreePol_2 = recode(pp.data$AgreePol_2, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$AgreePol_4 = recode(pp.data$AgreePol_4, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$AgreePol_7 = recode(pp.data$AgreePol_7, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$AgreePol_8 = recode(pp.data$AgreePol_8, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$AgreePol_9 = recode(pp.data$AgreePol_9, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$AgreePol_10 = recode(pp.data$AgreePol_10, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ConsInd_2 = recode(pp.data$ConsInd_2, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ConsInd_3 = recode(pp.data$ConsInd_3, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ConsInd_4 = recode(pp.data$ConsInd_4, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ConsInd_6 = recode(pp.data$ConsInd_6, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ConsInd_9 = recode(pp.data$ConsInd_9, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ConsInd_10 = recode(pp.data$ConsInd_10, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ConsOrd_1 = recode(pp.data$ConsOrd_1, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ConsOrd_5 = recode(pp.data$ConsOrd_5, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ConsOrd_7 = recode(pp.data$ConsOrd_7, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ConsOrd_8 = recode(pp.data$ConsOrd_8, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ExtraEnth_2 = recode(pp.data$ExtraEnth_2, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ExtraEnth_3 = recode(pp.data$ExtraEnth_3, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ExtraEnth_4 = recode(pp.data$ExtraEnth_4, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ExtraEnth_6 = recode(pp.data$ExtraEnth_6, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ExtraEnth_7 = recode(pp.data$ExtraEnth_7, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ExtraAssert_3 = recode(pp.data$ExtraAssert_3, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ExtraAssert_5 = recode(pp.data$ExtraAssert_5, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ExtraAssert_8 = recode(pp.data$ExtraAssert_8, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$ExtraAssert_10 = recode(pp.data$ExtraAssert_10, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$OpenIntel_2 = recode(pp.data$OpenIntel_2, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$OpenIntel_5 = recode(pp.data$OpenIntel_5, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$OpenIntel_6 = recode(pp.data$OpenIntel_6, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$OpenIntel_9 = recode(pp.data$OpenIntel_9, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$Openness_5 = recode(pp.data$Openness_5, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$Openness_8 = recode(pp.data$Openness_8, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$Openness_9 = recode(pp.data$Openness_9, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$Openness_10 = recode(pp.data$Openness_10, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-
-#SDO and RWA
-
-pp.data$SDO_INCSOCEQUAL_r = recode(pp.data$SDO_INCSOCEQUAL_r, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$SDO_GROUPEQUAL_r = recode(pp.data$SDO_GROUPEQUAL_r, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$SDO_DOEQUAL_r = recode(pp.data$SDO_DOEQUAL_r, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$RWA_DEVOWN_r = recode(pp.data$RWA_DEVOWN_r, "1=7; 2=6; 3=5; 4=4; 5=3; 6=2; 7=1")
-pp.data$RWA_ATHEIGOOD_r = recode(pp.data$RWA_ATHEIGOOD_r, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$RWA_OPPGOOD_r = recode(pp.data$RWA_OPPGOOD_r, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-pp.data$EP_ALLNZ_r= recode(pp.data$EP_ALLNZ_r, "1=7; 2=6; 3=5; 4=4; 5=3;6=2; 7=1")
-
-
-#Scoring Big 5, RWA, SDO from P5 data
-
-pp.data$Big5_Neur = rowMeans(pp.data[,144:163], na.rm=TRUE)
-pp.data$Big5_Agree = rowMeans(pp.data[,164:183], na.rm=TRUE)
-pp.data$Big5_Cons = rowMeans(pp.data[,184:203], na.rm=TRUE)
-pp.data$Big5_Extra = rowMeans(pp.data[,204:223], na.rm=TRUE)
-pp.data$Big5_Open = rowMeans(pp.data[,224:243], na.rm=TRUE)
-
-pp.data$Big5_SDO = rowMeans(pp.data[,244:249], na.rm=TRUE)
-pp.data$Big5_RWA = rowMeans(pp.data[,250:255], na.rm=TRUE)
-pp.data$Big5_EP = rowMeans(pp.data[,256:258], na.rm=TRUE)
-
-#parent cooperative values phase 1
-
-pp.data$response.diff = with(pp.data, Op_coop_Alt_Avg_p1 - Op_coop_Ego_Avg_p1)
-
-```
-  
-  
-  
 ```{r p4 peer warm up social context scoring, include = FALSE}
 #Afilliation scores - T1, T2, T1T2
 pp.data$WU_Afill_T1 <- rowMeans(subset(pp.data, select = c("WU_Afill_Set1", 
@@ -238,46 +92,31 @@ pp.data$RT_JCE <- rowMeans(subset(pp.data, select = c("RT_JCE_Set1_FINAL", "RT_J
 ```{r p4 responding and initiating score y/n scoring, include = FALSE}
 pp.data$Initiate_yn_3s[pp.data$Initiate_freq_3s == 0] <- 0
 pp.data$Initiate_yn_3s[pp.data$Initiate_freq_3s != 0] <- 1
-
 pp.data$Initiate_yn_0s[pp.data$Initiate_freq_0s == 0] <- 0
 pp.data$Initiate_yn_0s[pp.data$Initiate_freq_0s != 0] <- 1
-
 pp.data$Respond_yn_3s[pp.data$Respond_freq_3s == 0] <- 0
 pp.data$Respond_yn_3s[pp.data$Respond_freq_3s != 0] <- 1
-
 pp.data$Respond_yn_0s[pp.data$Respond_freq_0s == 0] <- 0
 pp.data$Respond_yn_0s[pp.data$Respond_freq_0s != 0] <- 1
 ```
-
 ```{r p4 afill/antag y/n scoring for warm up and robot task, include = FALSE}
-
 pp.data$WU_Afill_yn_T1[pp.data$WU_Afill_T1 == 1] <- 0
 pp.data$WU_Afill_yn_T1[pp.data$WU_Afill_T1 != 1] <- 1
-
 pp.data$WU_Afill_yn_T2[pp.data$WU_Afill_T2 == 1] <- 0
 pp.data$WU_Afill_yn_T2[pp.data$WU_Afill_T2 != 1] <- 1
-
 pp.data$WU_Afill_yn_T1T2[pp.data$WU_Afill_T1T2 == 1] <- 0
 pp.data$WU_Afill_yn_T1T2[pp.data$WU_Afill_T1T2 != 1] <- 1
-
 pp.data$WU_Antag_yn_T1[pp.data$WU_Antag_T1 == 1] <- 0
 pp.data$WU_Antag_yn_T1[pp.data$WU_Antag_T1 != 1] <- 1
-
 pp.data$WU_Antag_yn_T2[pp.data$WU_Antag_T2 == 1] <- 0
 pp.data$WU_Antag_T2_yn[pp.data$WU_Antag_T2 != 1] <- 1
-
 pp.data$WU_Antag_yn_T1T2[pp.data$WU_Antag_T1T2 == 1] <- 0
 pp.data$WU_Antag_yn_T1T2[pp.data$WU_Antag_T1T2 != 1] <- 1
-
 pp.data$RT_Afill_yn[pp.data$RT_Afill == 1] <- 0
 pp.data$RT_Afill_yn[pp.data$RT_Afill != 1] <- 1
-
 pp.data$RT_Antag_yn[pp.data$RT_Antag == 1] <- 0
 pp.data$RT_Antag_yn[pp.data$RT_Antag != 1] <- 1
 ```
-
-
-
 ```{r data subsets, include = FALSE}
 #Dataset restructure (individual to dyad)
 
@@ -306,66 +145,1719 @@ dyad.df <- dyad %>%
 dyad.df <- dyad.df %>%
   arrange(dyad_id)
 ```
-
 ```{r p4 frequency of cooperative actions dyad scoring, include = FALSE}
 
 for (i in 1:nrow(dyad.df)) {
   dyad.df$Freq_CA_p4[i] <- max(dyad.df[i,c("initiate_freq_3s_o","initiate_freq_3s_p","respond_freq_3s_o", "respond_freq_3s_p")])
 }
 ```
-
 ```{r P4 Peers age difference scoring, include = FALSE}
 dyad.df$age_p4_diff <- abs(dyad.df$age_p4_o - dyad.df$age_p4_p)
 ```
-
 ```{r data subsets pcgm, include = FALSE}
 #Subset to include p4 in and p5 mothers only
 dyad.df_pcgm.p5 <- dyad.df[which(dyad.df$parent_type_p5==2),]
 ```
+  
+### Results Summary  
+  
+The present study has the following aims: 
+  
+1.) determine the extent to which the warm up social context (affiliation, antagonism, and jce) relates to the social context in the robot task  
+2.) determine the extent to which the warm up social context relates to cooperative ability in the robot task (latency to success, initiating behaviours, responding behaviours)  
+3.) determine the extent to which the robot task social context relates to cooperative ability in the robot task   
+  
+In order to answer the aformentioned research questions, we conducted tests on both the individual set of data, where both the ORCA and the peer are treated as individual participants, and dyadic set of data.  
+  
+**Individual dataset findings:**
+  
+* affiliation and antagonism in the warm up DOES NOT relate to affiliation and antagonism in the robot task respectively.
+* increased joint coordinated engagement in the first 1:30 min of the warm up predicts an increase in joint coordinated engagement on the robot task.
+* increased affiliation during the first and last 1:30 min of the warm up predicts an increase of initating and responding behaviours in the robot task, however no relationship emerged for latency to success.
+* increased antagonism during the first 1:30 min of the warm up predicts shorter latency to success, HOWEVER antagonism at in the last 1:30 min of the warm up predicts *increased* latency to success 
+* increased antagonism at during the first 1:30 minute of the warm up (but not the last 1:30 min) predicts increased initiating freqency and responding freqency in the robot task
+* increased joint coordinated engagement during the first and last 1:30 of the warm up predicts shorter latency to success
+* increased joint coordinated engagement during the first 1:30 of the warm up predicts increased initiating behaviours and increased responding behaviours. The association did not emerge for the last 1:30 minute of the warm up
+* increased contribution to toy tidy predicts increased frequency of initiating behaviours in the robot task
+* increased affiliation in the robot task predicts an increase in both initiating and responding behaviours in the robot task
+* increased joint coordinated engagement in the robot task predicts a decrease in latency to success and an increase in initiating and responding behaviours in the robot task.
+  
+**Dyadic dataset findings:**  
+No actor-partner effects emerged for any of the aformentioned research questions, however some significant relationships emerged between the covariates.
 
-# Chapter 3 - Parents and Peer Cooperation - Data Plan
+### Results notes and considerations  
+* No outliers were removed
+* Nearly all of the DVs/endogenous variables are *heavily* right skewed. For the dyadic analyses, the maximum likelihood estimator is somewhat robust to non-normality, but these variables, particurally the ability, affiliation, and antagonism are so skewed that they may result in Type II error. 
+* regression analyses on the individual dataset drop a lot of data due to missingness - perhaps we should consider multiple imputations of the Full Information Maximum Likelihood for dealing with missingness.
 
+  
+### Research Questions - Primary Analyses  
+
+#### Warm Up Analyses 
+To our knowledge, all of the studies investigating peer cooperation do not take into account what occurs in the "warm up phase" of studies involving child participants. This is alarming and concerning as research shows that first impressions (e.g., an individuals choice in an economic game, such as a public goods or trust game) have an effect on subsequent cooperative actions/contributions between two or more people (Engel et al., 2014; Grueneisen & Tomasello, 2017; see other literature about multi-shot economic games). The Broken Windows Theory (Wilson & Kelling, 1982) suggests that obvious signs of social disorder (e.g., graffiti or broken windows in a neighbourhood) encourages further social disorder/crime. This holds true in lab based experiments as well suggesting that the social situation (e.g., contributions to the greater good) decays if others behave selfishly and are "found out" (Engel et al., 2014). Broken Windows Theory taken together with previous research regarding multiple-shot economic games highlights the need for researchers to explore the social context that two child participants are situated in *before* completing a cooperative task. If cooperation occurs in the initial meeting aka warm up phase, surely this supports later cooperation. Alternatively, if social decay occurs within the warm up phase, research would suggest that this would hinder cooperative success in subsequent tasks. But do 2-year-olds hold grudges?  
+  
+*Note.* T1 = score for first 1:30, T2 = score for last 1:30, T1T2 = combined averaged score)  
+  
+##### Warm Up Social Context + Robot Task Social Context - Individual Level
+  
+* Does warm up affiliation relate to robot task affiliation? **No.**
+  
+```{r warm up + robot affiliation}
+#Time 1
+wu.rt.afill.t1 <- lm(RT_Afill ~ WU_Afill_T1 + Gender, data = indiv.df)
+summary(wu.rt.afill.t1)
+
+#Time 2
+wu.rt.afill.t2 <- lm(RT_Afill ~ WU_Afill_T2, data = indiv.df)
+summary(wu.rt.afill.t2)
+```
+  
+* Does warm up antagonism relate to robot task antagonism? **No**
+
+```{r warm up + robot antagonism}
+#Time 1
+wu.rt.antag.t1 <- lm(RT_Antag ~ WU_Antag_T1, data = indiv.df)
+summary(wu.rt.antag.t1)
+
+#Time 2
+wu.rt.antag.t2 <- lm(RT_Antag ~ WU_Antag_T2, data = indiv.df)
+summary(wu.rt.antag.t2)
+```
+  
+* Does warm up JCE relate to robot task JCE? **Yes, Warm up Time 1 JCE predicts JCE in the RT**
+```{r warm up + robot jce}
+#Time 1
+wu.rt.jce.t1 <- lm(RT_JCE ~ WU_JCE_T1, data = indiv.df)
+summary(wu.rt.jce.t1)
+
+#Time 2
+wu.rt.jce.t2 <- lm(RT_JCE ~ WU_JCE_T2, data = indiv.df)
+summary(wu.rt.jce.t2)
+```
+  
+##### Warm Up Social Context + Robot Task Social Context - Dyadic Analyses
+  
+These analyses used structural equation modeling with maximum 
+likelihood estimation using the program lavaan (Rosseel, 2012). The tests 
+of coefficients are Z tests. Effect sizes for actor and partner effects 
+are partial correlations. Betas use the overall standard deviation across 
+all persons (o) for standardization. The FIML 
+standard deviations differ from the raw ones by the square root of N - 1 
+divided by N.
+  
+* Are there actor-partner effects on warm up affiliation scores (T1, T2) and robot affiliation scores? **No**
+  
+The focus of this analysis is to investigate the effect of warm 
+up affiliation t1 on robot task affiliation and of warm up affiliation t2 
+on robot task affiliation. The dyad members are treated as if they are 
+indistinguishable. Both the effect of own warm up affiliation t1 and warm 
+up affiliation t2 (actor) and the effect of partner's warm up affiliation 
+t1 and warm up affiliation t2 (partner) on robot task affiliation are 
+studied.  The total number of dyads (N) is 149. There are missing data for 
+one or more of the variables: The number of cases for ORCA on warm up 
+affiliation t1 is 112, on warm up affiliation t2 114 and on robot task 
+affiliation 141. For PEER the number of cases on warm up affiliation t1 is 
+113, on warm up affiliation t2 114 and on robot task affiliation 139.
+  
+  
+```{r APIM affiliation warm up and robot task}
+APIM_afill_sc_wu_rt <- '
+
+                        rt_afill_o  ~ a*wu_afill_t1_o
+                        rt_afill_p  ~ a*wu_afill_t1_p
+                        rt_afill_o  ~ p*wu_afill_t1_p
+                        rt_afill_p  ~ p*wu_afill_t1_o
+                        wu_afill_t1_o ~ mx*1
+                        wu_afill_t1_p ~ mx*1
+                        rt_afill_o ~ my*1
+                        rt_afill_p ~ my*1
+                        wu_afill_t1_o ~~ vx*wu_afill_t1_o
+                        wu_afill_t1_p ~~ vx*wu_afill_t1_p
+                        rt_afill_o ~~ vy*rt_afill_o
+                        rt_afill_p ~~ vy*rt_afill_p
+                        wu_afill_t1_p ~~ cx*wu_afill_t1_o
+                        rt_afill_p ~~ cy*rt_afill_o 
+ rt_afill_o  ~ ab*wu_afill_t2_o
+                           rt_afill_p  ~ ab*wu_afill_t2_p
+                           rt_afill_o  ~ pb*wu_afill_t2_p
+                           rt_afill_p  ~ pb*wu_afill_t2_o
+                           wu_afill_t2_o ~ mxb*1
+                           wu_afill_t2_p ~ mxb*1
+                           wu_afill_t2_o ~~ vxb*wu_afill_t2_o
+                           wu_afill_t2_p ~~ vxb*wu_afill_t2_p
+                           wu_afill_t2_p ~~ cxb*wu_afill_t2_o
+                           wu_afill_t1_o ~~ c1*wu_afill_t2_o
+                           wu_afill_t1_o ~~ c2*wu_afill_t2_p
+                           wu_afill_t1_p ~~ c3*wu_afill_t2_o
+                           wu_afill_t1_p ~~ c4*wu_afill_t2_p
+                           kb := pb/ab
+                           sumb := (pb + ab)/2
+                           contb := ab - pb  
+  
+  
+  
+  
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+apimd_afill.sc.wu.rt <- sem(APIM_afill_sc_wu_rt,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_afill.sc.wu.rt, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_afill.sc.wu.rt, standardized = TRUE)
+```
+  
+Note. intercepts are means, and can be interpreted as the FIML means for the variables.
+  
+The variance of the errors is 0.068. The R squared is 0.005. 
+The partial intraclass correlation for affiliation robot task 
+controlling for the other predictor variables is 
+equal to .604 and is statistically significant (p < .001, 95% CI [0.41, 
+0.79]). Thus, when one member of the dyad scores high on the 
+variable affiliation robot task after controlling for the predictor 
+variables, the other member also tends to have a high score. 
+
+IV: affiliation warm up time 1: 
+       The actor effect is equal to 0.005 (p = .857, 95% CI [-0.05, 
+0.06]). The standardized actor effect is 0.014 (partial r = .010). The 
+partner effect is equal to 0.013, which is not statistically significant 
+(p = .645, 95% CI [-0.04, 0.07]), and its overall standardized effect is 
+0.035 (partial r = .025).
+       Next, the relative sizes of the actor and partner effects are 
+considered. If the standardized actor effect is greater than .1 in 
+absolute value and is statistically significant, k (i.e. the ratio of the 
+partner effect to the actor effect) can be interpreted in the output. For 
+this dataset the standardized actor effect does not have a substantial 
+value. Therefore, estimates of k will be highly unstable. Please, take 
+this in consideration when interpreting the following estimates. The value 
+of k equals 2.49. No further conclusions can be drawn for k, because a 
+bootstrap analysis was not chosen to calculate its confidence interval. 
+
+affiliation warm up time 2: 
+       When considering the second independent variable, the actor effect 
+is equal to 0.009 (p = .840, 95% CI [-0.08, 0.1]). The standardized actor 
+effect is 0.015 (partial r = .011). The partner effect is equal to -0.054, 
+which is not statistically significant (p = .240, 95% CI [-0.14, 0.04]), 
+and its overall standardized effect is -0.085 (partial r = -.065).
+       If the standardized actor effect is greater than .1 in absolute 
+value and is statistically significant, k (i.e. the ratio of the partner 
+effect to the actor effect) can be interpreted in the output. For this 
+dataset the standardized actor effect does not have a substantial value. 
+Therefore, estimates of k will be highly unstable. Please, take this in 
+consideration when interpreting the following estimates. The value of k 
+equals -5.68. No further conclusions can be drawn for k, because a 
+bootstrap analysis was not chosen to calculate its confidence interval. 
+  
+  
+* Are there actor-partner effects on warm up antagonism scores (T1, T2) and robot antagonism scores? **No**
+  
+The focus of this study is the investigation of the effect of warm 
+up antagonism t1 and of warm up antagonism t2 on robot 
+antagonism. The dyad members are treated as if they are indistinguishable. 
+Both the effect of own warm up antagonism t1 and warm up antagonism t2 
+(actor) and the effect of partner's warm up antagonism t1 and warm up 
+antagonism t2 (partner) on robot antagonism are studied.  The total number 
+of dyads (N) is 149. There are missing data for one or more of the 
+variables: The number of cases for ORCA on warm up antagonism t1 is 112, 
+on warm up antagonism t2 114 and on robot antagonism 141. For PEERs the 
+number of cases on warm up antagonism t1 is 113, on warm up antagonism t2 
+114 and on robot antagonism 139.
+  
+```{r APIM antagonism warm up and robot task}
+APIM_antag_sc_wu_rt <- '
+
+                        rt_antag_o  ~ a*wu_antag_t1_o
+                        rt_antag_p  ~ a*wu_antag_t1_p
+                        rt_antag_o  ~ p*wu_antag_t1_p
+                        rt_antag_p  ~ p*wu_antag_t1_o
+                        wu_antag_t1_o ~ mx*1
+                        wu_antag_t1_p ~ mx*1
+                        rt_antag_o ~ my*1
+                        rt_antag_p ~ my*1
+                        wu_antag_t1_o ~~ vx*wu_antag_t1_o
+                        wu_antag_t1_p ~~ vx*wu_antag_t1_p
+                        rt_antag_o ~~ vy*rt_antag_o
+                        rt_antag_p ~~ vy*rt_antag_p
+                        wu_antag_t1_p ~~ cx*wu_antag_t1_o
+                        rt_antag_p ~~ cy*rt_antag_o 
+ rt_antag_o  ~ ab*wu_antag_t2_o
+                           rt_antag_p  ~ ab*wu_antag_t2_p
+                           rt_antag_o  ~ pb*wu_antag_t2_p
+                           rt_antag_p  ~ pb*wu_antag_t2_o
+                           wu_antag_t2_o ~ mxb*1
+                           wu_antag_t2_p ~ mxb*1
+                           wu_antag_t2_o ~~ vxb*wu_antag_t2_o
+                           wu_antag_t2_p ~~ vxb*wu_antag_t2_p
+                           wu_antag_t2_p ~~ cxb*wu_antag_t2_o
+                           wu_antag_t1_o ~~ c1*wu_antag_t2_o
+                           wu_antag_t1_o ~~ c2*wu_antag_t2_p
+                           wu_antag_t1_p ~~ c3*wu_antag_t2_o
+                           wu_antag_t1_p ~~ c4*wu_antag_t2_p
+                           kb := pb/ab
+                           sumb := (pb + ab)/2
+                           contb := ab - pb  
+  
+  
+  
+  
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+apimd_antag.sc.wu.rt <- sem(APIM_antag_sc_wu_rt,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_antag.sc.wu.rt, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_antag.sc.wu.rt, standardized = TRUE)  
+```
+  
+The lavaan model converged after 73 iterations. The variance of the errors 
+is 0.052. The R squared is 0.008. The partial intraclass correlation for 
+robot antagonism controlling for the other predictor variables is equal to 
+.670 and is statistically significant (p < .001, 95% CI [0.47, 0.87]). 
+Thus, when one member of the dyad scores high on the variable robot 
+antagonism after controlling for the predictor variables, the other member 
+also tends to have a high score. 
+  
+warm up antagonism t1:   
+       The actor effect is equal to 0.036 (p = .610, 95% CI [-0.1, 0.17]). 
+The standardized actor effect is 0.038 (partial r = .029). The partner 
+effect is equal to 0.066, which is not statistically significant (p = 
+.344, 95% CI [-0.07, 0.2]), and its overall standardized effect is 0.069 
+(partial r = .054).
+       Next, the relative sizes of the actor and partner effects are 
+considered. If the standardized actor effect is greater than .1 in 
+absolute value and is statistically significant, k (i.e. the ratio of the 
+partner effect to the actor effect) can be interpreted in the output. For 
+this dataset the standardized actor effect does not have a substantial 
+value. Therefore, estimates of k will be highly unstable. Please, take 
+this in consideration when interpreting the following estimates. The value 
+of k equals 1.83. No further conclusions can be drawn for k, because a 
+bootstrap analysis was not chosen to calculate its confidence interval. 
+  
+warm up antagonism t2: 
+       When considering the second independent variable, the actor effect 
+is equal to 0.005 (p = .912, 95% CI [-0.09, 0.1]). The standardized actor 
+effect is 0.006 (partial r = .007). The partner effect is equal to -0.044, 
+which is not statistically significant (p = .341, 95% CI [-0.14, 0.05]), 
+and its overall standardized effect is -0.055 (partial r = ).
+       If the standardized actor effect is greater than .1 in absolute 
+value and is statistically significant, k (i.e. the ratio of the partner 
+effect to the actor effect) can be interpreted in the output. For this 
+dataset the standardized actor effect does not have a substantial value. 
+Therefore, estimates of k will be highly unstable. Please, take this in 
+consideration when interpreting the following estimates. The value of k 
+equals -8.68. No further conclusions can be drawn for k, because a 
+bootstrap analysis was not chosen to calculate its confidence interval. 
+  
+  
+* Are there actor-partner effects on warm up jce scores (T1, T2) and robot jce scores? **No**
+  
+The focus of this study is the investigation of the effect of warm 
+up jce t1 on robot jce and of warm up jce t2 on robot jce. The dyad 
+members are treated as if they are indistinguishable. Both the effect of 
+own warm up jce t1 and warm up jce t2 (actor) and the effect of partner's 
+warm up jce t1 and warm up jce t2 (partner) on robot jce are studied.  The 
+total number of dyads (N) is 149. There are missing data for one or more 
+of the variables: The number of cases for ORCA on warm up jce t1 is 112, 
+on warm up jce t2 114 and on robot jce 141. For PEER the number of cases on 
+warm up jce t1 is 113, on warm up jce t2 114 and on robot jce 139.
+  
+```{r APIM jce warm up and robot task}
+APIM_jce_sc_wu_rt <- '
+
+                        rt_jce_o  ~ a*wu_jce_t1_o
+                        rt_jce_p  ~ a*wu_jce_t1_p
+                        rt_jce_o  ~ p*wu_jce_t1_p
+                        rt_jce_p  ~ p*wu_jce_t1_o
+                        wu_jce_t1_o ~ mx*1
+                        wu_jce_t1_p ~ mx*1
+                        rt_jce_o ~ my*1
+                        rt_jce_p ~ my*1
+                        wu_jce_t1_o ~~ vx*wu_jce_t1_o
+                        wu_jce_t1_p ~~ vx*wu_jce_t1_p
+                        rt_jce_o ~~ vy*rt_jce_o
+                        rt_jce_p ~~ vy*rt_jce_p
+                        wu_jce_t1_p ~~ cx*wu_jce_t1_o
+                        rt_jce_p ~~ cy*rt_jce_o 
+ rt_jce_o  ~ ab*wu_jce_t2_o
+                           rt_jce_p  ~ ab*wu_jce_t2_p
+                           rt_jce_o  ~ pb*wu_jce_t2_p
+                           rt_jce_p  ~ pb*wu_jce_t2_o
+                           wu_jce_t2_o ~ mxb*1
+                           wu_jce_t2_p ~ mxb*1
+                           wu_jce_t2_o ~~ vxb*wu_jce_t2_o
+                           wu_jce_t2_p ~~ vxb*wu_jce_t2_p
+                           wu_jce_t2_p ~~ cxb*wu_jce_t2_o
+                           wu_jce_t1_o ~~ c1*wu_jce_t2_o
+                           wu_jce_t1_o ~~ c2*wu_jce_t2_p
+                           wu_jce_t1_p ~~ c3*wu_jce_t2_o
+                           wu_jce_t1_p ~~ c4*wu_jce_t2_p
+                           kb := pb/ab
+                           sumb := (pb + ab)/2
+                           contb := ab - pb  
+  
+  
+  
+  
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+apimd_jce.sc.wu.rt <- sem(APIM_jce_sc_wu_rt,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_jce.sc.wu.rt, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_jce.sc.wu.rt, standardized = TRUE)  
+```
+
+  
+The lavaan model converged after 41 iterations. The variance of the errors 
+is 0.270. The R squared is 0.044. The partial intraclass correlation for 
+robot jce controlling for the other predictor variables is equal to .708 
+and is statistically significant (p < .001, 95% CI [0.5, 0.91]). Thus, 
+when one member of the dyad scores high on the variable robot jce 
+after controlling for the predictor variables, the other member also tends 
+to have a high score. 
+  
+warm up jce t1:  
+The actor effect is equal to 0.090 (p = .203, 95% CI [-0.05, 
+0.23]). The standardized actor effect is 0.081 (partial r = .068). The 
+partner effect is equal to 0.118, which is not statistically significant 
+(p = .098, 95% CI [-0.02, 0.26]), and its overall standardized effect is 
+0.106 (partial r = .089).  
+  
+
+Next, the relative sizes of the actor and partner effects are 
+considered. If the standardized actor effect is greater than .1 in 
+absolute value and is statistically significant, k (i.e. the ratio of the 
+partner effect to the actor effect) can be interpreted in the output. For 
+this dataset the standardized actor effect does not have a substantial 
+value. Therefore, estimates of k will be highly unstable. Please, take 
+this in consideration when interpreting the following estimates. The value 
+of k equals 1.31. No further conclusions can be drawn for k, because a 
+bootstrap analysis was not chosen to calculate its confidence interval.
+  
+warm up jce t2: 
+When considering the second independent variable, the actor effect 
+is equal to 0.049 (p = .383, 95% CI [-0.06, 0.16]). The standardized actor 
+effect is 0.059 (partial r = .042). The partner effect is equal to 0.033, 
+which is not statistically significant (p = .555, 95% CI [-0.08, 0.14]), 
+and its overall standardized effect is 0.040 (partial r = .029).  
+  
+If the standardized actor effect is greater than .1 in absolute 
+value and is statistically significant, k (i.e. the ratio of the partner 
+effect to the actor effect) can be interpreted in the output. For this 
+dataset the standardized actor effect does not have a substantial value. 
+Therefore, estimates of k will be highly unstable. Please, take this in 
+consideration when interpreting the following estimates. The value of k 
+equals 0.68. No further conclusions can be drawn for k, because a 
+bootstrap analysis was not chosen to calculate its confidence interval.
+  
+##### Warm Up Social Context + Robot Task Ability - Individual Level
+  
+* Does warm up affiliation relate to robot task cooperative ability? **Yes, affiliation at T1 and T2 during the warm up predicts frequency of initating and responding behaviours and the relationship is positive**
+  
+```{r warm up affiliation + robot ability}
+#Time 1 - latency
+wu.rt.lat.t1 <- lm(Latency_3sec ~ WU_Afill_T1, data = indiv.df)
+summary(wu.rt.lat.t1)
+
+#Time 2 - latency
+wu.rt.lat.t2 <- lm(Latency_3sec ~ WU_Afill_T2, data = indiv.df)
+summary(wu.rt.lat.t2)
+
+#Time 1 - init
+wu.rt.init.t1 <- lm(Initiate_freq_3s ~ WU_Afill_T1, data = indiv.df)
+summary(wu.rt.init.t1)
+
+#Time 2 - init
+wu.rt.init.t2 <- lm(Initiate_freq_3s ~ WU_Afill_T2, data = indiv.df)
+summary(wu.rt.init.t2)
+
+#Time 1 - responding
+wu.rt.resp.t1 <- lm(Respond_freq_3s ~ WU_Afill_T1 + Age_P4, data = indiv.df)
+summary(wu.rt.resp.t1)
+
+#Time 2 - responding
+wu.rt.resp.t2 <- lm(Respond_freq_3s ~ WU_Afill_T2 + Age_P4, data = indiv.df)
+summary(wu.rt.resp.t2)
+```
+  
+* Does warm up antagonism relate to robot task cooperative ability?  
+**Yes:** 
+      **antagonism at T1 predicts shorter latency to success**
+      **antagonism at T2 predicts increased latency to success**
+      **antagonism at T1 (but not time 2) predicts increased initiating freqency**
+      **antagonism at T1 (but not time 2) predicts increased responding freqency**
+      
+      
+  
+```{r warm up antagonism + robot ability}
+#Time 1 - latency
+wu.antag.rt.lat.t1 <- lm(Latency_3sec ~ WU_Antag_T1, data = indiv.df)
+summary(wu.antag.rt.lat.t1)
+
+#Time 2 - latency
+wu.antag.rt.lat.t2 <- lm(Latency_3sec ~ WU_Antag_T2, data = indiv.df)
+summary(wu.antag.rt.lat.t2)
+
+#Time 1 - init
+wu.antag.rt.init.t1 <- lm(Initiate_freq_3s ~ WU_Antag_T1, data = indiv.df)
+summary(wu.antag.rt.init.t1)
+
+#Time 2 - init
+wu.antag.rt.init.t2 <- lm(Initiate_freq_3s ~ WU_Antag_T2, data = indiv.df)
+summary(wu.antag.rt.init.t2)
+
+#Time 1 - responding
+wu.antag.rt.resp.t1 <- lm(Respond_freq_3s ~ WU_Antag_T1 + Age_P4, data = indiv.df)
+summary(wu.antag.rt.resp.t1)
+
+#Time 2 - responding
+wu.antag.rt.resp.t2 <- lm(Respond_freq_3s ~ WU_Antag_T2 + Age_P4, data = indiv.df)
+summary(wu.antag.rt.resp.t2)
+
+```  
+  
+* Does warm up jce relate to robot task cooperative ability?  
+**Yes:** 
+      **jce at T1 & T2 predicts shorter latency to success**
+      **jce at T1 (but not T2) predicts increased initiating behaviours**
+      **jce at T1 (but not T2) predicts increased responding behaviours**
+      
+  
+```{r warm up jce + robot ability}
+#Time 1 - latency
+wu.jce.rt.lat.t1 <- lm(Latency_3sec ~ WU_JCE_T1, data = indiv.df)
+summary(wu.jce.rt.lat.t1)
+
+#Time 2 - latency
+wu.jce.rt.lat.t2 <- lm(Latency_3sec ~ WU_JCE_T2, data = indiv.df)
+summary(wu.jce.rt.lat.t2)
+
+#Time 1 - init
+wu.jce.rt.init.t1 <- lm(Initiate_freq_3s ~ WU_JCE_T1, data = indiv.df)
+summary(wu.jce.rt.init.t1)
+
+#Time 2 - init
+wu.jce.rt.init.t2 <- lm(Initiate_freq_3s ~ WU_JCE_T2, data = indiv.df)
+summary(wu.jce.rt.init.t2)
+
+#Time 1 - responding
+wu.jce.rt.resp.t1 <- lm(Respond_freq_3s ~ WU_JCE_T1 + Age_P4, data = indiv.df)
+summary(wu.jce.rt.resp.t1)
+
+#Time 2 - responding
+wu.jce.rt.resp.t2 <- lm(Respond_freq_3s ~ WU_JCE_T2 + Age_P4, data = indiv.df)
+summary(wu.jce.rt.resp.t2)
+
+```  
+  
+* Does warm up contribution to toy tidy relate to robot task cooperative ability?  **Yes: contribution to toy tidy predicts frequency of initiating behaviours**
+  
+```{r warm up contrib + robot ability}
+
+#Time 2 - latency
+wu.contrib.rt.lat.t2 <- lm(Latency_3sec ~ WU_Contrib, data = indiv.df)
+summary(wu.contrib.rt.lat.t2)
+
+#Time 2 - init
+wu.contrib.rt.init.t2 <- lm(Initiate_freq_3s ~ WU_Contrib, data = indiv.df)
+summary(wu.contrib.rt.init.t2)
+
+
+#Time 2 - responding
+wu.contrib.rt.resp.t2 <- lm(Respond_freq_3s ~ WU_Contrib + Age_P4, data = indiv.df)
+summary(wu.contrib.rt.resp.t2)
+
+```  
+  
+##### Warm Up Social Context + Robot Task Social Context - Dyadic Analyses
+
+  
+* Are there effects on warm up affiliation scores (T1, T2) and robot latency to success? **No**
+```{r affiliation warm up and robot task latency}
+wu.afill.latency.rt <- lm(latency_3sec ~ wu_afill_t1_o + wu_afill_t2_o + 
+                            wu_afill_t1_p + wu_afill_t2_p + 
+                            wu_afill_t1_o*wu_afill_t1_p +
+                            wu_afill_t2_o*wu_afill_t2_p, data = dyad.df)
+summary(wu.afill.latency.rt)
+```
+  
+* Are there effects on warm up antagonism scores (T1, T2) and robot latency to success? **No**  
+  
+```{r antagonism warm up and robot task latency}
+wu.antag.latency.rt <- lm(latency_3sec ~ wu_antag_t1_o + wu_antag_t2_o + 
+                            wu_antag_t1_p + wu_antag_t2_p + 
+                            wu_antag_t1_o*wu_antag_t1_p +
+                            wu_antag_t2_o*wu_antag_t2_p, data = dyad.df)
+summary(wu.antag.latency.rt)
+```
+  
+* Are there effects on warm up joint coodinated engagement scores (T1, T2) and robot latency to success? **No**
+  
+```{r jce warm up and robot task latency}
+wu.jce.latency.rt <- lm(latency_3sec ~ wu_jce_t1_o + wu_jce_t2_o + 
+                            wu_jce_t1_p + wu_jce_t2_p + 
+                            wu_jce_t1_o*wu_jce_t1_p +
+                            wu_jce_t2_o*wu_jce_t2_p, data = dyad.df)
+summary(wu.jce.latency.rt)
+```
+  
+* Are there effects on warm up contribution to toy tidy scores and robot latency to success? **No**  
+```{r contribution warm up and robot task latency}
+wu.contrib.latency.rt <- lm(latency_3sec ~ wu_contrib_o + wu_contrib_o + 
+                            wu_contrib_p + wu_contrib_p + 
+                            wu_contrib_o*wu_contrib_p +
+                            wu_contrib_o*wu_contrib_p, data = dyad.df)
+summary(wu.contrib.latency.rt)
+```
+  
+  
+  These analyses used structural equation modeling with maximum 
+likelihood estimation using the program lavaan (Rosseel, 2012). The tests 
+of coefficients are Z tests. Effect sizes for actor and partner effects 
+are partial correlations. Betas use the overall standard deviation across 
+all persons (o) for standardization. The FIML 
+standard deviations differ from the raw ones by the square root of N - 1 
+divided by N.
+  
+* Are there actor-partner effects on warm up affiliation (T1, T2) and initiating behaviours?  **No**
+  
+  The focus of this study is the investigation of the effect of warm 
+up affiliation t1 on initiating freq and of warm up affiliation t2 on 
+initiating freq. The dyad members are treated as if they are 
+indistinguishable. Both the effect of own warm up affiliation t1 and warm 
+up affiliation t2 (actor) and the effect of partner's warm up affiliation 
+t1 and warm up affiliation t2 (partner) on initiating freq are studied.  
+The total number of dyads (N) is 149. There are missing data for one or 
+more of the variables: The number of cases for Women on warm up 
+affiliation t1 is 112, on warm up affiliation t2 114 and on initiating 
+freq 137. For Men the number of cases on warm up affiliation t1 is 113, on 
+warm up affiliation t2 114 and on initiating freq 136.  The variable 
+responding freq of peer is treated as a within dyad covariate and contains 
+136 (first role) and 137 (second role) observations.
+  
+```{r APIM warm up affill and initiating frequency}
+APIM_afill_sc_wu_rt.init <- 
+  '
+
+                        initiate_freq_3s_o  ~ a*wu_afill_t1_o
+                        initiate_freq_3s_p  ~ a*wu_afill_t1_p
+                        initiate_freq_3s_o  ~ p*wu_afill_t1_p
+                        initiate_freq_3s_p  ~ p*wu_afill_t1_o
+                        wu_afill_t1_o ~ mx*1
+                        wu_afill_t1_p ~ mx*1
+                        initiate_freq_3s_o ~ my*1
+                        initiate_freq_3s_p ~ my*1
+                        wu_afill_t1_o ~~ vx*wu_afill_t1_o
+                        wu_afill_t1_p ~~ vx*wu_afill_t1_p
+                        initiate_freq_3s_o ~~ vy*initiate_freq_3s_o
+                        initiate_freq_3s_p ~~ vy*initiate_freq_3s_p
+                        wu_afill_t1_p ~~ cx*wu_afill_t1_o
+                        initiate_freq_3s_p ~~ cy*initiate_freq_3s_o 
+ initiate_freq_3s_o  ~ ab*wu_afill_t2_o
+                           initiate_freq_3s_p  ~ ab*wu_afill_t2_p
+                           initiate_freq_3s_o  ~ pb*wu_afill_t2_p
+                           initiate_freq_3s_p  ~ pb*wu_afill_t2_o
+                           wu_afill_t2_o ~ mxb*1
+                           wu_afill_t2_p ~ mxb*1
+                           wu_afill_t2_o ~~ vxb*wu_afill_t2_o
+                           wu_afill_t2_p ~~ vxb*wu_afill_t2_p
+                           wu_afill_t2_p ~~ cxb*wu_afill_t2_o
+                           wu_afill_t1_o ~~ c1*wu_afill_t2_o
+                           wu_afill_t1_o ~~ c2*wu_afill_t2_p
+                           wu_afill_t1_p ~~ c3*wu_afill_t2_o
+                           wu_afill_t1_p ~~ c4*wu_afill_t2_p
+                           kb := pb/ab
+                           sumb := (pb + ab)/2
+                           contb := ab - pb  
+  
+  
+  
+  
+ initiate_freq_3s_o ~ respond_freq_3s_p*respond_freq_3s_p
+                      initiate_freq_3s_p ~ respond_freq_3s_o*respond_freq_3s_o 
+                      respond_freq_3s_p~~ vwc1a*respond_freq_3s_p
+                      respond_freq_3s_o~~ vwc1b*respond_freq_3s_o
+                      respond_freq_3s_p~ mwc1a*1 
+                      respond_freq_3s_o~ mwc1b*1 
+                      respond_freq_3s_p ~~ w1aw1b*respond_freq_3s_o 
+ 
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+apimd_afill_sc_wu_rt.init <- sem(APIM_afill_sc_wu_rt.init,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_afill_sc_wu_rt.init, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_afill_sc_wu_rt.init, standardized = TRUE)
+```
+  
+* Are there actor-partner effects on warm up affiliation (T1, T2) and responding behaviours? **No**
+```{r APIM warm up affill and responding frequency}
+APIM_afill_sc_wu_rt.resp <- '
+
+                        respond_freq_3s_o  ~ a*wu_afill_t1_o
+                        respond_freq_3s_p  ~ a*wu_afill_t1_p
+                        respond_freq_3s_o  ~ p*wu_afill_t1_p
+                        respond_freq_3s_p  ~ p*wu_afill_t1_o
+                        wu_afill_t1_o ~ mx*1
+                        wu_afill_t1_p ~ mx*1
+                        respond_freq_3s_o ~ my*1
+                        respond_freq_3s_p ~ my*1
+                        wu_afill_t1_o ~~ vx*wu_afill_t1_o
+                        wu_afill_t1_p ~~ vx*wu_afill_t1_p
+                        respond_freq_3s_o ~~ vy*respond_freq_3s_o
+                        respond_freq_3s_p ~~ vy*respond_freq_3s_p
+                        wu_afill_t1_p ~~ cx*wu_afill_t1_o
+                        respond_freq_3s_p ~~ cy*respond_freq_3s_o 
+ respond_freq_3s_o  ~ ab*wu_afill_t2_o
+                           respond_freq_3s_p  ~ ab*wu_afill_t2_p
+                           respond_freq_3s_o  ~ pb*wu_afill_t2_p
+                           respond_freq_3s_p  ~ pb*wu_afill_t2_o
+                           wu_afill_t2_o ~ mxb*1
+                           wu_afill_t2_p ~ mxb*1
+                           wu_afill_t2_o ~~ vxb*wu_afill_t2_o
+                           wu_afill_t2_p ~~ vxb*wu_afill_t2_p
+                           wu_afill_t2_p ~~ cxb*wu_afill_t2_o
+                           wu_afill_t1_o ~~ c1*wu_afill_t2_o
+                           wu_afill_t1_o ~~ c2*wu_afill_t2_p
+                           wu_afill_t1_p ~~ c3*wu_afill_t2_o
+                           wu_afill_t1_p ~~ c4*wu_afill_t2_p
+                           kb := pb/ab
+                           sumb := (pb + ab)/2
+                           contb := ab - pb  
+  
+  
+  
+  
+ respond_freq_3s_o ~ initiate_freq_3s_p*initiate_freq_3s_p
+                      respond_freq_3s_p ~ initiate_freq_3s_o*initiate_freq_3s_o 
+                      initiate_freq_3s_p~~ vwc1a*initiate_freq_3s_p
+                      initiate_freq_3s_o~~ vwc1b*initiate_freq_3s_o
+                      initiate_freq_3s_p~ mwc1a*1 
+                      initiate_freq_3s_o~ mwc1b*1 
+                      initiate_freq_3s_p ~~ w1aw1b*initiate_freq_3s_o 
+ 
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+
+apimd_afill_sc_wu_rt.resp <- sem(APIM_afill_sc_wu_rt.resp,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_afill_sc_wu_rt.resp, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_afill_sc_wu_rt.resp, standardized = TRUE)
+```
+  
+  
+* Are there actor-partner effects on warm up antagonism (T1, T2) and initiating behaviours?  **No**
+  
+```{r APIM warm up antag and initiating frequency}
+APIM_antag_sc_wu_rt.init <- 
+  '
+
+                        initiate_freq_3s_o  ~ a*wu_antag_t1_o
+                        initiate_freq_3s_p  ~ a*wu_antag_t1_p
+                        initiate_freq_3s_o  ~ p*wu_antag_t1_p
+                        initiate_freq_3s_p  ~ p*wu_antag_t1_o
+                        wu_antag_t1_o ~ mx*1
+                        wu_antag_t1_p ~ mx*1
+                        initiate_freq_3s_o ~ my*1
+                        initiate_freq_3s_p ~ my*1
+                        wu_antag_t1_o ~~ vx*wu_antag_t1_o
+                        wu_antag_t1_p ~~ vx*wu_antag_t1_p
+                        initiate_freq_3s_o ~~ vy*initiate_freq_3s_o
+                        initiate_freq_3s_p ~~ vy*initiate_freq_3s_p
+                        wu_antag_t1_p ~~ cx*wu_antag_t1_o
+                        initiate_freq_3s_p ~~ cy*initiate_freq_3s_o 
+ initiate_freq_3s_o  ~ ab*wu_antag_t2_o
+                           initiate_freq_3s_p  ~ ab*wu_antag_t2_p
+                           initiate_freq_3s_o  ~ pb*wu_antag_t2_p
+                           initiate_freq_3s_p  ~ pb*wu_antag_t2_o
+                           wu_antag_t2_o ~ mxb*1
+                           wu_antag_t2_p ~ mxb*1
+                           wu_antag_t2_o ~~ vxb*wu_antag_t2_o
+                           wu_antag_t2_p ~~ vxb*wu_antag_t2_p
+                           wu_antag_t2_p ~~ cxb*wu_antag_t2_o
+                           wu_antag_t1_o ~~ c1*wu_antag_t2_o
+                           wu_antag_t1_o ~~ c2*wu_antag_t2_p
+                           wu_antag_t1_p ~~ c3*wu_antag_t2_o
+                           wu_antag_t1_p ~~ c4*wu_antag_t2_p
+                           kb := pb/ab
+                           sumb := (pb + ab)/2
+                           contb := ab - pb  
+  
+  
+  
+  
+ initiate_freq_3s_o ~ respond_freq_3s_p*respond_freq_3s_p
+                      initiate_freq_3s_p ~ respond_freq_3s_o*respond_freq_3s_o 
+                      respond_freq_3s_p~~ vwc1a*respond_freq_3s_p
+                      respond_freq_3s_o~~ vwc1b*respond_freq_3s_o
+                      respond_freq_3s_p~ mwc1a*1 
+                      respond_freq_3s_o~ mwc1b*1 
+                      respond_freq_3s_p ~~ w1aw1b*respond_freq_3s_o 
+ 
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+apimd_antag_sc_wu_rt.init <- sem(APIM_antag_sc_wu_rt.init,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_antag_sc_wu_rt.init, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_antag_sc_wu_rt.init, standardized = TRUE)
+```
+  
+* Are there actor-partner effects on warm up antagonism (T1, T2) and responding behaviours? **No**
+```{r APIM warm up antag and responding frequency}
+APIM_antag_sc_wu_rt.resp <- '
+
+                        respond_freq_3s_o  ~ a*wu_antag_t1_o
+                        respond_freq_3s_p  ~ a*wu_antag_t1_p
+                        respond_freq_3s_o  ~ p*wu_antag_t1_p
+                        respond_freq_3s_p  ~ p*wu_antag_t1_o
+                        wu_antag_t1_o ~ mx*1
+                        wu_antag_t1_p ~ mx*1
+                        respond_freq_3s_o ~ my*1
+                        respond_freq_3s_p ~ my*1
+                        wu_antag_t1_o ~~ vx*wu_antag_t1_o
+                        wu_antag_t1_p ~~ vx*wu_antag_t1_p
+                        respond_freq_3s_o ~~ vy*respond_freq_3s_o
+                        respond_freq_3s_p ~~ vy*respond_freq_3s_p
+                        wu_antag_t1_p ~~ cx*wu_antag_t1_o
+                        respond_freq_3s_p ~~ cy*respond_freq_3s_o 
+ respond_freq_3s_o  ~ ab*wu_antag_t2_o
+                           respond_freq_3s_p  ~ ab*wu_antag_t2_p
+                           respond_freq_3s_o  ~ pb*wu_antag_t2_p
+                           respond_freq_3s_p  ~ pb*wu_antag_t2_o
+                           wu_antag_t2_o ~ mxb*1
+                           wu_antag_t2_p ~ mxb*1
+                           wu_antag_t2_o ~~ vxb*wu_antag_t2_o
+                           wu_antag_t2_p ~~ vxb*wu_antag_t2_p
+                           wu_antag_t2_p ~~ cxb*wu_antag_t2_o
+                           wu_antag_t1_o ~~ c1*wu_antag_t2_o
+                           wu_antag_t1_o ~~ c2*wu_antag_t2_p
+                           wu_antag_t1_p ~~ c3*wu_antag_t2_o
+                           wu_antag_t1_p ~~ c4*wu_antag_t2_p
+                           kb := pb/ab
+                           sumb := (pb + ab)/2
+                           contb := ab - pb  
+  
+  
+  
+  
+ respond_freq_3s_o ~ initiate_freq_3s_p*initiate_freq_3s_p
+                      respond_freq_3s_p ~ initiate_freq_3s_o*initiate_freq_3s_o 
+                      initiate_freq_3s_p~~ vwc1a*initiate_freq_3s_p
+                      initiate_freq_3s_o~~ vwc1b*initiate_freq_3s_o
+                      initiate_freq_3s_p~ mwc1a*1 
+                      initiate_freq_3s_o~ mwc1b*1 
+                      initiate_freq_3s_p ~~ w1aw1b*initiate_freq_3s_o 
+ 
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+
+apimd_antag_sc_wu_rt.resp <- sem(APIM_antag_sc_wu_rt.resp,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_antag_sc_wu_rt.resp, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_antag_sc_wu_rt.resp, standardized = TRUE)
+```
+  
+  
+* Are there actor-partner effects on warm up jce (T1, T2) and initiating behaviours?  **No**
+  
+```{r APIM warm up jce and initiating frequency}
+APIM_jce_sc_wu_rt.init <- 
+  '
+
+                        initiate_freq_3s_o  ~ a*wu_jce_t1_o
+                        initiate_freq_3s_p  ~ a*wu_jce_t1_p
+                        initiate_freq_3s_o  ~ p*wu_jce_t1_p
+                        initiate_freq_3s_p  ~ p*wu_jce_t1_o
+                        wu_jce_t1_o ~ mx*1
+                        wu_jce_t1_p ~ mx*1
+                        initiate_freq_3s_o ~ my*1
+                        initiate_freq_3s_p ~ my*1
+                        wu_jce_t1_o ~~ vx*wu_jce_t1_o
+                        wu_jce_t1_p ~~ vx*wu_jce_t1_p
+                        initiate_freq_3s_o ~~ vy*initiate_freq_3s_o
+                        initiate_freq_3s_p ~~ vy*initiate_freq_3s_p
+                        wu_jce_t1_p ~~ cx*wu_jce_t1_o
+                        initiate_freq_3s_p ~~ cy*initiate_freq_3s_o 
+ initiate_freq_3s_o  ~ ab*wu_jce_t2_o
+                           initiate_freq_3s_p  ~ ab*wu_jce_t2_p
+                           initiate_freq_3s_o  ~ pb*wu_jce_t2_p
+                           initiate_freq_3s_p  ~ pb*wu_jce_t2_o
+                           wu_jce_t2_o ~ mxb*1
+                           wu_jce_t2_p ~ mxb*1
+                           wu_jce_t2_o ~~ vxb*wu_jce_t2_o
+                           wu_jce_t2_p ~~ vxb*wu_jce_t2_p
+                           wu_jce_t2_p ~~ cxb*wu_jce_t2_o
+                           wu_jce_t1_o ~~ c1*wu_jce_t2_o
+                           wu_jce_t1_o ~~ c2*wu_jce_t2_p
+                           wu_jce_t1_p ~~ c3*wu_jce_t2_o
+                           wu_jce_t1_p ~~ c4*wu_jce_t2_p
+                           kb := pb/ab
+                           sumb := (pb + ab)/2
+                           contb := ab - pb  
+  
+  
+  
+  
+ initiate_freq_3s_o ~ respond_freq_3s_p*respond_freq_3s_p
+                      initiate_freq_3s_p ~ respond_freq_3s_o*respond_freq_3s_o 
+                      respond_freq_3s_p~~ vwc1a*respond_freq_3s_p
+                      respond_freq_3s_o~~ vwc1b*respond_freq_3s_o
+                      respond_freq_3s_p~ mwc1a*1 
+                      respond_freq_3s_o~ mwc1b*1 
+                      respond_freq_3s_p ~~ w1aw1b*respond_freq_3s_o 
+ 
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+apimd_jce_sc_wu_rt.init <- sem(APIM_jce_sc_wu_rt.init,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_jce_sc_wu_rt.init, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_jce_sc_wu_rt.init, standardized = TRUE)
+```
+  
+* Are there actor-partner effects on warm up jce (T1, T2) and responding behaviours? **No**
+  
+```{r APIM warm up jce and responding frequency}
+APIM_jce_sc_wu_rt.resp <- '
+
+                        respond_freq_3s_o  ~ a*wu_jce_t1_o
+                        respond_freq_3s_p  ~ a*wu_jce_t1_p
+                        respond_freq_3s_o  ~ p*wu_jce_t1_p
+                        respond_freq_3s_p  ~ p*wu_jce_t1_o
+                        wu_jce_t1_o ~ mx*1
+                        wu_jce_t1_p ~ mx*1
+                        respond_freq_3s_o ~ my*1
+                        respond_freq_3s_p ~ my*1
+                        wu_jce_t1_o ~~ vx*wu_jce_t1_o
+                        wu_jce_t1_p ~~ vx*wu_jce_t1_p
+                        respond_freq_3s_o ~~ vy*respond_freq_3s_o
+                        respond_freq_3s_p ~~ vy*respond_freq_3s_p
+                        wu_jce_t1_p ~~ cx*wu_jce_t1_o
+                        respond_freq_3s_p ~~ cy*respond_freq_3s_o 
+ respond_freq_3s_o  ~ ab*wu_jce_t2_o
+                           respond_freq_3s_p  ~ ab*wu_jce_t2_p
+                           respond_freq_3s_o  ~ pb*wu_jce_t2_p
+                           respond_freq_3s_p  ~ pb*wu_jce_t2_o
+                           wu_jce_t2_o ~ mxb*1
+                           wu_jce_t2_p ~ mxb*1
+                           wu_jce_t2_o ~~ vxb*wu_jce_t2_o
+                           wu_jce_t2_p ~~ vxb*wu_jce_t2_p
+                           wu_jce_t2_p ~~ cxb*wu_jce_t2_o
+                           wu_jce_t1_o ~~ c1*wu_jce_t2_o
+                           wu_jce_t1_o ~~ c2*wu_jce_t2_p
+                           wu_jce_t1_p ~~ c3*wu_jce_t2_o
+                           wu_jce_t1_p ~~ c4*wu_jce_t2_p
+                           kb := pb/ab
+                           sumb := (pb + ab)/2
+                           contb := ab - pb  
+  
+  
+  
+  
+ respond_freq_3s_o ~ initiate_freq_3s_p*initiate_freq_3s_p
+                      respond_freq_3s_p ~ initiate_freq_3s_o*initiate_freq_3s_o 
+                      initiate_freq_3s_p~~ vwc1a*initiate_freq_3s_p
+                      initiate_freq_3s_o~~ vwc1b*initiate_freq_3s_o
+                      initiate_freq_3s_p~ mwc1a*1 
+                      initiate_freq_3s_o~ mwc1b*1 
+                      initiate_freq_3s_p ~~ w1aw1b*initiate_freq_3s_o 
+ 
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+
+apimd_jce_sc_wu_rt.resp <- sem(APIM_jce_sc_wu_rt.resp,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_jce_sc_wu_rt.resp, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_jce_sc_wu_rt.resp, standardized = TRUE)
+```
+  
+* Are there actor-partner effects on warm up contribution (T1, T2) and initiating behaviours?  **No**
+  
+```{r APIM warm up contrib and initiating frequency}
+APIM_contrib_sc_wu_rt.init <- 
+  '
+
+                        initiate_freq_3s_o  ~ a*wu_contrib_o
+                        initiate_freq_3s_p  ~ a*wu_contrib_p
+                        initiate_freq_3s_o  ~ p*wu_contrib_p
+                        initiate_freq_3s_p  ~ p*wu_contrib_o
+                        wu_contrib_o ~ mx*1
+                        wu_contrib_p ~ mx*1
+                        initiate_freq_3s_o ~ my*1
+                        initiate_freq_3s_p ~ my*1
+                        wu_contrib_o ~~ vx*wu_contrib_o
+                        wu_contrib_p ~~ vx*wu_contrib_p
+                        initiate_freq_3s_o ~~ vy*initiate_freq_3s_o
+                        initiate_freq_3s_p ~~ vy*initiate_freq_3s_p
+                        wu_contrib_p ~~ cx*wu_contrib_o
+                        initiate_freq_3s_p ~~ cy*initiate_freq_3s_o 
+  
+  
+  
+  
+ initiate_freq_3s_o ~ respond_freq_3s_p*respond_freq_3s_p
+                      initiate_freq_3s_p ~ respond_freq_3s_o*respond_freq_3s_o 
+                      respond_freq_3s_p~~ vwc1a*respond_freq_3s_p
+                      respond_freq_3s_o~~ vwc1b*respond_freq_3s_o
+                      respond_freq_3s_p~ mwc1a*1 
+                      respond_freq_3s_o~ mwc1b*1 
+                      respond_freq_3s_p ~~ w1aw1b*respond_freq_3s_o 
+ 
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+apimd_contrib_sc_wu_rt.init <- sem(APIM_contrib_sc_wu_rt.init,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_contrib_sc_wu_rt.init, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_contrib_sc_wu_rt.init, standardized = TRUE)
+```
+  
+* Are there actor-partner effects on warm up contribution (T1, T2) and responding behaviours? **No**  
+```{r APIM warm up contrib and responding frequency}
+APIM_contrib_sc_wu_rt.resp <- '
+
+                        respond_freq_3s_o  ~ a*wu_contrib_o
+                        respond_freq_3s_p  ~ a*wu_contrib_p
+                        respond_freq_3s_o  ~ p*wu_contrib_p
+                        respond_freq_3s_p  ~ p*wu_contrib_o
+                        wu_contrib_o ~ mx*1
+                        wu_contrib_p ~ mx*1
+                        respond_freq_3s_o ~ my*1
+                        respond_freq_3s_p ~ my*1
+                        wu_contrib_o ~~ vx*wu_contrib_o
+                        wu_contrib_p ~~ vx*wu_contrib_p
+                        respond_freq_3s_o ~~ vy*respond_freq_3s_o
+                        respond_freq_3s_p ~~ vy*respond_freq_3s_p
+                        wu_contrib_p ~~ cx*wu_contrib_o
+                        respond_freq_3s_p ~~ cy*respond_freq_3s_o 
+  
+  
+  
+  
+ respond_freq_3s_o ~ initiate_freq_3s_p*initiate_freq_3s_p
+                      respond_freq_3s_p ~ initiate_freq_3s_o*initiate_freq_3s_o 
+                      initiate_freq_3s_p~~ vwc1a*initiate_freq_3s_p
+                      initiate_freq_3s_o~~ vwc1b*initiate_freq_3s_o
+                      initiate_freq_3s_p~ mwc1a*1 
+                      initiate_freq_3s_o~ mwc1b*1 
+                      initiate_freq_3s_p ~~ w1aw1b*initiate_freq_3s_o 
+ 
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+
+apimd_contrib_sc_wu_rt.resp <- sem(APIM_contrib_sc_wu_rt.resp,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_contrib_sc_wu_rt.resp, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_contrib_sc_wu_rt.resp, standardized = TRUE)
+```
+  
+##### Robot Social Context + Robot Social Context - Individual Level
+  
+* Does robot affiliation relate to robot task cooperative ability? **Yes, but only for initiating and responding behaviours. An increase in affiliation predicts an increase in both behaviours**
+  
+```{r robot afill + robot ability}
+# latency
+rtsc.rt.lat.afill <- lm(Latency_3sec ~ RT_Afill, data = indiv.df)
+summary(rtsc.rt.lat.afill)
+
+# init
+rtsc.rt.init.afill <- lm(Initiate_freq_3s ~ RT_Afill, data = indiv.df)
+summary(rtsc.rt.init.afill)
+
+# responding
+rtsc.rt.resp.afill <- lm(Respond_freq_3s ~ RT_Afill + Age_P4, data = indiv.df)
+summary(rtsc.rt.resp.afill)
+```
+  
+* Does robot antgonism relate to robot task cooperative ability? **No**
+  
+```{r robot antag + robot ability}
+# latency
+rtsc.rt.lat.antag <- lm(Latency_3sec ~ RT_Antag, data = indiv.df)
+summary(rtsc.rt.lat.antag)
+
+# init
+rtsc.rt.init.antag <- lm(Initiate_freq_3s ~ RT_Antag, data = indiv.df)
+summary(rtsc.rt.init.antag)
+
+# responding
+rtsc.rt.resp.antag <- lm(Respond_freq_3s ~ RT_Antag + Age_P4, data = indiv.df)
+summary(rtsc.rt.resp.antag)
+```
+  
+* Does robot antgonism relate to robot task cooperative ability? **Yes, an increase in JCE predicts an decrease in latency to success and an increase in initiating and responding behaviours.**
+  
+```{r robot jce + robot ability}
+# latency
+rtsc.rt.lat.jce <- lm(Latency_3sec ~ RT_JCE, data = indiv.df)
+summary(rtsc.rt.lat.jce)
+
+# init
+rtsc.rt.init.jce <- lm(Initiate_freq_3s ~ RT_JCE, data = indiv.df)
+summary(rtsc.rt.init.jce)
+
+# responding
+rtsc.rt.resp.jce <- lm(Respond_freq_3s ~ RT_JCE + Age_P4, data = indiv.df)
+summary(rtsc.rt.resp.jce)
+```
+  
+##### Robot Social Context + Robot Task Social Context - Dyadic Analyses
+  
+* Are there effects on robot affiliation scores and robot latency to success? **No**
+```{r affiliation robot and robot task latency}
+rtsc.afill.latency.rt <- lm(latency_3sec ~ rt_afill_o + rt_afill_o + 
+                            rt_afill_p + rt_afill_p + 
+                            rt_afill_o*rt_afill_p +
+                            rt_afill_o*rt_afill_p, data = dyad.df)
+summary(rtsc.afill.latency.rt)
+```
+  
+* Are there effects on robot antagonism scores and robot latency to success? **No**
+```{r antagonism robot and robot task latency}
+rtsc.antag.latency.rt <- lm(latency_3sec ~ rt_antag_o + rt_antag_o + 
+                            rt_antag_p + rt_antag_p + 
+                            rt_antag_o*rt_antag_p +
+                            rt_antag_o*rt_antag_p, data = dyad.df)
+summary(rtsc.antag.latency.rt)
+```
+  
+* Are there effects on robot jce scores and robot latency to success? **No**
+```{r jce robot and robot task latency}
+rtsc.jce.latency.rt <- lm(latency_3sec ~ rt_jce_o + rt_jce_o + 
+                            rt_jce_p + rt_jce_p + 
+                            rt_jce_o*rt_jce_p +
+                            rt_jce_o*rt_jce_p, data = dyad.df)
+summary(rtsc.jce.latency.rt)
+```
+  
+These analyses used structural equation modeling with maximum 
+likelihood estimation using the program lavaan (Rosseel, 2012). The tests 
+of coefficients are Z tests. Effect sizes for actor and partner effects 
+are partial correlations. Betas use the overall standard deviation across 
+all persons (o) for standardization. The FIML 
+standard deviations differ from the raw ones by the square root of N - 1 
+divided by N.
+  
+* Are there actor-partner effects on robot affiliation and initiating behaviours?  **No**
+  
+```{r APIM robot task afill and initiating frequency}
+APIM_afill_sc_rtsc_rt.init <- 
+ '
+
+                        initiate_freq_3s_o  ~ a*rt_afill_o
+                        initiate_freq_3s_p  ~ a*rt_afill_p
+                        initiate_freq_3s_o  ~ p*rt_afill_p
+                        initiate_freq_3s_p  ~ p*rt_afill_o
+                        rt_afill_o ~ mx*1
+                        rt_afill_p ~ mx*1
+                        initiate_freq_3s_o ~ my*1
+                        initiate_freq_3s_p ~ my*1
+                        rt_afill_o ~~ vx*rt_afill_o
+                        rt_afill_p ~~ vx*rt_afill_p
+                        initiate_freq_3s_o ~~ vy*initiate_freq_3s_o
+                        initiate_freq_3s_p ~~ vy*initiate_freq_3s_p
+                        rt_afill_p ~~ cx*rt_afill_o
+                        initiate_freq_3s_p ~~ cy*initiate_freq_3s_o 
+  
+  
+  
+  
+ initiate_freq_3s_o ~ respond_freq_3s_p*respond_freq_3s_p
+                      initiate_freq_3s_p ~ respond_freq_3s_o*respond_freq_3s_o 
+                      respond_freq_3s_p~~ vwc1a*respond_freq_3s_p
+                      respond_freq_3s_o~~ vwc1b*respond_freq_3s_o
+                      respond_freq_3s_p~ mwc1a*1 
+                      respond_freq_3s_o~ mwc1b*1 
+                      respond_freq_3s_p ~~ w1aw1b*respond_freq_3s_o 
+ 
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+apimd_afill_sc_rtsc_rt.init <- sem(APIM_afill_sc_rtsc_rt.init,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_afill_sc_rtsc_rt.init, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_afill_sc_rtsc_rt.init, standardized = TRUE)
+```
+  
+* Are there actor-partner effects on warm up affiliation  and responding behaviours?  **No**
+  
+```{r APIM robot task afill and responding frequency}
+APIM_afill_sc_rtsc_rt.resp <- 
+ '
+
+                        respond_freq_3s_o  ~ a*rt_afill_o
+                        respond_freq_3s_p  ~ a*rt_afill_p
+                        respond_freq_3s_o  ~ p*rt_afill_p
+                        respond_freq_3s_p  ~ p*rt_afill_o
+                        rt_afill_o ~ mx*1
+                        rt_afill_p ~ mx*1
+                        respond_freq_3s_o ~ my*1
+                        respond_freq_3s_p ~ my*1
+                        rt_afill_o ~~ vx*rt_afill_o
+                        rt_afill_p ~~ vx*rt_afill_p
+                        respond_freq_3s_o ~~ vy*respond_freq_3s_o
+                        respond_freq_3s_p ~~ vy*respond_freq_3s_p
+                        rt_afill_p ~~ cx*rt_afill_o
+                        respond_freq_3s_p ~~ cy*respond_freq_3s_o 
+  
+  
+  
+  
+ respond_freq_3s_o ~ initiate_freq_3s_p*initiate_freq_3s_p
+                      respond_freq_3s_p ~ initiate_freq_3s_o*initiate_freq_3s_o 
+                      initiate_freq_3s_p~~ vwc1a*initiate_freq_3s_p
+                      initiate_freq_3s_o~~ vwc1b*initiate_freq_3s_o
+                      initiate_freq_3s_p~ mwc1a*1 
+                      initiate_freq_3s_o~ mwc1b*1 
+                      initiate_freq_3s_p ~~ w1aw1b*initiate_freq_3s_o 
+ 
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+apimd_afill_sc_rtsc_rt.resp <- sem(APIM_afill_sc_rtsc_rt.resp,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_afill_sc_rtsc_rt.resp, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_afill_sc_rtsc_rt.resp, standardized = TRUE)
+```
+  
+  
+  
+* Are there actor-partner effects on robot antagonism and initiating behaviours?  **No**
+  
+```{r APIM robot task antag and initiating frequency}
+APIM_antag_sc_rtsc_rt.init <- 
+ '
+
+                        initiate_freq_3s_o  ~ a*rt_antag_o
+                        initiate_freq_3s_p  ~ a*rt_antag_p
+                        initiate_freq_3s_o  ~ p*rt_antag_p
+                        initiate_freq_3s_p  ~ p*rt_antag_o
+                        rt_antag_o ~ mx*1
+                        rt_antag_p ~ mx*1
+                        initiate_freq_3s_o ~ my*1
+                        initiate_freq_3s_p ~ my*1
+                        rt_antag_o ~~ vx*rt_antag_o
+                        rt_antag_p ~~ vx*rt_antag_p
+                        initiate_freq_3s_o ~~ vy*initiate_freq_3s_o
+                        initiate_freq_3s_p ~~ vy*initiate_freq_3s_p
+                        rt_antag_p ~~ cx*rt_antag_o
+                        initiate_freq_3s_p ~~ cy*initiate_freq_3s_o 
+  
+  
+  
+  
+ initiate_freq_3s_o ~ respond_freq_3s_p*respond_freq_3s_p
+                      initiate_freq_3s_p ~ respond_freq_3s_o*respond_freq_3s_o 
+                      respond_freq_3s_p~~ vwc1a*respond_freq_3s_p
+                      respond_freq_3s_o~~ vwc1b*respond_freq_3s_o
+                      respond_freq_3s_p~ mwc1a*1 
+                      respond_freq_3s_o~ mwc1b*1 
+                      respond_freq_3s_p ~~ w1aw1b*respond_freq_3s_o 
+ 
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+apimd_antag_sc_rtsc_rt.init <- sem(APIM_antag_sc_rtsc_rt.init,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_antag_sc_rtsc_rt.init, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_antag_sc_rtsc_rt.init, standardized = TRUE)
+```
+  
+* Are there actor-partner effects on warm up antagonism and responding behaviours?  **No**
+  
+```{r APIM robot task antag and responding frequency}
+APIM_antag_sc_rtsc_rt.resp <- 
+ '
+
+                        respond_freq_3s_o  ~ a*rt_antag_o
+                        respond_freq_3s_p  ~ a*rt_antag_p
+                        respond_freq_3s_o  ~ p*rt_antag_p
+                        respond_freq_3s_p  ~ p*rt_antag_o
+                        rt_antag_o ~ mx*1
+                        rt_antag_p ~ mx*1
+                        respond_freq_3s_o ~ my*1
+                        respond_freq_3s_p ~ my*1
+                        rt_antag_o ~~ vx*rt_antag_o
+                        rt_antag_p ~~ vx*rt_antag_p
+                        respond_freq_3s_o ~~ vy*respond_freq_3s_o
+                        respond_freq_3s_p ~~ vy*respond_freq_3s_p
+                        rt_antag_p ~~ cx*rt_antag_o
+                        respond_freq_3s_p ~~ cy*respond_freq_3s_o 
+  
+  
+  
+  
+ respond_freq_3s_o ~ initiate_freq_3s_p*initiate_freq_3s_p
+                      respond_freq_3s_p ~ initiate_freq_3s_o*initiate_freq_3s_o 
+                      initiate_freq_3s_p~~ vwc1a*initiate_freq_3s_p
+                      initiate_freq_3s_o~~ vwc1b*initiate_freq_3s_o
+                      initiate_freq_3s_p~ mwc1a*1 
+                      initiate_freq_3s_o~ mwc1b*1 
+                      initiate_freq_3s_p ~~ w1aw1b*initiate_freq_3s_o 
+ 
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+apimd_antag_sc_rtsc_rt.resp <- sem(APIM_antag_sc_rtsc_rt.resp,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_antag_sc_rtsc_rt.resp, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_antag_sc_rtsc_rt.resp, standardized = TRUE)
+```
+  
+* Are there actor-partner effects on robot jce and initiating behaviours?  **No**
+  
+```{r APIM robot task jce and initiating frequency}
+APIM_jce_sc_rtsc_rt.init <- 
+ '
+
+                        initiate_freq_3s_o  ~ a*rt_jce_o
+                        initiate_freq_3s_p  ~ a*rt_jce_p
+                        initiate_freq_3s_o  ~ p*rt_jce_p
+                        initiate_freq_3s_p  ~ p*rt_jce_o
+                        rt_jce_o ~ mx*1
+                        rt_jce_p ~ mx*1
+                        initiate_freq_3s_o ~ my*1
+                        initiate_freq_3s_p ~ my*1
+                        rt_jce_o ~~ vx*rt_jce_o
+                        rt_jce_p ~~ vx*rt_jce_p
+                        initiate_freq_3s_o ~~ vy*initiate_freq_3s_o
+                        initiate_freq_3s_p ~~ vy*initiate_freq_3s_p
+                        rt_jce_p ~~ cx*rt_jce_o
+                        initiate_freq_3s_p ~~ cy*initiate_freq_3s_o 
+  
+  
+  
+  
+ initiate_freq_3s_o ~ respond_freq_3s_p*respond_freq_3s_p
+                      initiate_freq_3s_p ~ respond_freq_3s_o*respond_freq_3s_o 
+                      respond_freq_3s_p~~ vwc1a*respond_freq_3s_p
+                      respond_freq_3s_o~~ vwc1b*respond_freq_3s_o
+                      respond_freq_3s_p~ mwc1a*1 
+                      respond_freq_3s_o~ mwc1b*1 
+                      respond_freq_3s_p ~~ w1aw1b*respond_freq_3s_o 
+ 
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+apimd_jce_sc_rtsc_rt.init <- sem(APIM_jce_sc_rtsc_rt.init,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_jce_sc_rtsc_rt.init, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_jce_sc_rtsc_rt.init, standardized = TRUE)
+```
+  
+* Are there actor-partner effects on warm up jce and responding behaviours?  **No**
+  
+```{r APIM robot task jce and responding frequency}
+APIM_jce_sc_rtsc_rt.resp <- 
+ '
+
+                        respond_freq_3s_o  ~ a*rt_jce_o
+                        respond_freq_3s_p  ~ a*rt_jce_p
+                        respond_freq_3s_o  ~ p*rt_jce_p
+                        respond_freq_3s_p  ~ p*rt_jce_o
+                        rt_jce_o ~ mx*1
+                        rt_jce_p ~ mx*1
+                        respond_freq_3s_o ~ my*1
+                        respond_freq_3s_p ~ my*1
+                        rt_jce_o ~~ vx*rt_jce_o
+                        rt_jce_p ~~ vx*rt_jce_p
+                        respond_freq_3s_o ~~ vy*respond_freq_3s_o
+                        respond_freq_3s_p ~~ vy*respond_freq_3s_p
+                        rt_jce_p ~~ cx*rt_jce_o
+                        respond_freq_3s_p ~~ cy*respond_freq_3s_o 
+  
+  
+  
+  
+ respond_freq_3s_o ~ initiate_freq_3s_p*initiate_freq_3s_p
+                      respond_freq_3s_p ~ initiate_freq_3s_o*initiate_freq_3s_o 
+                      initiate_freq_3s_p~~ vwc1a*initiate_freq_3s_p
+                      initiate_freq_3s_o~~ vwc1b*initiate_freq_3s_o
+                      initiate_freq_3s_p~ mwc1a*1 
+                      initiate_freq_3s_o~ mwc1b*1 
+                      initiate_freq_3s_p ~~ w1aw1b*initiate_freq_3s_o 
+ 
+  
+ k := p/a
+                        sum := (p + a)/2
+                        cont := a - p  
+'
+apimd_jce_sc_rtsc_rt.resp <- sem(APIM_jce_sc_rtsc_rt.resp,fixed.x=FALSE, data = dyad.df, missing = "FIML")
+summary(apimd_jce_sc_rtsc_rt.resp, fit.measures=TRUE, standardize=TRUE)
+parameterEstimates(apimd_jce_sc_rtsc_rt.resp, standardized = TRUE)
+```
+  
+### Research Questions - Follow Up Analyses  
+  
+### Research Questions - Secondary Analyses  
+  
+#### Individual Level Analyses (ALL) 
+  
+*Note. These are all individual level analyses where the ORCA and peer are treated as individual participants*
+  
+##### Warm Up Social Context
+  
+* Are there differences between T1 and T2 for all social context warm up variables? **Yes, for antagonism scores and JCE scores**
+  
+Due to differences in the other variables, all subsequent analyses comparing the warm up to other variables will be split between T1 and T2 (including affiliation).
+  
+```{r warm up data restructure for wilcox test, include = FALSE}
+#restructure variables from wide to long
+## affiliation score - warm up
+WU.afill <- subset(indiv.df, select=c("WU_Afill_T1", "WU_Afill_T2"))
+WU.afill <- gather(WU.afill, time, score, WU_Afill_T1:WU_Afill_T2, factor_key=TRUE)
+WU.afill <- na.omit(WU.afill)
+## antagonistic score - warm up
+WU.antag <- subset(indiv.df, select=c("WU_Antag_T1", "WU_Antag_T2"))
+WU.antag <- gather(WU.antag, time, score, WU_Antag_T1:WU_Antag_T2, factor_key=TRUE)
+WU.antag <- na.omit(WU.antag)
+## jce score - warm up
+WU.jce <- subset(indiv.df, select=c("WU_JCE_T1", "WU_JCE_T2"))
+WU.jce <- gather(WU.jce, time, score, WU_JCE_T1:WU_JCE_T2, factor_key=TRUE)
+WU.jce <- na.omit(WU.jce)
+```
+  
+```{r warm up social context time sampling differences}
+#data for afilliation, antagonism, and JCE is non normally distributed - non parametric tests utilized.
+#test for differences between warm up T1 and T2 averages for all social context variables
+
+##affiliation differences - ns
+wilcox.test(score ~ time, data = WU.afill, paired=FALSE)
+##antagonistic differences - SIG DIFFERENCES
+wilcox.test(score ~ time, data = WU.antag, paired=FALSE)
+group_by(WU.antag, time) %>%
+  summarise(
+    count = n(),
+    median = median(score, na.rm = TRUE),
+    IQR = IQR(score, na.rm = TRUE)
+  )
+##jce differences - SIG DIFFERECES
+wilcox.test(score ~ time, data = WU.jce, paired=FALSE)
+group_by(WU.jce, time) %>%
+  summarise(
+    count = n(),
+    median = median(score, na.rm = TRUE),
+    IQR = IQR(score, na.rm = TRUE)
+  )
+```
+  
+* Are there gender differences for warm up social context variables? **Yes, there is a gender difference in the affiliation score between genders for T1**
+  
+```{r warm up social context gender differences}
+#gender differences for warm up affiliation T1
+wilcox.test(WU_Afill_T1 ~ Gender, data = indiv.df, paired=FALSE)
+group_by(indiv.df, Gender) %>%
+  summarise(
+    count = n(),
+    median = median(WU_Afill_T1, na.rm = TRUE),
+    IQR = IQR(WU_Afill_T1, na.rm = TRUE)
+  )
+
+#gender differences for warm up affiliation T2
+wilcox.test(WU_Afill_T2 ~ Gender, data = indiv.df, paired=FALSE)
+
+##gender differences for warm up antagonism T1
+wilcox.test(WU_Antag_T1 ~ Gender, data = indiv.df, paired=FALSE)
+
+##gender differences for warm up antagonism T2
+wilcox.test(WU_Antag_T2 ~ Gender, data = indiv.df, paired=FALSE)
+
+##gender differences for warm up jce T1
+wilcox.test(WU_JCE_T1 ~ Gender, data = indiv.df, paired=FALSE)
+
+##gender differences for warm up jce T2
+wilcox.test(WU_JCE_T2 ~ Gender, data = indiv.df, paired=FALSE)
+
+##gender differences for warm up contribution
+wilcox.test(WU_Contrib ~ Gender, data = indiv.df, paired=FALSE)
+```
+  
+* Is there a relationship between age and warm up social context variables? **No**
+  
+```{r warm up social context age differences}
+
+#association between age and warm up affiliation t1
+age.wu.afill.t1 <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_Afill_T1, method = 'spearman')
+age.wu.afill.t1
+
+#association between age and warm up affiliation t2
+age.wu.afill.t2 <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_Afill_T2, method = 'spearman')
+age.wu.afill.t2
+
+#association between age and warm up antagonism t1
+age.wu.antag.t1 <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_Antag_T1, method = 'spearman')
+age.wu.antag.t1
+
+#association between age and warm up antagonism t2
+age.wu.antag.t2 <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_Antag_T2, method = 'spearman')
+age.wu.antag.t2
+
+#association between age and warm up jce t1
+age.wu.jce.t1 <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_JCE_T1, method = 'spearman')
+age.wu.jce.t1
+
+#association between age and warm up jce t2
+age.wu.jce.t2 <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_JCE_T2, method = 'spearman')
+age.wu.jce.t2
+
+#association between age and warm up contributions
+age.wu.contrib <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_Contrib, method = 'spearman')
+age.wu.contrib
+```
+
+##### Robot Social Context
+  
+* Are there gender differences for robot social context variables? **No**
+  
+```{r robot social context gender differences}
+#gender differences for robot task affiliation 
+wilcox.test(RT_Afill ~ Gender, data = indiv.df, paired=FALSE)
+
+##gender differences for robot task antagonism 
+wilcox.test(RT_Antag ~ Gender, data = indiv.df, paired=FALSE)
+
+##gender differences for robot task jce
+wilcox.test(RT_JCE ~ Gender, data = indiv.df, paired=FALSE)
+
+```
+  
+* Is there a relationship between age and robot social context variables? **No**
+  
+```{r robot social context age differences}
+
+#association between age and warm up affiliation
+age.rt.afill <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$RT_Afill, method = 'spearman')
+age.rt.afill
+
+#association between age and warm up antagonism t1
+age.rt.antag <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$RT_Antag, method = 'spearman')
+age.rt.antag
+
+#association between age and warm up jce t2
+age.rt.jce <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$RT_JCE, method = 'spearman')
+age.rt.jce
+
+```
+  
+#### Robot Cooperative Ability
+  
+* Does participant age correlate latency to success? **No**
+  
+```{r regression between age for orca and peer and latency to success}
+#regression for age of peer and orca and predicting latency
+age.latency <- lm(latency_3sec ~ age_p4_o + age_p4_p, data = dyad.df)
+summary(age.latency)
+```
+  
+* Does the age difference between the participants correlate to latency to success **No**
+  
+```{r correlation between age difference within the dyad and latency to success}
+#correlation between age difference and latency scores
+agediff.latency.df <- subset(dyad.df, select = c("age_p4_diff","latency_3sec"))
+agediff.latency.df <- na.omit(agediff.latency.df)
+agediff.latency.corr <- cor.test(x = agediff.latency.df$age_p4_diff, 
+                       y = agediff.latency.df$latency_3sec, method = 'spearman')
+agediff.latency.corr 
+```
+  
+* Does age relate to frequency of initiating behaviours? **No**  
+```{r age and initating behaviours}
+#correlation between age and initating behaviours
+age.init.corr <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$Initiate_freq_3s, method = 'spearman')
+age.init.corr
+```
+  
+* Does age relate to frequency of responding behaviours? **Yes - an increase in age is weakly/moderately associated with an increase in responding behaviours**  
+```{r age and responding behaviours}
+#correlation between age and responding behaviours
+age.resp.corr <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$Respond_freq_3s, method = 'spearman')
+age.resp.corr
+```
+  
+* Are there age differences between groups of children who did and did NOT engage in initiating/responding behaviours? **Yes, but only for the 'responded group.' In other words, the group of children who exhibited a cooperative handle response behaviour were older than the group who did not.**
+  
+```{r ttest for age differences for cooperative ability behaviours}
+#because many (~100) participants DONT have a latency score, 
+#a ttest is conducted to see if there is an age effect for age 
+#on if the child engaged in any initiating/responding behaviours.
+
+#age at p4 and initiate (y/n)
+t.test(indiv.df$Age_P4~indiv.df$Initiate_yn_3s)
+
+#age at p4 and respond (y/n)
+t.test(indiv.df$Age_P4~indiv.df$Respond_yn_3s)
+```
+  
+* Are there gender differences in latency to success scores? **No**
+  
+```{r gender and robot latency to success}
+#gender differences for robot latency to success
+wilcox.test(latency_3sec ~ gender, data = dyad.df, paired=FALSE)
+```
+  
+* Are there gender differences in initating behaviours? **No**
+  
+```{r gender and robot initiate freq}
+#gender differences for robot initating behaviours
+wilcox.test(Initiate_freq_3s ~ Gender, data = indiv.df, paired=FALSE)
+```
+  
+* Are there gender differences in responding behaviours? **No**
+  
+```{r gender and robot respond freq}
+#gender differences for robot responding behaviours
+wilcox.test(Respond_freq_3s ~ Gender, data = indiv.df, paired=FALSE)
+```
+
+* Are there gender differences between whether or not the child engaged in initating behaviours? **Yes**
+  
+```{r gender and robot initiate yn}
+#gender differences for if the child initated a cooperation sequence ever
+wilcox.test(Initiate_yn_3s ~ Gender, data = indiv.df, paired=FALSE)
+group_by(indiv.df, Gender) %>%
+  summarise(
+    count = n(),
+    median = median(Initiate_yn_3s, na.rm = TRUE),
+    IQR = IQR(Initiate_yn_3s , na.rm = TRUE)
+  )
+```
+  
+
+* Are there gender differences between whether or not the child engaged in responding behaviours? **Yes**
+  
+```{r gender and robot respond yn}
+#gender differences for if the child initated a cooperation sequence ever
+wilcox.test(Respond_yn_3s ~ Gender, data = indiv.df, paired=FALSE)
+group_by(indiv.df, Gender) %>%
+  summarise(
+    count = n(),
+    median = median(Respond_yn_3s, na.rm = TRUE),
+    IQR = IQR(Respond_yn_3s , na.rm = TRUE)
+  )
+```
+
+* Does age correlate frequency of initiating behaviours, when controlling for the initiating/responding behaviour of the peer?  
+**Hypothesis**: Yes, a positive correlation is expected. Older children will initiate more as a product of shorter latency (Endedijk et al., 2015). Also noted is older children will be more developed and thus have enhanced cognitive capacity - some citations in Endedijk paper, also we expect peer task monitoring to increase with age (Brownell et al., 2006)
+* Does age correlate frequency of responding behaviours, when controlling for the initiating/responding behaviour of the peer?  
+**Hypothesis**: Yes, a positive correlation is expected. Older children will respond more as a product of shorter latency (Endedijk et al., 2015). Also noted is older children will be more developed and thus have enhanced cognitive capacity - some citations in Endedijk paper, also we expect peer task monitoring to increase with age (Brownell et al., 2006)
+* Do gender differences exist for frequency of initiating behaviours, when controlling for the initiating/responding behaviour of the peer?  
+**Hypothesis**: We do not expect a gender difference to emerge as there is no theoretical reason and it hasn't been observed in previous research (see Brownell et al., 2006; Endedik et al., 2015)
+* Do gender differences exist for frequency of responding behaviours, when controlling for the initiating/responding behaviour of the peer?  
+**Hypothesis**: We do not expect a gender difference to emerge as there is no theoretical reason and it hasn't been observed in previous research (see Brownell et al., 2006; Endedik et al., 2015)
+* Do gender differences exist for affiliative scores?  
+**Hypothesis**: We expect a gender difference to emerge. This effect was observed in Endedijk et al. (2015). Girls may be less competitive and dominant than boys, and thus may display more affiliative behaviours throughout the task (Maccoby, 1990, as cited in Endedijk et al., 2015).
+* Do gender differences exist for antagonistic scores?  
+**Hypothesis**: Based on the logic above, a gender difference could emerge here with boys being more antagonistic than girls if they display far more competitive behaviours (Maccoby, 1990, as cited in Endedijk et al., 2015).  
+* Do affiliation scores correlate to frequency of initiating behaviours, when controlling for the initiating/responding behaviour of the peer?  
+**Hypothesis**: We expect that initiating behaviours will be related to cooperative success (as measured by latency and frequency of successes). Endedijk et al. (2015) and Ramani (2012) found affiliative behaviours, such as positive communication, was linked with cooperative success. Thus, we hypothesize that affiliation scores will be linked with initiating behaviours.
+* Do affiliation scores correlate to frequency of responding behaviours, when controlling for the initiating/responding behaviour of the peer?  
+**Hypothesis**: We expect that responding behaviours will be related to cooperative success (as measured by latency and frequency of successes). Endedijk et al. (2015) and Ramani (2012) found affiliative behaviours, such as positive communication, was linked with cooperative success. Thus, we hypothesize that affiliation scores will be linked with responding behaviours.
+* Do antagonistic scores correlate to frequency of initiating behaviours, when controlling for the initiating/responding behaviour of the peer?  
+**Hypothesis**: A correlation is not expected to emerge. Endedijk et al. (2015) found no relationships and suggested that it is due to the double function of antagonistic behaviours between peers. Although antagonistic behaviour can be detrimental to social function (Hart, DeWolf, Wozniak, & Burts, 1992; NICHD Early Child Care Research Network, 2004, as cited in Endedijk et al.,2015), it can also serve as a normative function - enforcing how children should interact with one another (Vaughn, Vollenweider, Bost, & Azria-Evans, 2003; Williams et al., 2007; Williams, Ontai, & Mastergeorge, 2010, as cited in Endedijk et al., 2015).
+* Do antagonistic scores correlate to frequency of responding behaviours, when controlling for the initiating/responding behaviour of the peer?  
+**Hypothesis**: A correlation is not expected to emerge. Endedijk et al. (2015) found no relationships and suggested that it is due to the double function of antagonistic behaviours between peers. Although antagonistic behaviour can be detrimental to social function (Hart, DeWolf, Wozniak, & Burts, 1992; NICHD Early Child Care Research Network, 2004, as cited in Endedijk et al.,2015), it can also serve as a normative function - enforcing how children should interact with one another (Vaughn, Vollenweider, Bost, & Azria-Evans, 2003; Williams et al., 2007; Williams, Ontai, & Mastergeorge, 2010, as cited in Endedijk et al., 2015).  
+  
+#### Individual (ORCA) Analyses
+* Does temperament correlate to affiliative behaviour?  
+**Hypothesis**: It is expected that a positive relationship will emerge between affiliative behaviour and temperamental Surgency, as observed in Endedijk et al. (2015). The rationale is that children high in Surgency are less shy and more likely to engage with their peers.
+* Does temperament relate to antagonistic behaviour?  
+**Hypothesis**: Based on the findings from Endedijk et al. (2015) and Laible et al. (2014), it is expected that Negative Affectivity will positively relate to antagonism scores. Characteristic of Negative Affectivity are: anger, contempt, disgust, guilt, fear, and nervousness. It is possible that in an interaction with an unfamiliar peer, children high in Negative Affectivity will experience these emotions and they will manifest as antagonistic behaviours.
+* Does temperament relate to initiating behaviours, when controlling for the initiating/responding behaviour of the peer?  
+**Hypothesis**: Endedijk et al. (2015) and Laible et al. (2014) found a positive relationship between Effortful Control and cooperative success, since we expect initiating behaviours to be linked with cooperative success, it is expected that a positive relationship will emerge between initiating behaviours and temperamental Effortful Control.  
+* Does temperament relate to responding behaviours, when controlling for the initiating/responding behaviour of the peer?  
+**Hypothesis**: Endedijk et al. (2015) and Laible et al. (2014) found a positive relationship between Effortful Control and cooperative success, since we expect initiating behaviours to be linked with cooperative success, it is expected that a positive relationship will emerge between responding behaviours and temperamental Effortful Control. This effect may be more pronounced than initiating behaviours because a characteristic of Effortful Control is the ability to manage attention and adapt to tasks that may not be very interesting to the child. If a child is high in Effortful control, they may attend to the peer more and respond more to their handle pulls, rather than starting the pulls themselves, particularly if they are initially uninterested in the task.   
+* Are there differences in initiating behaviour between parent SES "groups"  
+**Hypothesis**: No difference is expected.  
+* Are there differences in responding behaviour between parent SES "groups"  
+**Hypothesis**: As "responding behaviour" could be considered the more "cooperative" behaviour, we may see a difference in those children who have parents in the low SES groups. Endedijk et al. (2015) found that 4 year olds who attended child care more frequently were more successful and affiliative in the cooperative task. The rationale is that perhaps parents in the lower SES category may have to work more and thus their children may spend relatively more time in childcare situations at a younger age.  
+
+### Research Questions - Exploratory Analyses  
+This section includes analyses that we may not have strong hypotheses for (due to lack of theory or previous research) but are still important to test.  
+
+#### Exploratory/Checks
+* Are there correlations between cooperative ability and social context on the robot task?
+```{r RT cooperation correlation matrix, include = FALSE }
+#Note rr_tt_sec is the length of robot task interaction in seconds
+RT_ca.sc.df <- subset(dyad.df, select = c("rt_tt_sec", "initiate_freq_3s_o", "initiate_freq_3s_p",
+                                          "respond_yn_3s_o", "respond_yn_3s_p","initiate_yn_3s_o",
+                                          "initiate_yn_3s_p","respond_yn_3s_o", 
+                                          "respond_yn_3s_p","rt_afill_yn_o", "rt_afill_yn_p",
+                                          "rt_antag_yn_o", "rt_antag_yn_p", "rt_afill_o", "rt_afill_p",
+                                          "rt_antag_o", "rt_antag_p", "rt_jce_o", "rt_jce_p", "rt_eng_o",
+                                          "rt_eng_p"))
+
+RT_ca.sc.cor <- cor(RT_ca.sc.df, use = "complete.obs")
+round(RT_ca.sc.cor, 2)
+RT_ca.sc.cor2 <- rcorr(as.matrix(RT_ca.sc.df))
+RT_ca.sc.cor2
+RT_ca.sc.cor2$r
+# Extract p-values
+RT_ca.sc.cor2$P
+
+flattenCorrMatrix <- function(cormat, pmat) {
+  ut <- upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+    )
+}
+```
+```{r RT cooperation table and matrix corr, set-options, echo=FALSE, cache=FALSE}
+options(width = 500)
+
+flattenCorrMatrix(RT_ca.sc.cor2$r, RT_ca.sc.cor2$P)
+corrplot(RT_ca.sc.cor, type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
+
+```
+
+
+```{r}
+test <- subset(dyad.df_pcgm.p5, select = c("dyad_id", "Freq_CA_p4","rt_afill_o", "rt_afill_p", "respond_freq_3s_o", "respond_freq_3s_p", "initiate_freq_3s_p", "initiate_freq_3s_o", "wu_afill_t1t2_o", "wu_afill_t1t2_p"))
+write.csv(test, "dyadicdata.csv")
+```
+```{r}
+dyadic.wu.rt.sc <- subset(dyad.df, select = c ("wu_afill_t1_o", "wu_afill_t2_o", "wu_antag_t1_o", "wu_antag_t2_o", "wu_jce_t1_o", "wu_jce_t2_o", "wu_afill_t1_p", "wu_afill_t2_p", "wu_antag_t1_p", "wu_antag_t2_p", "wu_jce_t1_p", "wu_jce_t2_p", "rt_afill_o", "rt_antag_o", "rt_jce_o", "rt_afill_p", "rt_antag_p", "rt_jce_p", "gender", "respond_freq_3s_o", "respond_freq_3s_p", "initiate_freq_3s_o", "initiate_freq_3s_p"))
+
+write.csv(dyadic.wu.rt.sc, "dyadic.sc.wu.rt.csv")
+```
+ 
 ## Variables & Descriptions
 ### ORCA
-#### Temperament  
-* Type: Continuous  
-* Function: IV  
-* Description: Gartstein & Rothbart (2003)  
-```{r Temperamental Surgency}
-with(indiv.df, hist(SUR_ECBQ_p4,breaks = 5,
-                   xlab = "surgency",
-                   main = "hist Temperamental surgency"))
-mean(indiv.df$SUR_ECBQ_p4, na.rm = TRUE)
-sd(indiv.df$SUR_ECBQ_p4, na.rm = TRUE)
-median(indiv.df$SUR_ECBQ_p4, na.rm = TRUE)
-range(indiv.df$SUR_ECBQ_p4, na.rm = TRUE)
-#number of observations NAs removed
-sum(!is.na(indiv.df$SUR_ECBQ_p4))
-```
-  
-```{r Negative Affectivity}
-with(indiv.df, hist(NEG_ECBQ_p4,breaks = 5,
-                   xlab = "NEG affect",
-                   main = "hist Neg affect"))
-mean(indiv.df$NEG_ECBQ_p4, na.rm = TRUE)
-sd(indiv.df$NEG_ECBQ_p4, na.rm = TRUE)
-median(indiv.df$NEG_ECBQ_p4, na.rm = TRUE)
-range(indiv.df$NEG_ECBQ_p4, na.rm = TRUE)
-#number of observations NAs removed
-sum(!is.na(indiv.df$NEG_ECBQ_p4))
-```
-  
-```{r Regalatory capacity}
-with(indiv.df, hist(REG_ECBQ_p4,breaks = 5,
-                   xlab = "Reg capacity",
-                   main = "hist regalatory capacity"))
-mean(indiv.df$REG_ECBQ_p4, na.rm = TRUE)
-sd(indiv.df$REG_ECBQ_p4, na.rm = TRUE)
-median(indiv.df$REG_ECBQ_p4, na.rm = TRUE)
-range(indiv.df$REG_ECBQ_p4, na.rm = TRUE)
-#number of observations NAs removed
-sum(!is.na(indiv.df$REG_ECBQ_p4)) 
-```
 
 #### Afilliative score (Warm Up)  
 * Type: Continuous  
@@ -405,35 +1897,6 @@ range(dyad.df$wu_afill_t1t2_o, na.rm = TRUE)
 #number of observations NAs removed
 sum(!is.na(dyad.df$wu_afill_t1t2_o)) 
 ```
-#### Affiliative score Y/N (Warm Up)  
-* Type: Categorical  
-* Function: IV, DV  
-* Description: Due to the heavy right skew of the distributions above (also see descriptives) - the affiliative score has been transformed to a categorical variable of did the child display affiliative behaviours (yes = 1, 0 = no). Further support for this decision can be found in Endedijk et al. (2015). Specifically it was found that 2-year-olds on average displayed 1.2 affiliative behvaiours throughout the task. **Dual coded on a scale of 1 to 7 (1 = no instances, 7 = almost all of the time). The first 1:30 (T1) and last 1:30 (T2) of the warm up was split into 30s time chunks for coding. Scores for each time chunk were averaged for a final score per participant within the dyad and also for T1 and T2.**   
-  
-```{r Affiliative Score (Y/N) Warm Up T1}
-with(dyad.df, hist(wu_afill_yn_t1_o,breaks = 2,
-                   xlab = "Warm Up Affiliation Y/N",
-                   main = "ORCA affiliative behaviour Y/N \n during first 1:30 of warm up"))
-table(dyad.df$wu_afill_yn_t1_o)
-#number of observations NAs removed
-sum(!is.na(dyad.df$wu_afill_yn_t1_o)) 
-```
-```{r Affiliative Score (Y/N) Warm Up T2}
-with(dyad.df, hist(wu_afill_yn_t2_o,breaks = 2,
-                   xlab = "Warm Up Affiliation Y/N",
-                   main = "ORCA affiliative behaviour Y/N \n during last 1:30 of warm up"))
-table(dyad.df$wu_afill_yn_t2_o)
-#number of observations NAs removed
-sum(!is.na(dyad.df$wu_afill_yn_t2_o)) 
-```
-```{r Affiliative Score (Y/N) Warm Up T1T2}
-with(dyad.df, hist(wu_afill_yn_t1t2_o,breaks = 2,
-                   xlab = "Warm Up Affiliation Y/N",
-                   main = "ORCA affiliative behaviour Y/N \n during first and last 1:30 of warm up"))
-table(dyad.df$wu_afill_yn_t1t2_o)
-#number of observations NAs removed
-sum(!is.na(dyad.df$wu_afill_yn_t1t2_o)) 
-```
 
 #### Antagonistic score (Warm Up)   
 * Type: Continuous  
@@ -471,39 +1934,8 @@ median(dyad.df$wu_antag_t1t2_o, na.rm = TRUE)
 range(dyad.df$wu_antag_t1t2_o, na.rm = TRUE)
 #number of observations NAs removed
 sum(!is.na(dyad.df$wu_antag_t1t2_o)) 
-
 ```
-
-#### Antagonistic score Y/N (Warm Up)  
-* Type: Categorical  
-* Function: IV, DV  
-* Description: Due to the heavy right skew of the distributions above (also see descriptives) - the affiliative score has been transformed to a categorical variable of did the child display antagonistic behaviours (yes = 1, 0 = no). Further support for this decision can be found in Endedijk et al. (2015). Specifically it was found that 2-year-olds on average displayed 1.68 antagonistic behvaiours throughout the task. **Dual coded on a scale of 1 to 7 (1 = no instances, 7 = almost all of the time). The first 1:30 (T1) and last 1:30 (T2) of the warm up was split into 30s time chunks for coding. Scores for each time chunk were averaged for a final score per participant within the dyad and also for T1 and T2.**   
   
-```{r Antagonistic Score (Y/N) Warm Up T1}
-with(dyad.df, hist(wu_antag_yn_t1_o,breaks = 2,
-                   xlab = "Warm Up Antagonism Y/N",
-                   main = "ORCA antagonistic behaviour Y/N \n during first 1:30 of warm up"))
-table(dyad.df$wu_antag_yn_t1_o)
-#number of observations NAs removed
-sum(!is.na(dyad.df$wu_antag_yn_t1_o)) 
-```
-```{r Antagonistic Score (Y/N) Warm Up T2}
-with(dyad.df, hist(wu_antag_yn_t2_o,breaks = 2,
-                   xlab = "Warm Up Antagonism Y/N",
-                   main = "ORCA antagonistic behaviour Y/N \n during last 1:30 of warm up"))
-table(dyad.df$wu_antag_yn_t2_o)
-#number of observations NAs removed
-sum(!is.na(dyad.df$wu_antag_yn_t2_o)) 
-```
-```{r Antagonistic Score (Y/N) Warm Up T1T2}
-with(dyad.df, hist(wu_antag_yn_t1t2_o,breaks = 2,
-                   xlab = "Warm Up Antagonism Y/N",
-                   main = "ORCA antagonistic behaviour Y/N \n during first and last 1:30 of warm up"))
-table(dyad.df$wu_antag_yn_t1t2_o)
-#number of observations NAs removed
-sum(!is.na(dyad.df$wu_antag_yn_t1t2_o)) 
-```
-
 #### Contribution (Warm Up)
 * Type: Continuious/Ordinal  
 * Function: IV, DV  
@@ -535,19 +1967,6 @@ range(dyad.df$rt_afill_o, na.rm = TRUE)
 sum(!is.na(dyad.df$rt_afill_o)) 
 ```
 
-#### Affiliative score Y/N (Robot)  
-* Type: Categorical  
-* Function: IV, DV  
-* Description: Due to the heavy right skew of the distributions above (also see descriptives) - the affiliative score has been transformed to a categorical variable of did the child display affiliative behaviours (yes = 1, 0 = no). Further support for this decision can be found in Endedijk et al. (2015). Specifically it was found that 2-year-olds on average displayed 1.2 affiliative behvaiours throughout the task. **Dual coded on a scale of 1 to 7 (1 = no instances, 7 = almost all of the time). The first 1:30 (T1) and last 1:30 (T2) of the warm up was split into 30s time chunks for coding. Scores for each time chunk were averaged for a final score per participant within the dyad and also for T1 and T2.**   
-  
-```{r Affiliative Score Y/N Robot}
-with(dyad.df, hist(rt_afill_yn_o,breaks = 2,
-                   xlab = "Robot Affiliation Y/N",
-                   main = "ORCA affiliative behaviour Y/N \n during robot task"))
-table(dyad.df$rt_afill_yn_o)
-#number of observations NAs removed
-sum(!is.na(dyad.df$rt_afill_yn_o)) 
-```
 
 #### Antagonistic score (Robot)   
 * Type: Continuous  
@@ -563,20 +1982,6 @@ median(dyad.df$rt_antag_o, na.rm = TRUE)
 range(dyad.df$rt_antag_o, na.rm = TRUE)
 #number of observations NAs removed
 sum(!is.na(dyad.df$rt_antag_o)) 
-```
-
-#### Antagonism score Y/N (Robot)  
-* Type: Categorical  
-* Function: IV, DV  
-* Description: Due to the heavy right skew of the distributions above (also see descriptives) - the affiliative score has been transformed to a categorical variable of did the child display antagonistic behaviours (yes = 1, 0 = no). Further support for this decision can be found in Endedijk et al. (2015). Specifically it was found that 2-year-olds on average displayed 1.68 antagonistic behvaiours throughout the task. **Dual coded on a scale of 1 to 7 (1 = no instances, 7 = almost all of the time). The first 1:30 (T1) and last 1:30 (T2) of the warm up was split into 30s time chunks for coding. Scores for each time chunk were averaged for a final score per participant within the dyad and also for T1 and T2.**   
-  
-```{r Antagonism Score Y/N Robot}
-with(dyad.df, hist(rt_antag_yn_o,breaks = 2,
-                   xlab = "Robot Antagonism Y/N",
-                   main = "ORCA Antagonism behaviour Y/N \n during robot task"))
-table(dyad.df$rt_antag_yn_o)
-#number of observations NAs removed
-sum(!is.na(dyad.df$rt_antag_yn_o)) 
 ```
 
 #### Joint coordinated engagement (JCE) score  
@@ -668,71 +2073,6 @@ sum(!is.na(dyad.df$initiate_yn_3s_o))
 table(dyad.df$initiate_yn_3s_o)
 ```
   
-### ORCA Parent data
-#### SES   
-* Type: Categorical  
-* Function: Control/IV  
-* Description: Groups based upon parent highest level of education - 1 = no high school completion, 2 = completed high school, 3 = completed something beyond high school  
-
-#### Personality  
-* Type: Continuous  
-* Function: IV  
-* Description: DeYoung, 2007 
-```{r ORCA parent Openness}
-with(dyad.df, hist(big5_open_o,breaks = 20,
-                   xlab = "Openness score",
-                   main = "hist ORCA parent Openness score \n averages"))
-mean(dyad.df$big5_open_o, na.rm = TRUE)
-sd(dyad.df$big5_open_o, na.rm = TRUE)
-range(dyad.df$big5_open_o, na.rm = TRUE)
-#number of observations NAs removed
-sum(!is.na(dyad.df$big5_open_o))
-```
-
-```{r ORCA parent Conscientiousness}
-with(dyad.df, hist(big5_cons_o,breaks = 20,
-                   xlab = "Conscientiousness score",
-                   main = "hist ORCA parent Conscientiousness score \n averages"))
-mean(dyad.df$big5_cons_o, na.rm = TRUE)
-sd(dyad.df$big5_cons_o, na.rm = TRUE)
-range(dyad.df$big5_cons_o, na.rm = TRUE)
-#number of observations NAs removed
-sum(!is.na(dyad.df$big5_cons_o))
-```
-
-```{r ORCA parent Extraversion}
-with(dyad.df, hist(big5_extra_o,breaks = 20,
-                   xlab = "Extraversion score",
-                   main = "hist ORCA parent Extraversion score \n averages"))
-mean(dyad.df$big5_extra_o, na.rm = TRUE)
-sd(dyad.df$big5_extra_o, na.rm = TRUE)
-range(dyad.df$big5_extra_o, na.rm = TRUE)
-#number of observations NAs removed
-sum(!is.na(dyad.df$big5_extra_o))
-```
-
-```{r ORCA parent Agreeableness}
-with(dyad.df, hist(big5_agree_o,breaks = 20,
-                   xlab = "Agreeableness score",
-                   main = "hist ORCA parent Agreeableness score \n averages"))
-mean(dyad.df$big5_agree_o, na.rm = TRUE)
-sd(dyad.df$big5_agree_o, na.rm = TRUE)
-range(dyad.df$big5_agree_o, na.rm = TRUE)
-#number of observations NAs removed
-sum(!is.na(dyad.df$big5_agree_o))
-```
-
-```{r ORCA parent Neuroticism}
-with(dyad.df, hist(big5_neur_o,breaks = 20,
-                   xlab = "Neuroticism score",
-                   main = "hist ORCA parent Neuroticism score \n averages"))
-mean(dyad.df$big5_neur_o, na.rm = TRUE)
-sd(dyad.df$big5_neur_o, na.rm = TRUE)
-range(dyad.df$big5_neur_o, na.rm = TRUE)
-#number of observations NAs removed
-sum(!is.na(dyad.df$big5_neur_o))
-```
-
 
 ### Peer
 #### PEER Afilliative score (Warm Up)  
@@ -742,7 +2082,7 @@ sum(!is.na(dyad.df$big5_neur_o))
 ```{r PEER Affiliative Score Warm Up T1}
 with(dyad.df, hist(wu_afill_t1_p,breaks = 5,
                    xlab = "Warm Up Affiliation Score Avg (1-7)",
-                   main = "ORCA affiliative behaviour avg score \n during first 1:30 of warm up"))
+                   main = "PEER affiliative behaviour avg score \n during first 1:30 of warm up"))
 mean(dyad.df$wu_afill_t1_p, na.rm = TRUE)
 sd(dyad.df$wu_afill_t1_p, na.rm = TRUE)
 median(dyad.df$wu_afill_t1_p, na.rm = TRUE)
@@ -753,7 +2093,7 @@ sum(!is.na(dyad.df$wu_afill_t1_p))
 ```{r PEER Affiliative Score Warm Up T2}
 with(dyad.df, hist(wu_afill_t2_p,breaks = 5,
                    xlab = "Warm Up Affiliation Score Avg (1-7)",
-                   main = "ORCA affiliative behaviour avg score \n during last 1:30 of warm up"))
+                   main = "PEER affiliative behaviour avg score \n during last 1:30 of warm up"))
 mean(dyad.df$wu_afill_t2_p, na.rm = TRUE)
 sd(dyad.df$wu_afill_t2_p, na.rm = TRUE)
 median(dyad.df$wu_afill_t2_p, na.rm = TRUE)
@@ -764,42 +2104,13 @@ sum(!is.na(dyad.df$wu_afill_t2_p))
 ```{r PEER Affiliative Score Warm Up T1T2}
 with(dyad.df, hist(wu_afill_t1t2_p,breaks = 5,
                    xlab = "Warm Up Affiliation Score Avg (1-7)",
-                   main = "ORCA affiliative behaviour avg score \n during first and last 1:30 of warm up"))
+                   main = "PEER affiliative behaviour avg score \n during first and last 1:30 of warm up"))
 mean(dyad.df$wu_afill_t1t2_p, na.rm = TRUE)
 sd(dyad.df$wu_afill_t1t2_p, na.rm = TRUE)
 median(dyad.df$wu_afill_t1t2_p, na.rm = TRUE)
 range(dyad.df$wu_afill_t1t2_p, na.rm = TRUE)
 #number of observations NAs removed
 sum(!is.na(dyad.df$wu_afill_t1t2_p)) 
-```
-#### Affiliative score Y/N (Warm Up)  
-* Type: Categorical  
-* Function: IV, DV  
-* Description: Due to the heavy right skew of the distributions above (also see descriptives) - the affiliative score has been transformed to a categorical variable of did the child display affiliative behaviours (yes = 1, 0 = no). Further support for this decision can be found in Endedijk et al. (2015). Specifically it was found that 2-year-olds on average displayed 1.2 affiliative behvaiours throughout the task. **Dual coded on a scale of 1 to 7 (1 = no instances, 7 = almost all of the time). The first 1:30 (T1) and last 1:30 (T2) of the warm up was split into 30s time chunks for coding. Scores for each time chunk were averaged for a final score per participant within the dyad and also for T1 and T2.**   
-  
-```{r PEER Affiliative Score (Y/N) Warm Up T1}
-with(dyad.df, hist(wu_afill_yn_t1_p,breaks = 2,
-                   xlab = "Warm Up Affiliation Y/N",
-                   main = "PEER affiliative behaviour Y/N \n during first 1:30 of warm up"))
-table(dyad.df$wu_afill_yn_t1_p)
-#number of observations NAs removed
-sum(!is.na(dyad.df$wu_afill_yn_t1_p)) 
-```
-```{r PEER Affiliative Score (Y/N) Warm Up T2}
-with(dyad.df, hist(wu_afill_yn_t2_p,breaks = 2,
-                   xlab = "Warm Up Affiliation Y/N",
-                   main = "PEER affiliative behaviour Y/N \n during last 1:30 of warm up"))
-table(dyad.df$wu_afill_yn_t2_p)
-#number of observations NAs removed
-sum(!is.na(dyad.df$wu_afill_yn_t2_p)) 
-```
-```{r PEER Affiliative Score (Y/N) Warm Up T1T2}
-with(dyad.df, hist(wu_afill_yn_t1t2_p,breaks = 2,
-                   xlab = "Warm Up Affiliation Y/N",
-                   main = "PEER affiliative behaviour Y/N \n during first and last 1:30 of warm up"))
-table(dyad.df$wu_afill_yn_t1t2_p)
-#number of observations NAs removed
-sum(!is.na(dyad.df$wu_afill_yn_t1t2_p)) 
 ```
 
 #### PEER Antagonistic score (Warm Up) 
@@ -809,7 +2120,7 @@ sum(!is.na(dyad.df$wu_afill_yn_t1t2_p))
 ```{r PEER Antagonistic Score Warm Up T1}
 with(dyad.df, hist(wu_antag_t1_p,breaks = 5,
                    xlab = "Warm Up Antagonism Score Avg (1-7)",
-                   main = "ORCA affiliative behaviour avg score \n during first 1:30 of warm up"))
+                   main = "PEER affiliative behaviour avg score \n during first 1:30 of warm up"))
 mean(dyad.df$wu_antag_t1_p, na.rm = TRUE)
 sd(dyad.df$wu_antag_t1_p, na.rm = TRUE)
 median(dyad.df$wu_antag_t1_p, na.rm = TRUE)
@@ -820,7 +2131,7 @@ sum(!is.na(dyad.df$wu_antag_t1_p))
 ```{r PEER Antagonistic Score Warm Up T2}
 with(dyad.df, hist(wu_antag_t2_p,breaks = 5,
                    xlab = "Warm Up Antagonism Score Avg (1-7)",
-                   main = "ORCA affiliative behaviour avg score \n during last 1:30 of warm up"))
+                   main = "PEER affiliative behaviour avg score \n during last 1:30 of warm up"))
 mean(dyad.df$wu_antag_t2_p, na.rm = TRUE)
 sd(dyad.df$wu_antag_t2_p, na.rm = TRUE)
 median(dyad.df$wu_antag_t2_p, na.rm = TRUE)
@@ -831,7 +2142,7 @@ sum(!is.na(dyad.df$wu_antag_t2_p))
 ```{r PEER Antagonistic Score Warm Up T1T2}
 with(dyad.df, hist(wu_antag_t1t2_p,breaks = 5,
                    xlab = "Warm Up Antagonism Score Avg (1-7)",
-                   main = "ORCA affiliative behaviour avg score \n during first and last 1:30 of warm up"))
+                   main = "PEER affiliative behaviour avg score \n during first and last 1:30 of warm up"))
 mean(dyad.df$wu_antag_t1t2_p, na.rm = TRUE)
 sd(dyad.df$wu_antag_t1t2_p, na.rm = TRUE)
 median(dyad.df$wu_antag_t1t2_p, na.rm = TRUE)
@@ -840,37 +2151,7 @@ range(dyad.df$wu_antag_t1t2_p, na.rm = TRUE)
 sum(!is.na(dyad.df$wu_antag_t1t2_p)) 
 
 ```
-#### Antagonistic score Y/N (Warm Up)  
-* Type: Categorical  
-* Function: IV, DV  
-* Description: Due to the heavy right skew of the distributions above (also see descriptives) - the affiliative score has been transformed to a categorical variable of did the child display antagonistic behaviours (yes = 1, 0 = no). Further support for this decision can be found in Endedijk et al. (2015). Specifically it was found that 2-year-olds on average displayed 1.68 antagonistic behvaiours throughout the task. **Dual coded on a scale of 1 to 7 (1 = no instances, 7 = almost all of the time). The first 1:30 (T1) and last 1:30 (T2) of the warm up was split into 30s time chunks for coding. Scores for each time chunk were averaged for a final score per participant within the dyad and also for T1 and T2.**   
   
-```{r PEER Antagonistic Score (Y/N) Warm Up T1}
-with(dyad.df, hist(wu_antag_yn_t1_p,breaks = 2,
-                   xlab = "Warm Up Antagonism Y/N",
-                   main = "PEER antagonistic behaviour Y/N \n during first 1:30 of warm up"))
-table(dyad.df$wu_antag_yn_t1_p)
-#number of observations NAs removed
-sum(!is.na(dyad.df$wu_antag_yn_t1_p)) 
-```
-```{r PEER Antagonistic Score (Y/N) Warm Up T2}
-with(dyad.df, hist(wu_antag_yn_t2_p,breaks = 2,
-                   xlab = "Warm Up Antagonism Y/N",
-                   main = "PEER antagonistic behaviour Y/N \n during last 1:30 of warm up"))
-table(dyad.df$wu_antag_yn_t2_p)
-#number of observations NAs removed
-sum(!is.na(dyad.df$wu_antag_yn_t2_p)) 
-```
-```{r PEER Antagonistic Score (Y/N) Warm Up T1T2}
-with(dyad.df, hist(wu_antag_yn_t1t2_p,breaks = 2,
-                   xlab = "Warm Up Antagonism Y/N",
-                   main = "PEER antagonistic behaviour Y/N \n during first and last 1:30 of warm up"))
-table(dyad.df$wu_antag_yn_t1t2_p)
-#number of observations NAs removed
-sum(!is.na(dyad.df$wu_antag_yn_t1t2_p)) 
-```
-
-
 #### Contribution (Warm Up)  
 * Type: Continuious/Ordinal 
 * Function: IV, DV  
@@ -878,7 +2159,7 @@ sum(!is.na(dyad.df$wu_antag_yn_t1t2_p))
 ```{r PEER Contribution Score Warm Up}
 with(dyad.df, hist(wu_contrib_p,breaks = 5,
                    xlab = "Warm Up Contribution Score Avg (1-5)",
-                   main = "ORCA contribution avg score \n during last 1:30 of warm up"))
+                   main = "PEER contribution avg score \n during last 1:30 of warm up"))
 mean(dyad.df$wu_contrib_p, na.rm = TRUE)
 sd(dyad.df$wu_contrib_p, na.rm = TRUE)
 median(dyad.df$wu_contrib_p, na.rm = TRUE)
@@ -893,7 +2174,7 @@ sum(!is.na(dyad.df$wu_contrib_p))
 ```{r PEER Robot Task Affiliative Score}
 with(dyad.df, hist(rt_afill_p,breaks = 10,
                    xlab = "Robot Task Affiliation Score Avg (1-7)",
-                   main = "ORCA affiliation avg score \n on entire robot task interaction"))
+                   main = "PEER affiliation avg score \n on entire robot task interaction"))
 mean(dyad.df$rt_afill_p, na.rm = TRUE)
 sd(dyad.df$rt_afill_p, na.rm = TRUE)
 median(dyad.df$rt_afill_p, na.rm = TRUE)
@@ -901,47 +2182,21 @@ range(dyad.df$rt_afill_p, na.rm = TRUE)
 #number of observations NAs removed
 sum(!is.na(dyad.df$rt_afill_p)) 
 ```
-#### Affiliative score Y/N (Robot)  
-* Type: Categorical  
-* Function: IV, DV  
-* Description: Due to the heavy right skew of the distributions above (also see descriptives) - the affiliative score has been transformed to a categorical variable of did the child display affiliative behaviours (yes = 1, 0 = no). Further support for this decision can be found in Endedijk et al. (2015). Specifically it was found that 2-year-olds on average displayed 1.2 affiliative behvaiours throughout the task. **Dual coded on a scale of 1 to 7 (1 = no instances, 7 = almost all of the time). The first 1:30 (T1) and last 1:30 (T2) of the warm up was split into 30s time chunks for coding. Scores for each time chunk were averaged for a final score per participant within the dyad and also for T1 and T2.**   
-  
-```{r PEER Affiliative Score Y/N Robot}
-with(dyad.df, hist(rt_afill_yn_p,breaks = 2,
-                   xlab = "Robot Affiliation Y/N",
-                   main = "PEER affiliative behaviour Y/N \n during robot task"))
-table(dyad.df$rt_afill_yn_p)
-#number of observations NAs removed
-sum(!is.na(dyad.df$rt_afill_yn_p)) 
-```
+
 #### PEER Antagonistic score (Robot) 
 * Type: Continuous  
 * Function: IV, DV  
 * Description: Dual coded on a scale of 1 to 7 (1 =  no instances, 7 = almost all of the time). The entire robot task was split into 30s time chunks for coding. Time chunks < 30s were not coded. Scores for each time chunk were averaged for a final score per participant within the dyad.  
 ```{r PEER Robot Task Antagonistic Score}
-with(dyad.df, hist(rt_antag_p,breaks = 10,
+with(dyad.df, hist(rt_antag_p,breaks = 4,
                    xlab = "Robot Task Antagonism Score Avg (1-7)",
-                   main = "ORCA Antagonism avg score \n on entire robot task interaction"))
+                   main = "PEER Antagonism avg score \n on entire robot task interaction"))
 mean(dyad.df$rt_antag_p, na.rm = TRUE)
 sd(dyad.df$rt_antag_p, na.rm = TRUE)
 median(dyad.df$rt_antag_p, na.rm = TRUE)
 range(dyad.df$rt_antag_p, na.rm = TRUE)
 #number of observations NAs removed
 sum(!is.na(dyad.df$rt_antag_p)) 
-```
-
-#### Antagonism score Y/N (Robot)  
-* Type: Categorical  
-* Function: IV, DV  
-* Description: Due to the heavy right skew of the distributions above (also see descriptives) - the affiliative score has been transformed to a categorical variable of did the child display antagonistic behaviours (yes = 1, 0 = no). Further support for this decision can be found in Endedijk et al. (2015). Specifically it was found that 2-year-olds on average displayed 1.68 antagonistic behvaiours throughout the task. **Dual coded on a scale of 1 to 7 (1 = no instances, 7 = almost all of the time). The first 1:30 (T1) and last 1:30 (T2) of the warm up was split into 30s time chunks for coding. Scores for each time chunk were averaged for a final score per participant within the dyad and also for T1 and T2.**   
-  
-```{r PEER Antagonism Score Y/N Robot}
-with(dyad.df, hist(rt_antag_yn_p,breaks = 2,
-                   xlab = "Robot Antagonism Y/N",
-                   main = "PEER Antagonism behaviour Y/N \n during robot task"))
-table(dyad.df$rt_antag_yn_p)
-#number of observations NAs removed
-sum(!is.na(dyad.df$rt_antag_yn_p)) 
 ```
 
 #### PEER Joint coordinated engagement (JCE) score (Robot)
@@ -951,7 +2206,7 @@ sum(!is.na(dyad.df$rt_antag_yn_p))
 ```{r PEER Robot Joint coordinated engagement score}
 with(dyad.df, hist(rt_jce_p,breaks = 10,
                    xlab = "Robot Task JCE Score Avg (1-7)",
-                   main = "ORCA JCE avg score \n on entire robot task interaction"))
+                   main = "PEER JCE avg score \n on entire robot task interaction"))
 mean(dyad.df$rt_jce_p, na.rm = TRUE)
 sd(dyad.df$rt_jce_p, na.rm = TRUE)
 median(dyad.df$rt_jce_p, na.rm = TRUE)
@@ -964,7 +2219,7 @@ sum(!is.na(dyad.df$rt_jce_p))
 ```{r PEER handle hold downs total}
 with(dyad.df, hist(n_handle_p,breaks = 20,
                    xlab = "# complete down on any handle",
-                   main = "ORCA handle down behaviour freq"))
+                   main = "PEER handle down behaviour freq"))
 mean(dyad.df$n_handle_p, na.rm = TRUE)
 sd(dyad.df$n_handle_p, na.rm = TRUE)
 median(dyad.df$n_handle_p, na.rm = TRUE)
@@ -987,21 +2242,7 @@ range(dyad.df$respond_freq_3s_p, na.rm = TRUE)
 sum(!is.na(dyad.df$respond_freq_3s_p))
 ```
   
-#### Responding score (Y/N)    
-  Type: Binary/categorical  
-  Function: DV  
-  Description: Individual measure of cooperative ability that was computed after seeing the continuous measure had a heavy right skew. Did the child (yes or no) hold down the handle down completely AFTER the other dyad member held down their handle. Time window: 3 seconds (based on critera from Brownell et al., 2006). CALCULATED VIA INTERACT. Yes = 1, No = 0
-```{r PEER responding score categorical}
-with(dyad.df, hist(respond_yn_3s_p,breaks = 2,
-                   xlab = "y/n responding \n 0 = no, 1 = yes",
-                   main = "hist did PEER show responding behaviour"))
-mean(dyad.df$respond_yn_3s_p, na.rm = TRUE)
-sd(dyad.df$respond_yn_3s_p, na.rm = TRUE)
-range(dyad.df$respond_yn_3s_p, na.rm = TRUE)
-#number of observations NAs removed
-sum(!is.na(dyad.df$respond_yn_3s_p))
-table(dyad.df$respond_yn_3s_p)
-```
+
 #### Initiating score  
 * Type: Continuous  
 * Function: DV  
@@ -1015,22 +2256,6 @@ sd(dyad.df$initiate_freq_3s_p, na.rm = TRUE)
 range(dyad.df$initiate_freq_3s_p, na.rm = TRUE)
 #number of observations NAs removed
 sum(!is.na(dyad.df$initiate_freq_3s_p))
-```
-
-#### Initiating score (Y/N)    
-* Type: Binary/categorical  
-* Function: DV  
-* Description: Individual measure of cooperative ability that was computed after seeing the continuous measure had a heavy right skew. Did the child (yes or no) hold down the handle down completely BEFORE the other dyad member held down their handle. Time window: 3 seconds (based on critera from Brownell et al., 2006). CALCULATED VIA INTERACT. Yes = 1, No = 0
-```{r PEER initiate score categorical}
-with(dyad.df, hist(initiate_yn_3s_p,breaks = 2,
-                   xlab = "y/n initiate \n 0 = no, 1 = yes",
-                   main = "hist did PEER show initiating behaviour"))
-mean(dyad.df$initiate_yn_3s_p, na.rm = TRUE)
-sd(dyad.df$initiate_yn_3s_p, na.rm = TRUE)
-range(dyad.df$initiate_yn_3s_p, na.rm = TRUE)
-#number of observations NAs removed
-sum(!is.na(dyad.df$initiate_yn_3s_p))
-table(dyad.df$initiate_yn_3s_p)
 ```
 
 ### Dyad  
@@ -1146,348 +2371,9 @@ Means and SD for responding behaviours (0sec)
 mean(pp.data$Respond_freq_0s, na.rm = TRUE)
 sd(pp.data$Respond_freq_0s, na.rm = TRUE)
 ```
-
-### Research Questions - Primary Analyses  
-The following research questions build upon work by Endedijk et al., (2015) and Brownell et al., (2006). Essentially, the present research combines the two aformentioned works and introduces the following key features: 1.) Larger sample size (Endedijk: ~63 24-month-old dyads, Brownell: 14 ~24-month-old dyads), 2.) More conservative cooperation definitions (3s allowance overlap like Brownell, but also exact/true cooperation defined by exact overlap), 3.) Explores links between early (at 12-months) cooperative understanding and later cooperative ability with a peer, 4.) Introduces parent characteristcs such as early cooperative values (measured at infant age 9-months) and Big 5 personality as potential factors to explain variability in 24-month-olds cooperative ability and cooperative social context with a peer, 5.) Considers the social context surrounding the warm up - otherwise described as first impressions/the initial interaction between a dyad (including a semi unstructured adult led "cooperative" toy tidy activity - heavily social convention based). 
   
-  
-#### Parent (ORCA) Analyses
-  
-  
-* Does parent personality correlate/predict frequency of initiating and/or responding behaviours, when controlling for the initiating/responding behaviour of the peer?  
-  
-
-**Hypothesis**: In previous research by Breeland & Henderson (2020) parent Agreeableness positively related to 14-month-olds spatial coordination on a parallel roles task with an adult experimenter. In this task infants generally exhibited responding behaviours, while the adult experimenter initated. Further, in adults, Agreeableness is linked with cooperation (Habashi et al., 2016; Kagel et al., 2014). It could be argued that the display of responding behaviours is more "cooperative" than initiating  behaviours because it demands that you follow the action/anticipate the action of the social partner. It is therefore hypothesized that parents high in Agreeableness will have children who engage in more responding behaviours. 
-
-```{r Parent personality predict initiating behaviours - continuous DV - linear regression, include = FALSE}
-init.big5_model <- lm(initiate_freq_3s_o ~ big5_open_o + 
-                        big5_cons_o + big5_extra_o + 
-                        big5_agree_o + big5_neur_o +
-                        respond_freq_3s_p, data = dyad.df)
-init.big5_model
-summary(init.big5_model)
-autoplot(init.big5_model)
-```
-
-```{r Parent personality predict initiating behaviours - binary DV - logistic regression, include = FALSE}
-init.big5_glm <- glm(initiate_yn_3s_o ~ big5_open_o + big5_cons_o + 
-                       big5_extra_o +big5_agree_o + big5_neur_o + respond_yn_3s_p, binomial, data = dyad.df)
-summary(init.big5_glm)
-exp(coef(init.big5_glm)) # exponentiated coefficients
-predict(init.big5_glm, type="response") # predicted values
-residuals(init.big5_glm, type="deviance") # residuals
-```
-```{r Parent personality predict responding behaviours - continuous DV - linear regression, include = FALSE}
-resp.big5_model <- lm(respond_freq_3s_o ~ big5_open_o + 
-                        big5_cons_o + big5_extra_o + 
-                        big5_agree_o + big5_neur_o +
-                        initiate_freq_3s_p, data = dyad.df_pcgm.p5)
-resp.big5_model
-summary(resp.big5_model)
-autoplot(resp.big5_model)
-```
-```{r Parent personality predict responding behaviours - binary DV - logistic regresion, include = FALSE}
-resp.big5_glm <- glm(respond_yn_3s_o ~ big5_open_o + 
-                        big5_cons_o + big5_extra_o + 
-                        big5_agree_o + big5_neur_o +
-                        initiate_yn_3s_p, binomial, data = dyad.df)
-summary(resp.big5_glm)
-exp(coef(resp.big5_glm)) # exponentiated coefficients
-predict(resp.big5_glm, type="response") # predicted values
-residuals(resp.big5_glm, type="deviance") # residuals
-```
-
-
-* Does parent personality (ORCA parent only) correlate/predict the latency to success score for the dyad, when controlling for the actions (initiating/responding behaviour) of the peer?  
-**Hypothesis**: In Breeland and Henderson (2020), Parent Openness predicted infant latency to success in a complementary roles task, however these infants actually took longer to complete the goal. Theoretically (as described above), children of parents high in Agreeableness should be better at cooperating and thus achieve a shorter latency, when controlling for the behaviours of their social partner.  
-
-
-#### Longitudinal + Parent (ORCA) Analyses
-* Do parent cooperative values (egoistic vs altruistic, measured at infant age 9-months) predict 24-month olds initiating/responding behaviour, when controlling for the initiating/responding behaviour of the peer?  
-  
-**Hypothesis**: Yes, in Breeland and Henderson (2020) more altruistic parents had children who were more spatially coordinated and successful in a parallel roles task with an adult experimenter. We would expect to observe this in a peer interaction as well by seeing children engage in more responding behaviours if their parent emphasizes altruism.  
-  
-```{r Parent CVS predict initiating behaviours - continuous DV - linear regression, include = FALSE}
-init.CVS_model <- lm(initiate_freq_3s_o ~ response.diff_o + respond_freq_3s_p, data = dyad.df_pcgm.p5)
-init.CVS_model
-summary(init.CVS_model)
-autoplot(init.CVS_model)
-```
-
-```{r Parent CVS predict initiating behaviours - binary DV - logistic regression, include = FALSE}
-init.CVS_glm <- glm(initiate_yn_3s_o ~ response.diff_o + respond_yn_3s_p, binomial, data = dyad.df_pcgm.p5)
-summary(init.CVS_glm)
-exp(coef(init.CVS_glm)) # exponentiated coefficients
-predict(init.CVS_glm, type="response") # predicted values
-residuals(init.CVS_glm, type="deviance") # residuals
-``` 
-  
-  
-* Do parent cooperative values (egoistic vs altruistic, measured at infant age 9-months) predict latency to success in a parallel roles task with a peer at 24-months of age, when controlling for the cooperative behaviours of the peer?  
-**Hypothesis**: Yes, children of more altruistic parents will take longer to achieve the goal based on results by Breeland and Henderson (2020). 
-  
-```{r Parent CVS predict latency to success - continuous DV - linear regression, include = FALSE}
-init.CVS.lat_model <- lm(initiate_freq_3s_o ~ latency_3sec + respond_freq_3s_p, data = dyad.df_pcgm.p5)
-init.CVS.lat_model
-summary(init.CVS.lat_model)
-```
-  
-#### Warm Up Analyses 
-To our knowledge, all of the studies investigating peer cooperation do not take into account what occurs in the "warm up phase" of studies involving child participants. This is alarming and concerning as research shows that first impressions (e.g., an individuals choice in an economic game, such as a public goods or trust game) have an effect on subsequent cooperative actions/contributions between two or more people (Engel et al., 2014; Grueneisen & Tomasello, 2017; see other literature about multi-shot economic games). The Broken Windows Theory (Wilson & Kelling, 1982) suggests that obvious signs of social disorder (e.g., graffiti or broken windows in a neighbourhood) encourages further social disorder/crime. This holds true in lab based experiments as well suggesting that the social situation (e.g., contributions to the greater good) decays if others behave selfishly and are "found out" (Engel et al., 2014). Broken Windows Theory taken together with previous research regarding multiple-shot economic games highlights the need for researchers to explore the social context that two child participants are situated in *before* completing a cooperative task. If cooperation occurs in the initial meeting aka warm up phase, surely this supports later cooperation. Alternatively, if social decay occurs within the warm up phase, research would suggest that this would hinder cooperative success in subsequent tasks. But do 2-year-olds hold grudges?  
-  
-*Note.* T1 = score for first 1:30, T2 = score for last 1:30, T1T2 = combined averaged score)  
-  
-  
-#### Warm Up + Parent (ORCA) Analyses
-
-* Does parent personality (Agreeableness) predict child (ORCA) contribution?  
-**Hypothesis:** Yes, Agreeableness in adults is characterised by adherence to routines/conventions and is also related to cooperation. The mechanism of this relationship is unclear at the moment but we would expect parents Agreeableness to impact how their child acts in a sociology-normative cooperative activity like the "toy tidy"
-
-```{r parent personality predicting contribution - ordinal log regression, include = FALSE}
-dyad.df$wu_contrib_o_cat <- factor(dyad.df$wu_contrib_o, ordered = TRUE)
-pp.contrib.olrm <- polr(wu_contrib_o_cat ~ big5_open_o + big5_cons_o + big5_extra_o + big5_agree_o + big5_neur_o, data = dyad.df, Hess=TRUE)
-summary(pp.contrib.olrm)
-pp.contrib.olrm.table <- coef(summary(pp.contrib.olrm))
-pp.contrib.olrm.table
-#P values and other add to table
-p <- pnorm(abs(pp.contrib.olrm.table[, "t value"]), lower.tail = FALSE) * 2
-pp.contrib.olrm.table <- cbind(pp.contrib.olrm.table, "p value" = p)
-pp.contrib.olrm.table
-
-#confidence intervals
-ci <- confint(pp.contrib.olrm)
-ci
-exp(ci)
-#odds ratio
-exp(coef(pp.contrib.olrm))
-
-```
-
-```{r parent personality predicting contribution to warm up tidy - linear regression, include = FALSE}
-pp.contrib.lm <- lm(wu_contrib_o ~ big5_open_o + big5_cons_o + big5_extra_o + big5_agree_o + big5_neur_o + parent_type_p5 + pcg_p5, data = dyad.df)
-summary(pp.contrib.lm)
-autoplot(pp.contrib.lm)
-```
-  
-* Does parent CVS predict child (ORCA) contribution?  
-```{r}
-pp.contrib.cvs.lm <- lm(wu_contrib_o ~ response.diff_o + parent_type_p5 + pcg_p5, data = dyad.df)
-summary(pp.contrib.cvs.lm)
-```
-
-
-#### Warm Up Dyadic Analyses (APIM using SEM)
-  
-* Are there actor-partner effects on warm up affiliation scores (T1, T2, T1T2), robot affiliation scores and latency to success?  
-**Hypothesis:** Yes - we expect the two contacts to interact and influence one another (see Broken windows Theory/citations above).  
-* Are there actor-partner effects on warm up antagonism scores (T1, T2, T1T2), robot antagonism scores and latency to success?  
-**Hypothesis:** Yes - we expect the two contacts to interact and influence one another (see Broken windows Theory/citations above).  
-* Are there actor-partner effects on warm up contribution scores and latency to success?  
-**Hypothesis:** Yes - same rationale as above
-* Are there actor-partner effects on warm up affiliation (T1, T2, T1T2) initiating/responding behaviours?  
-**Hypothesis:**: Yes  
-* Are there actor-partner effects on warm up antagonism (T1, T2, T1T2) initiating/responding behaviours?   
-**Hypothesis:** Yes  
-* Are there actor-partner effects on warm up contribution and initiating/responding behaviours?  
-**Hypothesis:** Yes - see above
-
-### Research Questions - Exploratory Analyses  
-This section includes analyses that we may not have strong hypotheses for (due to lack of theory or previous research) but are still important to test.  
-  
-* Do parent cooperative values (egoistic vs altruistic, measured at infant age 9-months) predict 24-month olds affiliative/antagonistic behaviour, when controlling for the affiliative/antagonistic behaviour of the peer?  
-**Hypothesis**: Perhaps parents who have more altruistic values (e.g., children should cooperate to make the world a better place), parent their children different and stress being kind to others/general altruism. It is hypothesized that these children will me more affiliative and less antagonistic to an unfamiliar peer.  
-* Does parent CVS at 9 months predict child (ORCA) warm up affiliation (T1, T2, T1T2) when controlling for the peers social behaviours (affiliation/antagonism)?  
-**Hypothesis:** Potentially, due to the type of measurement that CVS is - I'm not sure if we would see a strong effect, but perhaps. Parents who value cooperation for altruistic reasons may have children who are more affiliative because it helps the cooperative interaction.
-* Does parent CVS at 9 months predict child (ORCA) warm up antagonism (T1, T2, T1T2) when controlling for the peers social behaviours (affiliation/antagonism)?  
-**Hypothesis:** Potentially, due to the type of measurement that CVS is - I'm not sure if we would see a strong effect, but perhaps. Parents who value cooperation for altruistic reasons may have children who are less antagonistic because it helps the cooperative interaction.
-* Does parent CVS at 9 months predict child (ORCA) contribution when controlling for the peers social behaviours (affiliation/antagonism/contribution)?  
-**Hypothesis:** Again possibly. The contribution score is really about conventions and so it is possible that "altruistic parents" may stress the importance of getting along/contributing and may have children who are more helpful in this sense? Could these values be related to conventions?
-* Does parent personality (Agreeableness) at 9 months predict child (ORCA) warm up affiliation (T1, T2, T1T2) when controlling for the peers social behaviours (affiliation/antagonism)?  
-**Hypothesis:** I'm not sure that there is strong evidence for this.
-* Does parent personality (Agreeableness) at 9 months predict child (ORCA) warm up antagonism (T1, T2, T1T2) when controlling for the peers social behaviours (affiliation/antagonism)?  
-**Hypothesis:** Again, not sure if there is strong evidence.
-
-### Research Questions - Follow Up Analyses  
-  
-So basically for this section I need to look at common correlations and determine potential mediators/moderators after I've done my primary and secondary analyses.
-  
-* *If a relationship emerges between child temperament and affiliative/antagonistic behaviour (see secondary analyses)* Does parent personality mediate/moderate the effect of child temperament on affiliative/antagonistic behaviours, while controlling for the affiliative/antagonistic behaviours of the peer?  
-**Hypothesis**: Yes, given that we expect a relationship to emerge between parent personality and child temperament, and child temperament and affiliative and antagonistic behaviour, parent personality should exhibit some effect on child displays of affiliative/antagonistic behaviours. 
-* *If a relationship emerges between parent personality/temperament/initiating/responding behaviours* Does parent personality mediate or moderate the effects of child temperament on initiating and/or responding behaviour? 
-**Hypothesis**:  
-  
-![Simplified Mediation Model](/Users/nicholebreeland/Dropbox (Uni of Auckland)/Thesis/Parents + Peer Cooperation/Analyses/P4 Peer Robot/ParentChild_Mod.png)  
-  
-  
-![Simplified Moderation Model](/Users/nicholebreeland/Dropbox (Uni of Auckland)/Thesis/Parents + Peer Cooperation/Analyses/P4 Peer Robot/ParentChild_Med.png) 
-  
-  
-* *If a relationship emerges between parent personality/temperament/initiating/responding behaviours (see secondary analyses)* Does parent personality mediate or moderate the effects of child temperament on latency to success, while controlling for the cooperative behaviours of the peer? 
-**Hypothesis**: Yes, given that we expect a relationship to emerge between parent personality and child temperament, and child temperament and latency to success, parent personality should exhibit some effect on latency to success.  
-* *If a relationship emerges between parent CVS and affiliative/antag behaviour and parent CVS and initiating/responding behaviours/latency to success* Does parent CVS mediate or moderate the effects the social context on child cooperative success (initiating/responding/latency).  
-**Hypothesis**: Yes  
-
-  
-### Research Questions - Secondary Analyses  
-  
-#### Individual Level Analyses (ALL)  
-  
-* Does parent personality correlate/predict child temperament?  
-**Hypothesis**: We expect multiple relationships to emerge. Puff & Renk (2016) 'found that mothers’ mood, flexibility, lack of distractibility related significantly to positive parenting behaviors, locus of control, high core self- evaluations, and young children’s easy temperament characteristics and lower levels of young children’s behavior problems.' Komsi et al. (2008) suggests that parent personality and child temperament develop in a bidirectional matter.  
-
-```{r correlations for child temperament and parent personality, include = FALSE}
-pp.ct.df <- subset(dyad.df,select= c("big5_open_o", "big5_cons_o", "big5_extra_o", 
-                               "big5_agree_o", "big5_neur_o", "sur_ecbq_p4_o", 
-                               "reg_ecbq_p4_o", "neg_ecbq_p4_o"))
-
-pp.ct.cor <- cor(pp.ct.df, use = "complete.obs")
-round(pp.ct.cor, 2)
-pp.ct.cor2 <- rcorr(as.matrix(pp.ct.df))
-pp.ct.cor2 
-pp.ct.cor2$r
-# Extract p-values
-pp.ct.cor2$P
-
-flattenCorrMatrix <- function(cormat, pmat) {
-  ut <- upper.tri(cormat)
-  data.frame(
-    row = rownames(cormat)[row(cormat)[ut]],
-    column = rownames(cormat)[col(cormat)[ut]],
-    cor  =(cormat)[ut],
-    p = pmat[ut]
-    )
-}
-```
-```{r parent personality correlation table and matrix}
-flattenCorrMatrix(pp.ct.cor2$r, pp.ct.cor2$P)
-
-corrplot(pp.ct.cor, type = "upper", order = "hclust", 
-         tl.col = "black", tl.srt = 45)
-```
-
-* Does age correlate latency to success?  
-**Hypothesis**: Yes, a negative correlation is expected. Older children will have a shorter latency to success. (Endedijk et al., 2015)
-```{r regression between age for orca and peer and latency to success}
-#regression for age of peer and orca and predicting latency
-age.latency <- lm(latency_3sec ~ age_p4_o + age_p4_p, data = dyad.df)
-summary(age.latency)
-```
-
-```{r correlation between age difference within the dyad and latency to success}
-#correlation between age difference and latency scores
-agediff.latency.df <- subset(dyad.df, select = c("age_p4_diff","latency_3sec"))
-agediff.latency.df <- na.omit(agediff.latency.df)
-cor(agediff.latency.df, method = "spearman")
-```
-
-```{r ttest for age differences for cooperative ability behaviours}
-#because many (~100) participants DONT have a latency score, a ttest is conducted to see if there is an age effect for age on if the child engaged in any initiating/responding behaviours.
-
-#age at p4 and initiate (y/n)
-t.test(indiv.df$Age_P4~indiv.df$Initiate_yn_3s)
-
-#age at p4 and respond (y/n)
-t.test(indiv.df$Age_P4~indiv.df$Respond_yn_3s)
-```
-
-
-* Does age correlate frequency of initiating behaviours, when controlling for the initiating/responding behaviour of the peer?  
-**Hypothesis**: Yes, a positive correlation is expected. Older children will initiate more as a product of shorter latency (Endedijk et al., 2015). Also noted is older children will be more developed and thus have enhanced cognitive capacity - some citations in Endedijk paper, also we expect peer task monitoring to increase with age (Brownell et al., 2006)
-* Does age correlate frequency of responding behaviours, when controlling for the initiating/responding behaviour of the peer?  
-**Hypothesis**: Yes, a positive correlation is expected. Older children will respond more as a product of shorter latency (Endedijk et al., 2015). Also noted is older children will be more developed and thus have enhanced cognitive capacity - some citations in Endedijk paper, also we expect peer task monitoring to increase with age (Brownell et al., 2006)
-* Do gender differences exist for frequency of initiating behaviours, when controlling for the initiating/responding behaviour of the peer?  
-**Hypothesis**: We do not expect a gender difference to emerge as there is no theoretical reason and it hasn't been observed in previous research (see Brownell et al., 2006; Endedik et al., 2015)
-* Do gender differences exist for frequency of responding behaviours, when controlling for the initiating/responding behaviour of the peer?  
-**Hypothesis**: We do not expect a gender difference to emerge as there is no theoretical reason and it hasn't been observed in previous research (see Brownell et al., 2006; Endedik et al., 2015)
-* Do gender differences exist for affiliative scores?  
-**Hypothesis**: We expect a gender difference to emerge. This effect was observed in Endedijk et al. (2015). Girls may be less competitive and dominant than boys, and thus may display more affiliative behaviours throughout the task (Maccoby, 1990, as cited in Endedijk et al., 2015).
-* Do gender differences exist for antagonistic scores?  
-**Hypothesis**: Based on the logic above, a gender difference could emerge here with boys being more antagonistic than girls if they display far more competitive behaviours (Maccoby, 1990, as cited in Endedijk et al., 2015).  
-* Do affiliation scores correlate to frequency of initiating behaviours, when controlling for the initiating/responding behaviour of the peer?  
-**Hypothesis**: We expect that initiating behaviours will be related to cooperative success (as measured by latency and frequency of successes). Endedijk et al. (2015) and Ramani (2012) found affiliative behaviours, such as positive communication, was linked with cooperative success. Thus, we hypothesize that affiliation scores will be linked with initiating behaviours.
-* Do affiliation scores correlate to frequency of responding behaviours, when controlling for the initiating/responding behaviour of the peer?  
-**Hypothesis**: We expect that responding behaviours will be related to cooperative success (as measured by latency and frequency of successes). Endedijk et al. (2015) and Ramani (2012) found affiliative behaviours, such as positive communication, was linked with cooperative success. Thus, we hypothesize that affiliation scores will be linked with responding behaviours.
-* Do antagonistic scores correlate to frequency of initiating behaviours, when controlling for the initiating/responding behaviour of the peer?  
-**Hypothesis**: A correlation is not expected to emerge. Endedijk et al. (2015) found no relationships and suggested that it is due to the double function of antagonistic behaviours between peers. Although antagonistic behaviour can be detrimental to social function (Hart, DeWolf, Wozniak, & Burts, 1992; NICHD Early Child Care Research Network, 2004, as cited in Endedijk et al.,2015), it can also serve as a normative function - enforcing how children should interact with one another (Vaughn, Vollenweider, Bost, & Azria-Evans, 2003; Williams et al., 2007; Williams, Ontai, & Mastergeorge, 2010, as cited in Endedijk et al., 2015).
-* Do antagonistic scores correlate to frequency of responding behaviours, when controlling for the initiating/responding behaviour of the peer?  
-**Hypothesis**: A correlation is not expected to emerge. Endedijk et al. (2015) found no relationships and suggested that it is due to the double function of antagonistic behaviours between peers. Although antagonistic behaviour can be detrimental to social function (Hart, DeWolf, Wozniak, & Burts, 1992; NICHD Early Child Care Research Network, 2004, as cited in Endedijk et al.,2015), it can also serve as a normative function - enforcing how children should interact with one another (Vaughn, Vollenweider, Bost, & Azria-Evans, 2003; Williams et al., 2007; Williams, Ontai, & Mastergeorge, 2010, as cited in Endedijk et al., 2015).  
-  
-#### Individual (ORCA) Analyses
-* Does temperament correlate to affiliative behaviour?  
-**Hypothesis**: It is expected that a positive relationship will emerge between affiliative behaviour and temperamental Surgency, as observed in Endedijk et al. (2015). The rationale is that children high in Surgency are less shy and more likely to engage with their peers.
-* Does temperament relate to antagonistic behaviour?  
-**Hypothesis**: Based on the findings from Endedijk et al. (2015) and Laible et al. (2014), it is expected that Negative Affectivity will positively relate to antagonism scores. Characteristic of Negative Affectivity are: anger, contempt, disgust, guilt, fear, and nervousness. It is possible that in an interaction with an unfamiliar peer, children high in Negative Affectivity will experience these emotions and they will manifest as antagonistic behaviours.
-* Does temperament relate to initiating behaviours, when controlling for the initiating/responding behaviour of the peer?  
-**Hypothesis**: Endedijk et al. (2015) and Laible et al. (2014) found a positive relationship between Effortful Control and cooperative success, since we expect initiating behaviours to be linked with cooperative success, it is expected that a positive relationship will emerge between initiating behaviours and temperamental Effortful Control.  
-* Does temperament relate to responding behaviours, when controlling for the initiating/responding behaviour of the peer?  
-**Hypothesis**: Endedijk et al. (2015) and Laible et al. (2014) found a positive relationship between Effortful Control and cooperative success, since we expect initiating behaviours to be linked with cooperative success, it is expected that a positive relationship will emerge between responding behaviours and temperamental Effortful Control. This effect may be more pronounced than initiating behaviours because a characteristic of Effortful Control is the ability to manage attention and adapt to tasks that may not be very interesting to the child. If a child is high in Effortful control, they may attend to the peer more and respond more to their handle pulls, rather than starting the pulls themselves, particularly if they are initially uninterested in the task.   
-* Are there differences in initiating behaviour between parent SES "groups"  
-**Hypothesis**: No difference is expected.  
-* Are there differences in responding behaviour between parent SES "groups"  
-**Hypothesis**: As "responding behaviour" could be considered the more "cooperative" behaviour, we may see a difference in those children who have parents in the low SES groups. Endedijk et al. (2015) found that 4 year olds who attended child care more frequently were more successful and affiliative in the cooperative task. The rationale is that perhaps parents in the lower SES category may have to work more and thus their children may spend relatively more time in childcare situations at a younger age.  
-
-#### Dyadic Analyses
-
-#### Exploratory/Checks
-* Are there correlations between cooperative ability and social context on the robot task?
-```{r RT cooperation correlation matrix, include = FALSE }
-#Note rr_tt_sec is the length of robot task interaction in seconds
-RT_ca.sc.df <- subset(dyad.df, select = c("rt_tt_sec", "initiate_freq_3s_o", "initiate_freq_3s_p",
-                                          "respond_yn_3s_o", "respond_yn_3s_p","initiate_yn_3s_o",
-                                          "initiate_yn_3s_p","respond_yn_3s_o", 
-                                          "respond_yn_3s_p","rt_afill_yn_o", "rt_afill_yn_p",
-                                          "rt_antag_yn_o", "rt_antag_yn_p", "rt_afill_o", "rt_afill_p",
-                                          "rt_antag_o", "rt_antag_p", "rt_jce_o", "rt_jce_p", "rt_eng_o",
-                                          "rt_eng_p"))
-
-RT_ca.sc.cor <- cor(RT_ca.sc.df, use = "complete.obs")
-round(RT_ca.sc.cor, 2)
-RT_ca.sc.cor2 <- rcorr(as.matrix(RT_ca.sc.df))
-RT_ca.sc.cor2
-RT_ca.sc.cor2$r
-# Extract p-values
-RT_ca.sc.cor2$P
-
-flattenCorrMatrix <- function(cormat, pmat) {
-  ut <- upper.tri(cormat)
-  data.frame(
-    row = rownames(cormat)[row(cormat)[ut]],
-    column = rownames(cormat)[col(cormat)[ut]],
-    cor  =(cormat)[ut],
-    p = pmat[ut]
-    )
-}
-```
-```{r RT cooperation table and matrix corr, set-options, echo=FALSE, cache=FALSE}
-options(width = 500)
-
-flattenCorrMatrix(RT_ca.sc.cor2$r, RT_ca.sc.cor2$P)
-corrplot(RT_ca.sc.cor, type = "upper", order = "hclust", 
-         tl.col = "black", tl.srt = 45)
-
-```
-
-##### APIM using SEM  
-
-* Are there actor-partner effects on affiliation scores and initiating/responding behaviours?  
-![APIM with affiliation scores and individual behaviours](/Users/nicholebreeland/Dropbox (Uni of Auckland)/Thesis/Parents + Peer Cooperation/Analyses/P4 Peer Robot/APIM_Afill.png)
-  
-  
-* Are there actor-partner effects on antagonism scores and initiating/responding behaviours?    
-![APIM with antagonism scores and individual behaviours](/Users/nicholebreeland/Dropbox (Uni of Auckland)/Thesis/Parents + Peer Cooperation/Analyses/P4 Peer Robot/APIM_Antag.png)  
-  
-  
-* Are there actor-partner effects on affiliation scores and joint measures of cooperation?  
-![APIM with affiliation scores and between-dyad measures](/Users/nicholebreeland/Dropbox (Uni of Auckland)/Thesis/Parents + Peer Cooperation/Analyses/P4 Peer Robot/APIM_btdyad.png)  
-  
-  
-  
-* Are there actor-partner effects on antagonism scores and joint measures of cooperation?  
-![APIM with antagonism scores and between-dyad measures](/Users/nicholebreeland/Dropbox (Uni of Auckland)/Thesis/Parents + Peer Cooperation/Analyses/P4 Peer Robot/APIM_jointcoop_antag.png)  
-  
-  
-  
-*Notes*: It would be good to include covariates such as age and gender, if differences are found above. Dyads are distinguishable by longitudinal and one-off participant - the design is a standard design. Will first check for nonindependence and also conduct a power analysis.
-git config --global user.email "n.breeland@auckland.ac.nz"
-git config --global user.name "NicholeBreeland"
-
+### ORCA Parent data/demographics
+#### SES   
+* Type: Categorical  
+* Function: Control/IV  
+* Description: Groups based upon parent highest level of education - 1 = no high school completion, 2 = completed high school, 3 = completed something beyond high school  
