@@ -23,7 +23,11 @@ library(corrplot)
 library(MASS)
 library(lavaanPlot)
 library(lavaan)
-library(semPlot)
+library(gee)
+library(lme4)
+library(lmerTest)
+library(doBy)
+library(geepack)
 ```
 ```{r main dataframe creation, include = FALSE}
 #Read in main data file
@@ -89,41 +93,73 @@ pp.data$RT_Eng <- rowMeans(subset(pp.data, select = c("RT_Eng_Set1_FINAL", "RT_E
 #Joint coordinated engagement
 pp.data$RT_JCE <- rowMeans(subset(pp.data, select = c("RT_JCE_Set1_FINAL", "RT_JCE_Set2_FINAL", "RT_JCE_Set3_FINAL", "RT_JCE_Set4_FINAL", "RT_JCE_Set5_FINAL", "RT_JCE_Set6_FINAL", "RT_JCE_Set7_FINAL", "RT_JCE_Set8_FINAL", "RT_JCE_Set9_FINAL", "RT_JCE_Set10_FINAL")), na.rm = TRUE)
 ```
-```{r p4 responding and initiating score y/n scoring, include = FALSE}
+```{r p4 success (latency y/n), responding and initiating score y/n scoring, include = FALSE}
 pp.data$Initiate_yn_3s[pp.data$Initiate_freq_3s == 0] <- 0
-pp.data$Initiate_yn_3s[pp.data$Initiate_freq_3s != 0] <- 1
+pp.data$Initiate_yn_3s[pp.data$Initiate_freq_3s > 0] <- 1
 pp.data$Initiate_yn_0s[pp.data$Initiate_freq_0s == 0] <- 0
-pp.data$Initiate_yn_0s[pp.data$Initiate_freq_0s != 0] <- 1
+pp.data$Initiate_yn_0s[pp.data$Initiate_freq_0s > 0] <- 1
 pp.data$Respond_yn_3s[pp.data$Respond_freq_3s == 0] <- 0
-pp.data$Respond_yn_3s[pp.data$Respond_freq_3s != 0] <- 1
+pp.data$Respond_yn_3s[pp.data$Respond_freq_3s > 0] <- 1
 pp.data$Respond_yn_0s[pp.data$Respond_freq_0s == 0] <- 0
-pp.data$Respond_yn_0s[pp.data$Respond_freq_0s != 0] <- 1
+pp.data$Respond_yn_0s[pp.data$Respond_freq_0s > 0] <- 1
+pp.data$Latency_3sec_yn[pp.data$Latency_3sec >= 0] <- 1
+pp.data$Latency_3sec_yn[is.na(pp.data$Latency_3sec)] <- 0
 ```
 ```{r p4 afill/antag y/n scoring for warm up and robot task, include = FALSE}
 pp.data$WU_Afill_yn_T1[pp.data$WU_Afill_T1 == 1] <- 0
-pp.data$WU_Afill_yn_T1[pp.data$WU_Afill_T1 != 1] <- 1
+pp.data$WU_Afill_yn_T1[pp.data$WU_Afill_T1 > 1] <- 1
 pp.data$WU_Afill_yn_T2[pp.data$WU_Afill_T2 == 1] <- 0
-pp.data$WU_Afill_yn_T2[pp.data$WU_Afill_T2 != 1] <- 1
+pp.data$WU_Afill_yn_T2[pp.data$WU_Afill_T2 > 1] <- 1
 pp.data$WU_Afill_yn_T1T2[pp.data$WU_Afill_T1T2 == 1] <- 0
-pp.data$WU_Afill_yn_T1T2[pp.data$WU_Afill_T1T2 != 1] <- 1
+pp.data$WU_Afill_yn_T1T2[pp.data$WU_Afill_T1T2 > 1] <- 1
 pp.data$WU_Antag_yn_T1[pp.data$WU_Antag_T1 == 1] <- 0
-pp.data$WU_Antag_yn_T1[pp.data$WU_Antag_T1 != 1] <- 1
+pp.data$WU_Antag_yn_T1[pp.data$WU_Antag_T1 > 1] <- 1
 pp.data$WU_Antag_yn_T2[pp.data$WU_Antag_T2 == 1] <- 0
-pp.data$WU_Antag_T2_yn[pp.data$WU_Antag_T2 != 1] <- 1
+pp.data$WU_Antag_yn_T2[pp.data$WU_Antag_T2 > 1] <- 1
 pp.data$WU_Antag_yn_T1T2[pp.data$WU_Antag_T1T2 == 1] <- 0
-pp.data$WU_Antag_yn_T1T2[pp.data$WU_Antag_T1T2 != 1] <- 1
+pp.data$WU_Antag_yn_T1T2[pp.data$WU_Antag_T1T2 > 1] <- 1
 pp.data$RT_Afill_yn[pp.data$RT_Afill == 1] <- 0
-pp.data$RT_Afill_yn[pp.data$RT_Afill != 1] <- 1
+pp.data$RT_Afill_yn[pp.data$RT_Afill > 1] <- 1
 pp.data$RT_Antag_yn[pp.data$RT_Antag == 1] <- 0
-pp.data$RT_Antag_yn[pp.data$RT_Antag != 1] <- 1
+pp.data$RT_Antag_yn[pp.data$RT_Antag > 1] <- 1
 ```
-```{r data subsets, include = FALSE}
+### Variable transformation information
+```{r transformed variable scoring}
+pp.data$Latency_3sec_Trans <- pp.data$Latency_3sec^(1/3)
+pp.data$Initiate_freq_3s_LogTrans <- log(pp.data$Initiate_freq_3s + 1)
+pp.data$Respond_freq_3s_LogTrans <- log(pp.data$Respond_freq_3s + 1)
+pp.data$WU_JCE_T1_Trans <- pp.data$WU_JCE_T1^(1/3)
+pp.data$WU_JCE_T2_Trans <- pp.data$WU_JCE_T2^(1/3)
+pp.data$WU_Contrib_Trans <- pp.data$WU_Contrib^(1/2)
+pp.data$RT_JCE_Trans <- pp.data$RT_JCE^(1/3) #Outliers present will windsorize 
+```
+
+```{r data subsets and outlier management, include = FALSE}
 #Dataset restructure (individual to dyad)
 
 #Subset to include shared variables and p4 study in only (excludes p4 study out and participant number)
 
 indiv.df <- pp.data[which(pp.data$P4_InOut==1),]
 indiv.df <- indiv.df[c(-1)]
+
+### Outlier management ###
+
+#Robot Task JCE Transformed
+mean(indiv.df$RT_JCE_Trans, na.rm = TRUE)
+#1.124617
+#indiv.df
+sd(indiv.df$RT_JCE_Trans, na.rm = TRUE)
+#0.1201474
+3*0.1201474 #3xSD
+#0.3604422
+0.3604422+1.124617 #3xSD+MEAN
+#Scores greater than 1.485059 are outliers
+sort(indiv.df$RT_JCE_Trans)
+#Outlier replacement and variable recreation
+indiv.df$RT_JCE_Trans_OR <- indiv.df$RT_JCE_Trans
+indiv.df$RT_JCE_Trans_OR[indiv.df$RT_JCE_Trans_OR >= 1.485059] <- 1.481248
+#6 values replaced with next highest value
+
 
 # Dyad structure data
 dyad <- indiv.df %>% 
@@ -137,7 +173,7 @@ dyad.df <- dyad %>%
   gather(key,value,-dyad_id,-p4_inout,-gender,
          -parent_type_p5,-pcg_p5,-p4_inout_comments, 
          -parent_type_p1, -pcg_p1, -dyad_level, -rt_tt_sec, 
-         -latency_3sec) %>%
+         -latency_3sec, -latency_3sec_trans) %>%
   mutate(dyad_level = ifelse(dyad_level == 1,"o","p")) %>%
   unite(new_key,key,dyad_level,sep = "_",remove=T) %>%
   spread(new_key,value)
@@ -154,11 +190,17 @@ for (i in 1:nrow(dyad.df)) {
 ```{r P4 Peers age difference scoring, include = FALSE}
 dyad.df$age_p4_diff <- abs(dyad.df$age_p4_o - dyad.df$age_p4_p)
 ```
+
+
 ```{r data subsets pcgm, include = FALSE}
 #Subset to include p4 in and p5 mothers only
 dyad.df_pcgm.p5 <- dyad.df[which(dyad.df$parent_type_p5==2),]
 ```
-  
+ 
+```{r pairwise dataset, include = FALSE}
+pairwise.data = read.csv("P4_Robot_WarmUp_Robot_SC.CA_StudyInOnly_PairwiseData.csv", stringsAsFactors = FALSE)
+```
+ 
 ### Results Summary  
   
 The present study has the following aims: 
@@ -171,24 +213,22 @@ In order to answer the aformentioned research questions, we conducted tests on b
   
 **Individual dataset findings:**
   
-* affiliation and antagonism in the warm up DOES NOT relate to affiliation and antagonism in the robot task respectively.
-* increased joint coordinated engagement in the first 1:30 min of the warm up predicts an increase in joint coordinated engagement on the robot task.
-* increased affiliation during the first and last 1:30 min of the warm up predicts an increase of initating and responding behaviours in the robot task, however no relationship emerged for latency to success.
-* increased antagonism during the first 1:30 min of the warm up predicts shorter latency to success, HOWEVER antagonism at in the last 1:30 min of the warm up predicts *increased* latency to success 
-* increased antagonism at during the first 1:30 minute of the warm up (but not the last 1:30 min) predicts increased initiating freqency and responding freqency in the robot task
-* increased joint coordinated engagement during the first and last 1:30 of the warm up predicts shorter latency to success
-* increased joint coordinated engagement during the first 1:30 of the warm up predicts increased initiating behaviours and increased responding behaviours. The association did not emerge for the last 1:30 minute of the warm up
-* increased contribution to toy tidy predicts increased frequency of initiating behaviours in the robot task
-* increased affiliation in the robot task predicts an increase in both initiating and responding behaviours in the robot task
-* increased joint coordinated engagement in the robot task predicts a decrease in latency to success and an increase in initiating and responding behaviours in the robot task.
+* (Analysis Type: GEE) Any display of antagonistic behaviour during the first 1:30 of the warm up is associated with antagonistic behaviour in the robot task by a liklihood of 223% (or 3.27x).
+* (Analysis Type: GEE) Displays of afilliative behaviours during the first 1:30 of warm up are associated with displays of initiating behaviours by a liklihood of 81% (or 1.81x)
+* (Analysis Type: GEE) Any display of antagonistic behaviour during the first 1:30 of the warm up is associated with displays of responding behaviours by a liklihood of 129% (2.29x), but the effect significance goes away with gender is controlled for within the model.
+* (Analysis Type: GEE) Every one-unit increase in contribution to toy tidy scores is associated with a 1% increase in liklihood of successful goal completion and a 13% (or 1.13x) increased liklihood of engaging in at least 1 responding behaviour.
+* (Analysis Type: GEE) Being affiliative is associated with a liklihood of being successful (i.e., completing the goal) on the robot task by 5%.
+* (Analysis Type: GEE) For every 1 unit increase in JCE, the liklihood of being successful on the robot task increases by .85 or 15% and the liklihood of engaging in an initiating behaviour increases by 2.45x or 145%, and the liklihood of engaging in a responding behaviour increases by 2.79x or 179%.
+* (Analysis Type: GLMM ) For every one unit increase in JCE, the liklihood of engaging in responding behaviour increases by 262x or 26100%.
   
 **Dyadic dataset findings:**  
-No actor-partner effects emerged for any of the aformentioned research questions, however some significant relationships emerged between the covariates.
+* I've paused this for now because I am not sure if we actually need/want dyadic analyses?
 
-### Results notes and considerations  
-* No outliers were removed
-* Nearly all of the DVs/endogenous variables are *heavily* right skewed. For the dyadic analyses, the maximum likelihood estimator is somewhat robust to non-normality, but these variables, particurally the ability, affiliation, and antagonism are so skewed that they may result in Type II error. 
-* regression analyses on the individual dataset drop a lot of data due to missingness - perhaps we should consider multiple imputations of the Full Information Maximum Likelihood for dealing with missingness.
+### Results notes, considerations, and decisions 
+* Latency to success (continuous variable) isn't a great measure and breaks most LMM. This is, of course, because of the low number of dyads who were able to achieve the goal. Instead - to fully capture what is happening I created a quasi success variable. If the dyad had a latency score and thus achieved the goal, they recieved a score of 1 for variable: Latency_3sec_yn. If no latency score and this no goal achievement, they recieved a score of zero. I analysed this variable as a binary latency variable with all predictors.
+* I have run both generalized linear mixed models for binary variables, however GEE may be more appropriate. The difference? *The basic difference in interpretation is that GLMMs model "individual level effects" (i.e. what is the effect of the predictor variable for a particular person), whereas GEEs model population level trends (i.e. what is the average difference in the outcome between groups with different values of the predictor variables). That is, GLMMs are generally more appropriate if you want to know about effects of an intervention/risk factor/etc. for an individual, whereas GEE are more appropriate for questions of public health. It's a subtle difference, and actually the interpretation is largely the same for linear models, but are different for, e.g., binary or count outcomes. The other main difference is that GEE are not "model based"- that is, they will give you proper p-values, even when your model assumptions are wrong. However, GLMM's are more sensitive to model assumptions.* Several papers note GEE is great for categorical DVs when looking at actor partner effects, etc.
+* GEE (and other) analyses on the individual dataset drop a lot of data due to missingness - perhaps we should consider multiple imputations of the Full Information Maximum Likelihood for dealing with missingness (GLMM) and MIP (GEE). Individual cases range from 208 - 280 (so 104 to 140 dyads). 
+* For P4 PEER Demo data - SES: 64 complete (out of 161), 97 missing. Child ethnicity: 138 complete (out of 161), 23 missing.
 
   
 ### Research Questions - Primary Analyses  
@@ -203,1023 +243,677 @@ To our knowledge, all of the studies investigating peer cooperation do not take 
 * Does warm up affiliation relate to robot task affiliation? **No.**
   
 ```{r warm up + robot affiliation}
-#Time 1
-wu.rt.afill.t1 <- lm(RT_Afill ~ WU_Afill_T1 + Gender, data = indiv.df)
-summary(wu.rt.afill.t1)
+#GEE
+#create dataframe with complete observations
+df.wu.rt.afill.gee <- subset(indiv.df, select = c ("Dyad_Number", "RT_Afill_yn", "WU_Afill_yn_T1", "WU_Afill_yn_T2"))
+df.wu.rt.afill.gee <- na.omit(df.wu.rt.afill.gee)
 
-#Time 2
-wu.rt.afill.t2 <- lm(RT_Afill ~ WU_Afill_T2, data = indiv.df)
-summary(wu.rt.afill.t2)
+wu.rt.afill.gee <- geeglm(RT_Afill_yn~WU_Afill_yn_T1+WU_Afill_yn_T2, family=binomial,
+data=df.wu.rt.afill.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(wu.rt.afill.gee)
+anova(wu.rt.afill.gee)
+
+
+#GLMM
+wu.rt.afill <- glmer(RT_Afill_yn ~ WU_Afill_yn_T1
+                        + WU_Afill_yn_T2 
+                        + (1|Dyad_Number), data = indiv.df,
+                        family = binomial,
+                        na.action = na.omit)
+summary(wu.rt.afill)
 ```
   
-* Does warm up antagonism relate to robot task antagonism? **No**
+* Does warm up antagonism relate to robot task antagonism? **Yes, according to the GEE model, individuals who are antagonistic at T1 of Warm up are 223% or 3.27x more likely to display antagonistic behaviour in the robot task**
 
 ```{r warm up + robot antagonism}
-#Time 1
-wu.rt.antag.t1 <- lm(RT_Antag ~ WU_Antag_T1, data = indiv.df)
-summary(wu.rt.antag.t1)
+#GEE
+#create dataframe with complete observations
+df.wu.rt.antag.gee <- subset(indiv.df, select = c ("Dyad_Number", "RT_Antag_yn", "WU_Antag_yn_T1", "WU_Antag_yn_T2"))
+df.wu.rt.antag.gee <- na.omit(df.wu.rt.antag.gee)
 
-#Time 2
-wu.rt.antag.t2 <- lm(RT_Antag ~ WU_Antag_T2, data = indiv.df)
-summary(wu.rt.antag.t2)
+wu.rt.antag.gee <- geeglm(RT_Antag_yn~WU_Antag_yn_T1+WU_Antag_yn_T2, family=binomial,
+data=df.wu.rt.antag.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(wu.rt.antag.gee)
+anova(wu.rt.antag.gee)
+
+#GLMM
+wu.rt.antag <- glmer(RT_Antag_yn ~ WU_Antag_yn_T1
+                        + WU_Antag_yn_T2 
+                        + (1|Dyad_Number), data = indiv.df,
+                        family = binomial,
+                        na.action = na.omit)
+summary(wu.rt.antag)
 ```
   
-* Does warm up JCE relate to robot task JCE? **Yes, Warm up Time 1 JCE predicts JCE in the RT**
+* Does warm up JCE relate to robot task JCE? **No - ran with outliers 'windsorized' and no differences**
 ```{r warm up + robot jce}
-#Time 1
-wu.rt.jce.t1 <- lm(RT_JCE ~ WU_JCE_T1, data = indiv.df)
-summary(wu.rt.jce.t1)
-
-#Time 2
-wu.rt.jce.t2 <- lm(RT_JCE ~ WU_JCE_T2, data = indiv.df)
-summary(wu.rt.jce.t2)
+wu.rt.jce<- lmer(RT_JCE_Trans ~ WU_JCE_T1_Trans
+                        + WU_JCE_T2_Trans 
+                        + (1|Dyad_Number),
+                    data = indiv.df,
+                 na.action = na.omit,
+                 REML=FALSE)
+summary(wu.rt.jce)
+#Assumption checks
+Plot.wu.rt.jce <- plot(wu.rt.jce)
+Plot.wu.rt.jce
+qqmath(wu.rt.jce, id=0.05)
 ```
   
 ##### Warm Up Social Context + Robot Task Social Context - Dyadic Analyses
-  
-These analyses used structural equation modeling with maximum 
-likelihood estimation using the program lavaan (Rosseel, 2012). The tests 
-of coefficients are Z tests. Effect sizes for actor and partner effects 
-are partial correlations. Betas use the overall standard deviation across 
-all persons (o) for standardization. The FIML 
-standard deviations differ from the raw ones by the square root of N - 1 
-divided by N.
   
 * Are there actor-partner effects on warm up affiliation scores (T1, T2) and robot affiliation scores? **No**
   
-The focus of this analysis is to investigate the effect of warm 
-up affiliation t1 on robot task affiliation and of warm up affiliation t2 
-on robot task affiliation. The dyad members are treated as if they are 
-indistinguishable. Both the effect of own warm up affiliation t1 and warm 
-up affiliation t2 (actor) and the effect of partner's warm up affiliation 
-t1 and warm up affiliation t2 (partner) on robot task affiliation are 
-studied.  The total number of dyads (N) is 149. There are missing data for 
-one or more of the variables: The number of cases for ORCA on warm up 
-affiliation t1 is 112, on warm up affiliation t2 114 and on robot task 
-affiliation 141. For PEER the number of cases on warm up affiliation t1 is 
-113, on warm up affiliation t2 114 and on robot task affiliation 139.
-  
-  
-```{r APIM affiliation warm up and robot task}
-APIM_afill_sc_wu_rt <- '
-
-                        rt_afill_o  ~ a*wu_afill_t1_o
-                        rt_afill_p  ~ a*wu_afill_t1_p
-                        rt_afill_o  ~ p*wu_afill_t1_p
-                        rt_afill_p  ~ p*wu_afill_t1_o
-                        wu_afill_t1_o ~ mx*1
-                        wu_afill_t1_p ~ mx*1
-                        rt_afill_o ~ my*1
-                        rt_afill_p ~ my*1
-                        wu_afill_t1_o ~~ vx*wu_afill_t1_o
-                        wu_afill_t1_p ~~ vx*wu_afill_t1_p
-                        rt_afill_o ~~ vy*rt_afill_o
-                        rt_afill_p ~~ vy*rt_afill_p
-                        wu_afill_t1_p ~~ cx*wu_afill_t1_o
-                        rt_afill_p ~~ cy*rt_afill_o 
- rt_afill_o  ~ ab*wu_afill_t2_o
-                           rt_afill_p  ~ ab*wu_afill_t2_p
-                           rt_afill_o  ~ pb*wu_afill_t2_p
-                           rt_afill_p  ~ pb*wu_afill_t2_o
-                           wu_afill_t2_o ~ mxb*1
-                           wu_afill_t2_p ~ mxb*1
-                           wu_afill_t2_o ~~ vxb*wu_afill_t2_o
-                           wu_afill_t2_p ~~ vxb*wu_afill_t2_p
-                           wu_afill_t2_p ~~ cxb*wu_afill_t2_o
-                           wu_afill_t1_o ~~ c1*wu_afill_t2_o
-                           wu_afill_t1_o ~~ c2*wu_afill_t2_p
-                           wu_afill_t1_p ~~ c3*wu_afill_t2_o
-                           wu_afill_t1_p ~~ c4*wu_afill_t2_p
-                           kb := pb/ab
-                           sumb := (pb + ab)/2
-                           contb := ab - pb  
-  
-  
-  
-  
-  
- k := p/a
-                        sum := (p + a)/2
-                        cont := a - p  
-'
-apimd_afill.sc.wu.rt <- sem(APIM_afill_sc_wu_rt,fixed.x=FALSE, data = dyad.df, missing = "FIML")
-summary(apimd_afill.sc.wu.rt, fit.measures=TRUE, standardize=TRUE)
-parameterEstimates(apimd_afill.sc.wu.rt, standardized = TRUE)
+```{r GLiMM affiliation warm up and robot task, include = FALSE}
+apim_wu.rt.afill <- glmer(rt_afill_yn_A ~ wu_afill_yn_t1_A + wu_afill_yn_t1_P
+                          + wu_afill_yn_t2_A + wu_afill_yn_t2_P + gender
+                  + (1|dyad_id),
+                  data = pairwise.data,
+                  family = binomial,
+                  na.action = na.omit)
+summary(apim_wu.rt.afill)
 ```
-  
-Note. intercepts are means, and can be interpreted as the FIML means for the variables.
-  
-The variance of the errors is 0.068. The R squared is 0.005. 
-The partial intraclass correlation for affiliation robot task 
-controlling for the other predictor variables is 
-equal to .604 and is statistically significant (p < .001, 95% CI [0.41, 
-0.79]). Thus, when one member of the dyad scores high on the 
-variable affiliation robot task after controlling for the predictor 
-variables, the other member also tends to have a high score. 
-
-IV: affiliation warm up time 1: 
-       The actor effect is equal to 0.005 (p = .857, 95% CI [-0.05, 
-0.06]). The standardized actor effect is 0.014 (partial r = .010). The 
-partner effect is equal to 0.013, which is not statistically significant 
-(p = .645, 95% CI [-0.04, 0.07]), and its overall standardized effect is 
-0.035 (partial r = .025).
-       Next, the relative sizes of the actor and partner effects are 
-considered. If the standardized actor effect is greater than .1 in 
-absolute value and is statistically significant, k (i.e. the ratio of the 
-partner effect to the actor effect) can be interpreted in the output. For 
-this dataset the standardized actor effect does not have a substantial 
-value. Therefore, estimates of k will be highly unstable. Please, take 
-this in consideration when interpreting the following estimates. The value 
-of k equals 2.49. No further conclusions can be drawn for k, because a 
-bootstrap analysis was not chosen to calculate its confidence interval. 
-
-affiliation warm up time 2: 
-       When considering the second independent variable, the actor effect 
-is equal to 0.009 (p = .840, 95% CI [-0.08, 0.1]). The standardized actor 
-effect is 0.015 (partial r = .011). The partner effect is equal to -0.054, 
-which is not statistically significant (p = .240, 95% CI [-0.14, 0.04]), 
-and its overall standardized effect is -0.085 (partial r = -.065).
-       If the standardized actor effect is greater than .1 in absolute 
-value and is statistically significant, k (i.e. the ratio of the partner 
-effect to the actor effect) can be interpreted in the output. For this 
-dataset the standardized actor effect does not have a substantial value. 
-Therefore, estimates of k will be highly unstable. Please, take this in 
-consideration when interpreting the following estimates. The value of k 
-equals -5.68. No further conclusions can be drawn for k, because a 
-bootstrap analysis was not chosen to calculate its confidence interval. 
-  
   
 * Are there actor-partner effects on warm up antagonism scores (T1, T2) and robot antagonism scores? **No**
-  
-The focus of this study is the investigation of the effect of warm 
-up antagonism t1 and of warm up antagonism t2 on robot 
-antagonism. The dyad members are treated as if they are indistinguishable. 
-Both the effect of own warm up antagonism t1 and warm up antagonism t2 
-(actor) and the effect of partner's warm up antagonism t1 and warm up 
-antagonism t2 (partner) on robot antagonism are studied.  The total number 
-of dyads (N) is 149. There are missing data for one or more of the 
-variables: The number of cases for ORCA on warm up antagonism t1 is 112, 
-on warm up antagonism t2 114 and on robot antagonism 141. For PEERs the 
-number of cases on warm up antagonism t1 is 113, on warm up antagonism t2 
-114 and on robot antagonism 139.
-  
-```{r APIM antagonism warm up and robot task}
-APIM_antag_sc_wu_rt <- '
-
-                        rt_antag_o  ~ a*wu_antag_t1_o
-                        rt_antag_p  ~ a*wu_antag_t1_p
-                        rt_antag_o  ~ p*wu_antag_t1_p
-                        rt_antag_p  ~ p*wu_antag_t1_o
-                        wu_antag_t1_o ~ mx*1
-                        wu_antag_t1_p ~ mx*1
-                        rt_antag_o ~ my*1
-                        rt_antag_p ~ my*1
-                        wu_antag_t1_o ~~ vx*wu_antag_t1_o
-                        wu_antag_t1_p ~~ vx*wu_antag_t1_p
-                        rt_antag_o ~~ vy*rt_antag_o
-                        rt_antag_p ~~ vy*rt_antag_p
-                        wu_antag_t1_p ~~ cx*wu_antag_t1_o
-                        rt_antag_p ~~ cy*rt_antag_o 
- rt_antag_o  ~ ab*wu_antag_t2_o
-                           rt_antag_p  ~ ab*wu_antag_t2_p
-                           rt_antag_o  ~ pb*wu_antag_t2_p
-                           rt_antag_p  ~ pb*wu_antag_t2_o
-                           wu_antag_t2_o ~ mxb*1
-                           wu_antag_t2_p ~ mxb*1
-                           wu_antag_t2_o ~~ vxb*wu_antag_t2_o
-                           wu_antag_t2_p ~~ vxb*wu_antag_t2_p
-                           wu_antag_t2_p ~~ cxb*wu_antag_t2_o
-                           wu_antag_t1_o ~~ c1*wu_antag_t2_o
-                           wu_antag_t1_o ~~ c2*wu_antag_t2_p
-                           wu_antag_t1_p ~~ c3*wu_antag_t2_o
-                           wu_antag_t1_p ~~ c4*wu_antag_t2_p
-                           kb := pb/ab
-                           sumb := (pb + ab)/2
-                           contb := ab - pb  
-  
-  
-  
-  
-  
- k := p/a
-                        sum := (p + a)/2
-                        cont := a - p  
-'
-apimd_antag.sc.wu.rt <- sem(APIM_antag_sc_wu_rt,fixed.x=FALSE, data = dyad.df, missing = "FIML")
-summary(apimd_antag.sc.wu.rt, fit.measures=TRUE, standardize=TRUE)
-parameterEstimates(apimd_antag.sc.wu.rt, standardized = TRUE)  
+    
+```{r GLiM antagonism warm up and robot task, include = FALSE}
+apim_wu.rt.antag <- glmer(rt_antag_yn_A ~ wu_antag_yn_t1_A + wu_antag_yn_t1_P
+                          + wu_antag_yn_t2_A + wu_antag_yn_t2_P
+                  + (1|dyad_id),
+                  data = pairwise.data,
+                  family = binomial,
+                  na.action = na.omit)
+summary(apim_wu.rt.antag)
 ```
-  
-The lavaan model converged after 73 iterations. The variance of the errors 
-is 0.052. The R squared is 0.008. The partial intraclass correlation for 
-robot antagonism controlling for the other predictor variables is equal to 
-.670 and is statistically significant (p < .001, 95% CI [0.47, 0.87]). 
-Thus, when one member of the dyad scores high on the variable robot 
-antagonism after controlling for the predictor variables, the other member 
-also tends to have a high score. 
-  
-warm up antagonism t1:   
-       The actor effect is equal to 0.036 (p = .610, 95% CI [-0.1, 0.17]). 
-The standardized actor effect is 0.038 (partial r = .029). The partner 
-effect is equal to 0.066, which is not statistically significant (p = 
-.344, 95% CI [-0.07, 0.2]), and its overall standardized effect is 0.069 
-(partial r = .054).
-       Next, the relative sizes of the actor and partner effects are 
-considered. If the standardized actor effect is greater than .1 in 
-absolute value and is statistically significant, k (i.e. the ratio of the 
-partner effect to the actor effect) can be interpreted in the output. For 
-this dataset the standardized actor effect does not have a substantial 
-value. Therefore, estimates of k will be highly unstable. Please, take 
-this in consideration when interpreting the following estimates. The value 
-of k equals 1.83. No further conclusions can be drawn for k, because a 
-bootstrap analysis was not chosen to calculate its confidence interval. 
-  
-warm up antagonism t2: 
-       When considering the second independent variable, the actor effect 
-is equal to 0.005 (p = .912, 95% CI [-0.09, 0.1]). The standardized actor 
-effect is 0.006 (partial r = .007). The partner effect is equal to -0.044, 
-which is not statistically significant (p = .341, 95% CI [-0.14, 0.05]), 
-and its overall standardized effect is -0.055 (partial r = ).
-       If the standardized actor effect is greater than .1 in absolute 
-value and is statistically significant, k (i.e. the ratio of the partner 
-effect to the actor effect) can be interpreted in the output. For this 
-dataset the standardized actor effect does not have a substantial value. 
-Therefore, estimates of k will be highly unstable. Please, take this in 
-consideration when interpreting the following estimates. The value of k 
-equals -8.68. No further conclusions can be drawn for k, because a 
-bootstrap analysis was not chosen to calculate its confidence interval. 
-  
   
 * Are there actor-partner effects on warm up jce scores (T1, T2) and robot jce scores? **No**
   
-The focus of this study is the investigation of the effect of warm 
-up jce t1 on robot jce and of warm up jce t2 on robot jce. The dyad 
-members are treated as if they are indistinguishable. Both the effect of 
-own warm up jce t1 and warm up jce t2 (actor) and the effect of partner's 
-warm up jce t1 and warm up jce t2 (partner) on robot jce are studied.  The 
-total number of dyads (N) is 149. There are missing data for one or more 
-of the variables: The number of cases for ORCA on warm up jce t1 is 112, 
-on warm up jce t2 114 and on robot jce 141. For PEER the number of cases on 
-warm up jce t1 is 113, on warm up jce t2 114 and on robot jce 139.
-  
-```{r APIM jce warm up and robot task}
-APIM_jce_sc_wu_rt <- '
-
-                        rt_jce_o  ~ a*wu_jce_t1_o
-                        rt_jce_p  ~ a*wu_jce_t1_p
-                        rt_jce_o  ~ p*wu_jce_t1_p
-                        rt_jce_p  ~ p*wu_jce_t1_o
-                        wu_jce_t1_o ~ mx*1
-                        wu_jce_t1_p ~ mx*1
-                        rt_jce_o ~ my*1
-                        rt_jce_p ~ my*1
-                        wu_jce_t1_o ~~ vx*wu_jce_t1_o
-                        wu_jce_t1_p ~~ vx*wu_jce_t1_p
-                        rt_jce_o ~~ vy*rt_jce_o
-                        rt_jce_p ~~ vy*rt_jce_p
-                        wu_jce_t1_p ~~ cx*wu_jce_t1_o
-                        rt_jce_p ~~ cy*rt_jce_o 
- rt_jce_o  ~ ab*wu_jce_t2_o
-                           rt_jce_p  ~ ab*wu_jce_t2_p
-                           rt_jce_o  ~ pb*wu_jce_t2_p
-                           rt_jce_p  ~ pb*wu_jce_t2_o
-                           wu_jce_t2_o ~ mxb*1
-                           wu_jce_t2_p ~ mxb*1
-                           wu_jce_t2_o ~~ vxb*wu_jce_t2_o
-                           wu_jce_t2_p ~~ vxb*wu_jce_t2_p
-                           wu_jce_t2_p ~~ cxb*wu_jce_t2_o
-                           wu_jce_t1_o ~~ c1*wu_jce_t2_o
-                           wu_jce_t1_o ~~ c2*wu_jce_t2_p
-                           wu_jce_t1_p ~~ c3*wu_jce_t2_o
-                           wu_jce_t1_p ~~ c4*wu_jce_t2_p
-                           kb := pb/ab
-                           sumb := (pb + ab)/2
-                           contb := ab - pb  
-  
-  
-  
-  
-  
- k := p/a
-                        sum := (p + a)/2
-                        cont := a - p  
-'
-apimd_jce.sc.wu.rt <- sem(APIM_jce_sc_wu_rt,fixed.x=FALSE, data = dyad.df, missing = "FIML")
-summary(apimd_jce.sc.wu.rt, fit.measures=TRUE, standardize=TRUE)
-parameterEstimates(apimd_jce.sc.wu.rt, standardized = TRUE)  
+```{r LMM jce warm up and robot task, include = FALSE}
+#NEED TO REDO PAIRWISE DATA TO INCLUDE TRANSFORMED VALUES FOR APIM
 ```
-
-  
-The lavaan model converged after 41 iterations. The variance of the errors 
-is 0.270. The R squared is 0.044. The partial intraclass correlation for 
-robot jce controlling for the other predictor variables is equal to .708 
-and is statistically significant (p < .001, 95% CI [0.5, 0.91]). Thus, 
-when one member of the dyad scores high on the variable robot jce 
-after controlling for the predictor variables, the other member also tends 
-to have a high score. 
-  
-warm up jce t1:  
-The actor effect is equal to 0.090 (p = .203, 95% CI [-0.05, 
-0.23]). The standardized actor effect is 0.081 (partial r = .068). The 
-partner effect is equal to 0.118, which is not statistically significant 
-(p = .098, 95% CI [-0.02, 0.26]), and its overall standardized effect is 
-0.106 (partial r = .089).  
-  
-
-Next, the relative sizes of the actor and partner effects are 
-considered. If the standardized actor effect is greater than .1 in 
-absolute value and is statistically significant, k (i.e. the ratio of the 
-partner effect to the actor effect) can be interpreted in the output. For 
-this dataset the standardized actor effect does not have a substantial 
-value. Therefore, estimates of k will be highly unstable. Please, take 
-this in consideration when interpreting the following estimates. The value 
-of k equals 1.31. No further conclusions can be drawn for k, because a 
-bootstrap analysis was not chosen to calculate its confidence interval.
-  
-warm up jce t2: 
-When considering the second independent variable, the actor effect 
-is equal to 0.049 (p = .383, 95% CI [-0.06, 0.16]). The standardized actor 
-effect is 0.059 (partial r = .042). The partner effect is equal to 0.033, 
-which is not statistically significant (p = .555, 95% CI [-0.08, 0.14]), 
-and its overall standardized effect is 0.040 (partial r = .029).  
-  
-If the standardized actor effect is greater than .1 in absolute 
-value and is statistically significant, k (i.e. the ratio of the partner 
-effect to the actor effect) can be interpreted in the output. For this 
-dataset the standardized actor effect does not have a substantial value. 
-Therefore, estimates of k will be highly unstable. Please, take this in 
-consideration when interpreting the following estimates. The value of k 
-equals 0.68. No further conclusions can be drawn for k, because a 
-bootstrap analysis was not chosen to calculate its confidence interval.
   
 ##### Warm Up Social Context + Robot Task Ability - Individual Level
   
-* Does warm up affiliation relate to robot task cooperative ability? **Yes, affiliation at T1 and T2 during the warm up predicts frequency of initating and responding behaviours and the relationship is positive**
+* Does warm up affiliation relate to robot task cooperative ability? **According to the GEE model, those who display afilliative behaviours at T1 are 1.81 times more likely to engage in initiating behaviours**
   
 ```{r warm up affiliation + robot ability}
-#Time 1 - latency
-wu.rt.lat.t1 <- lm(Latency_3sec ~ WU_Afill_T1, data = indiv.df)
+#GEE
+#create dataframe with complete observations
+df.wu.rt.lat.t1.gee <- subset(indiv.df, select = c ("Dyad_Number", "Latency_3sec_yn", "WU_Afill_yn_T1", "WU_Afill_yn_T2"))
+df.wu.rt.lat.t1.gee  <- na.omit(df.wu.rt.lat.t1.gee)
+
+wu.rt.lat.t1.gee <- geeglm(Latency_3sec_yn~WU_Afill_yn_T1+WU_Afill_yn_T2, family=binomial,
+data=df.wu.rt.lat.t1.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(wu.rt.lat.t1.gee)
+anova(wu.rt.lat.t1.gee)
+
+#latency and warm up affiliation - linear mixed model
+#not an ideal model as so few dyads achieved the goal 
+wu.rt.lat.t1 <- lmer(Latency_3sec_Trans ~ WU_Afill_yn_T1
+                        + WU_Afill_yn_T2 + Gender 
+                        + (1|Dyad_Number),
+                    data = indiv.df,
+                 na.action = na.omit,
+                 REML=FALSE)
 summary(wu.rt.lat.t1)
+#Assumption checks
+Plot.wu.rt.lat.t1 <- plot(wu.rt.lat.t1)
+Plot.wu.rt.lat.t1
+qqmath(wu.rt.lat.t1, id=0.05)
 
-#Time 2 - latency
-wu.rt.lat.t2 <- lm(Latency_3sec ~ WU_Afill_T2, data = indiv.df)
-summary(wu.rt.lat.t2)
 
-#Time 1 - init
-wu.rt.init.t1 <- lm(Initiate_freq_3s ~ WU_Afill_T1, data = indiv.df)
-summary(wu.rt.init.t1)
 
-#Time 2 - init
-wu.rt.init.t2 <- lm(Initiate_freq_3s ~ WU_Afill_T2, data = indiv.df)
-summary(wu.rt.init.t2)
+#init GEE
+#create dataframe with complete observations
+df.wu.rt.init.gee <- subset(indiv.df, select = c ("Dyad_Number", "Initiate_yn_3s", "WU_Afill_yn_T1", "WU_Afill_yn_T2", "Gender"))
+df.wu.rt.init.gee  <- na.omit(df.wu.rt.init.gee)
 
-#Time 1 - responding
-wu.rt.resp.t1 <- lm(Respond_freq_3s ~ WU_Afill_T1 + Age_P4, data = indiv.df)
-summary(wu.rt.resp.t1)
+wu.rt.init.gee <- geeglm(Initiate_yn_3s~WU_Afill_yn_T1+WU_Afill_yn_T2+Gender, family=binomial,
+data=df.wu.rt.init.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(wu.rt.init.gee)
+anova(wu.rt.init.gee)
+exp(0.5927) #1.81
+# 1 -  1.81 = 81% likelihood or 1.81 times more likely
 
-#Time 2 - responding
-wu.rt.resp.t2 <- lm(Respond_freq_3s ~ WU_Afill_T2 + Age_P4, data = indiv.df)
-summary(wu.rt.resp.t2)
+#init GLMM
+wu.rt.init <- glmer(Initiate_yn_3s ~ WU_Afill_yn_T1
+                   +WU_Afill_yn_T2 + Gender
+                  + (1|Dyad_Number),
+                  data = indiv.df,
+                  family = binomial,
+                  na.action = na.omit)
+summary(wu.rt.init)
+
+
+#resp
+
+#GEE
+#create dataframe with complete observations
+df.wu.rt.resp.gee <- subset(indiv.df, select = c ("Dyad_Number", "Respond_yn_3s", "WU_Afill_yn_T1", "WU_Afill_yn_T2", "Gender", "Age_P4"))
+df.wu.rt.resp.gee  <- na.omit(df.wu.rt.resp.gee)
+
+wu.rt.resp.gee <- geeglm(Respond_yn_3s~WU_Afill_yn_T1+WU_Afill_yn_T2+Gender+Age_P4, family=binomial,
+data=df.wu.rt.resp.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(wu.rt.resp.gee)
+anova(wu.rt.resp.gee)
+
+#GLMM
+wu.rt.resp <- glmer(Respond_yn_3s ~ WU_Afill_yn_T1
+                   +WU_Afill_yn_T2 + Gender + Age_P4
+                  + (1|Dyad_Number),
+                  data = indiv.df,
+                  family = binomial,
+                  na.action = na.omit)
+summary(wu.rt.resp)
+anova(wu.rt.resp)
 ```
   
-* Does warm up antagonism relate to robot task cooperative ability?  
-**Yes:** 
-      **antagonism at T1 predicts shorter latency to success**
-      **antagonism at T2 predicts increased latency to success**
-      **antagonism at T1 (but not time 2) predicts increased initiating freqency**
-      **antagonism at T1 (but not time 2) predicts increased responding freqency**
-      
-      
+* Does warm up antagonism relate to robot task cooperative ability? **No, however antagonism T1 could could increase responding behaviours but this effect is only significant when not controlling for gender (which isn't significant in the model anyway) - according to the GEE**
   
 ```{r warm up antagonism + robot ability}
-#Time 1 - latency
-wu.antag.rt.lat.t1 <- lm(Latency_3sec ~ WU_Antag_T1, data = indiv.df)
-summary(wu.antag.rt.lat.t1)
+#latency dummy coded
+#GEE
+#create dataframe with complete observations
+df.wu.antag.rt.lat.t1.gee <- subset(indiv.df, select = c ("Dyad_Number", "Latency_3sec_yn", "WU_Antag_yn_T1", "WU_Antag_yn_T2"))
+df.wu.antag.rt.lat.t1.gee <- na.omit(df.wu.antag.rt.lat.t1.gee)
 
-#Time 2 - latency
-wu.antag.rt.lat.t2 <- lm(Latency_3sec ~ WU_Antag_T2, data = indiv.df)
-summary(wu.antag.rt.lat.t2)
+wu.antag.rt.lat.t1.gee<- geeglm(Latency_3sec_yn~WU_Antag_yn_T1+WU_Antag_yn_T2, family=binomial,
+data=df.wu.antag.rt.lat.t1.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(wu.antag.rt.lat.t1.gee)
+anova(wu.antag.rt.lat.t1.gee)
+
+
+#latency continuous transformed
+wu.antag.rt.lat.t1 <- lmer(Latency_3sec_Trans ~ WU_Antag_yn_T1
+                        + WU_Antag_yn_T2 
+                        + (1|Dyad_Number),
+                    data = indiv.df,
+                 na.action = na.omit,
+                 REML=FALSE)
+summary(wu.antag.rt.lat.t1)
+#Assumption checks
+Plot.wu.antag.rt.lat.t1 <- plot(wu.antag.rt.lat.t1)
+Plot.wu.antag.rt.lat.t1
+qqmath(wu.antag.rt.lat.t1, id=0.05)
 
 #Time 1 - init
-wu.antag.rt.init.t1 <- lm(Initiate_freq_3s ~ WU_Antag_T1, data = indiv.df)
-summary(wu.antag.rt.init.t1)
 
-#Time 2 - init
-wu.antag.rt.init.t2 <- lm(Initiate_freq_3s ~ WU_Antag_T2, data = indiv.df)
-summary(wu.antag.rt.init.t2)
+#GEE
+#create dataframe with complete observations
+df.wu.antag.rt.init.gee <- subset(indiv.df, select = c ("Dyad_Number", "Initiate_yn_3s", "WU_Antag_yn_T1", "WU_Antag_yn_T2", "Gender"))
+df.wu.antag.rt.init.gee <- na.omit(df.wu.antag.rt.init.gee)
+
+wu.antag.rt.lat.t1.gee<- geeglm(Initiate_yn_3s~WU_Antag_yn_T1+WU_Antag_yn_T2 +Gender, family=binomial,
+data=df.wu.antag.rt.init.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(wu.antag.rt.lat.t1.gee)
+anova(wu.antag.rt.lat.t1.gee)
+
+
+#GLMM
+wu.antag.rt.init <- glmer(Initiate_yn_3s ~ WU_Antag_yn_T1
+                   +WU_Antag_yn_T2 + Gender
+                  + (1|Dyad_Number),
+                  data = indiv.df,
+                  family = binomial,
+                  na.action = na.omit)
+summary(wu.antag.rt.init)
+
+
 
 #Time 1 - responding
-wu.antag.rt.resp.t1 <- lm(Respond_freq_3s ~ WU_Antag_T1 + Age_P4, data = indiv.df)
-summary(wu.antag.rt.resp.t1)
+#GEE
+#create dataframe with complete observations
+df.wu.antag.rt.resp.gee <- subset(indiv.df, select = c ("Dyad_Number", "Respond_yn_3s", "WU_Antag_yn_T1", "WU_Antag_yn_T2", "Gender", "Age_P4"))
+df.wu.antag.rt.resp.gee <- na.omit(df.wu.antag.rt.resp.gee)
 
-#Time 2 - responding
-wu.antag.rt.resp.t2 <- lm(Respond_freq_3s ~ WU_Antag_T2 + Age_P4, data = indiv.df)
-summary(wu.antag.rt.resp.t2)
+wu.antag.rt.lat.t1.gee<- geeglm(Respond_yn_3s~WU_Antag_yn_T1+WU_Antag_yn_T2 +Gender +Age_P4, family=binomial,
+data=df.wu.antag.rt.resp.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(wu.antag.rt.lat.t1.gee)
+anova(wu.antag.rt.lat.t1.gee)
+
+#GLMM
+wu.antag.rt.resp <- glmer(Respond_yn_3s ~ WU_Antag_yn_T1
+                   +WU_Antag_yn_T2 + Gender + Age_P4
+                  + (1|Dyad_Number),
+                  data = indiv.df,
+                  family = binomial,
+                  na.action = na.omit)
+summary(wu.antag.rt.resp)
 
 ```  
   
-* Does warm up jce relate to robot task cooperative ability?  
-**Yes:** 
-      **jce at T1 & T2 predicts shorter latency to success**
-      **jce at T1 (but not T2) predicts increased initiating behaviours**
-      **jce at T1 (but not T2) predicts increased responding behaviours**
-      
+* Does warm up jce relate to robot task cooperative ability? **No**
   
 ```{r warm up jce + robot ability}
 #Time 1 - latency
-wu.jce.rt.lat.t1 <- lm(Latency_3sec ~ WU_JCE_T1, data = indiv.df)
-summary(wu.jce.rt.lat.t1)
-
-#Time 2 - latency
-wu.jce.rt.lat.t2 <- lm(Latency_3sec ~ WU_JCE_T2, data = indiv.df)
-summary(wu.jce.rt.lat.t2)
+wu.jce.rt.lat <- lmer(Latency_3sec_Trans ~ WU_JCE_T1_Trans
+                        + WU_JCE_T2_Trans 
+                        + (1|Dyad_Number),
+                    data = indiv.df,
+                 na.action = na.omit,
+                 REML=FALSE)
+summary(wu.jce.rt.lat)
 
 #Time 1 - init
-wu.jce.rt.init.t1 <- lm(Initiate_freq_3s ~ WU_JCE_T1, data = indiv.df)
-summary(wu.jce.rt.init.t1)
+#GEE
+#create dataframe with complete observations
+df.wu.jce.rt.init <- subset(indiv.df, select = c ("Dyad_Number", "Initiate_yn_3s", "WU_JCE_T1_Trans", "WU_JCE_T2_Trans", "Gender"))
+df.wu.jce.rt.init <- na.omit(df.wu.jce.rt.init)
 
-#Time 2 - init
-wu.jce.rt.init.t2 <- lm(Initiate_freq_3s ~ WU_JCE_T2, data = indiv.df)
-summary(wu.jce.rt.init.t2)
+wu.jce.rt.init <- geeglm(Initiate_yn_3s~WU_JCE_T1_Trans+WU_JCE_T2_Trans + Gender, family=binomial,
+data=df.wu.jce.rt.init, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(wu.jce.rt.init)
+anova(wu.jce.rt.init)
+
+#GLMM
+wu.jce.rt.init <- glmer(Initiate_yn_3s ~ WU_JCE_T1_Trans
+                   +WU_JCE_T2_Trans + Gender
+                  + (1|Dyad_Number),
+                  data = indiv.df,
+                  family = binomial,
+                  na.action = na.omit)
+summary(wu.jce.rt.init)
+
 
 #Time 1 - responding
-wu.jce.rt.resp.t1 <- lm(Respond_freq_3s ~ WU_JCE_T1 + Age_P4, data = indiv.df)
-summary(wu.jce.rt.resp.t1)
+#GEE
+#create dataframe with complete observations
+df.wu.jce.rt.resp <- subset(indiv.df, select = c ("Dyad_Number", "Respond_yn_3s", "WU_JCE_T1_Trans", "WU_JCE_T2_Trans", "Gender", "Age_P4"))
+df.wu.jce.rt.resp <- na.omit(df.wu.jce.rt.resp)
 
-#Time 2 - responding
-wu.jce.rt.resp.t2 <- lm(Respond_freq_3s ~ WU_JCE_T2 + Age_P4, data = indiv.df)
-summary(wu.jce.rt.resp.t2)
+wu.jce.rt.resp <- geeglm(Respond_yn_3s~WU_JCE_T1_Trans+WU_JCE_T2_Trans + Gender +Age_P4, family=binomial,
+data=df.wu.jce.rt.resp, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(wu.jce.rt.resp)
+anova(wu.jce.rt.resp)
 
+#GLMM
+wu.jce.rt.resp <- glmer(Respond_yn_3s ~ WU_JCE_T1_Trans
+                   + WU_JCE_T2_Trans + Gender + Age_P4
+                  + (1|Dyad_Number),
+                  data = indiv.df,
+                  family = binomial,
+                  na.action = na.omit)
+summary(wu.jce.rt.resp)
 ```  
   
-* Does warm up contribution to toy tidy relate to robot task cooperative ability?  **Yes: contribution to toy tidy predicts frequency of initiating behaviours**
+* Does warm up contribution to toy tidy relate to robot task cooperative ability?  **According to the GEE - those who demonstrate increased contribution to toy tidy are .99x more likely/1% more likely to complete the end goal successfully atleast once and 13% (or 1.13x) more likely to engage in at least 1 responding behaviour**
   
 ```{r warm up contrib + robot ability}
 
-#Time 2 - latency
-wu.contrib.rt.lat.t2 <- lm(Latency_3sec ~ WU_Contrib, data = indiv.df)
+##latency
+#GEE
+#create dataframe with complete observations
+df.wu.contrib.rt.lat.t2.gee <- subset(indiv.df, select = c ("Dyad_Number", "Latency_3sec_yn", "WU_Contrib"))
+df.wu.contrib.rt.lat.t2.gee <- na.omit(df.wu.contrib.rt.lat.t2.gee)
+
+wu.contrib.rt.lat.t2.gee <- geeglm(Latency_3sec_yn ~ WU_Contrib, family=binomial,
+data=df.wu.contrib.rt.lat.t2.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(wu.contrib.rt.lat.t2.gee)
+anova(wu.contrib.rt.lat.t2.gee)
+exp(-0.001364)
+
+#GLMM
+wu.contrib.rt.lat.t2 <- lmer(Latency_3sec_Trans ~ WU_Contrib_Trans
+                        + (1|Dyad_Number),
+                    data = indiv.df,
+                 na.action = na.omit,
+                 REML=FALSE)
 summary(wu.contrib.rt.lat.t2)
 
-#Time 2 - init
-wu.contrib.rt.init.t2 <- lm(Initiate_freq_3s ~ WU_Contrib, data = indiv.df)
+#Initiating
+#GEE
+#create dataframe with complete observations
+df.wu.init.rt.lat.t2.gee <- subset(indiv.df, select = c ("Dyad_Number", "Initiate_yn_3s", "WU_Contrib", "Gender"))
+df.wu.init.rt.lat.t2.gee <- na.omit(df.wu.init.rt.lat.t2.gee)
+
+wu.init.rt.lat.t2.gee <- geeglm(Initiate_yn_3s ~ WU_Contrib, family=binomial,
+data=df.wu.init.rt.lat.t2.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(wu.init.rt.lat.t2.gee)
+anova(wu.init.rt.lat.t2.gee)
+
+#GLMM
+wu.contrib.rt.init.t2 <- glmer(Initiate_yn_3s ~ WU_Contrib + Gender
+                  + (1|Dyad_Number),
+                  data = indiv.df,
+                  family = binomial,
+                  na.action = na.omit)
 summary(wu.contrib.rt.init.t2)
 
 
-#Time 2 - responding
-wu.contrib.rt.resp.t2 <- lm(Respond_freq_3s ~ WU_Contrib + Age_P4, data = indiv.df)
-summary(wu.contrib.rt.resp.t2)
+#Responding
+#GEE
+#create dataframe with complete observations
+df.wu.resp.rt.lat.t2.gee <- subset(indiv.df, select = c ("Dyad_Number", "Respond_yn_3s", "WU_Contrib", "Gender", "Age_P4"))
+df.wu.resp.rt.lat.t2.gee <- na.omit(df.wu.resp.rt.lat.t2.gee)
 
+wu.resp.rt.lat.t2.gee <- geeglm(Respond_yn_3s ~ WU_Contrib + Age_P4 + Gender, family=binomial,
+data=df.wu.resp.rt.lat.t2.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(wu.resp.rt.lat.t2.gee)
+anova(wu.resp.rt.lat.t2.gee)
+exp(0.1204)
+
+#GLMM
+wu.contrib.rt.resp.t2 <- glmer(Respond_yn_3s ~ WU_Contrib 
+                               + Gender
+                               + Age_P4
+                  + (1|Dyad_Number),
+                  data = indiv.df,
+                  family = binomial,
+                  na.action = na.omit)
+summary(wu.contrib.rt.resp.t2)
 ```  
   
-##### Warm Up Social Context + Robot Task Social Context - Dyadic Analyses
+##### Warm Up Social Context + Robot Task Ability - Dyadic Analyses
 
   
 * Are there effects on warm up affiliation scores (T1, T2) and robot latency to success? **No**
-```{r affiliation warm up and robot task latency}
-wu.afill.latency.rt <- lm(latency_3sec ~ wu_afill_t1_o + wu_afill_t2_o + 
-                            wu_afill_t1_p + wu_afill_t2_p + 
-                            wu_afill_t1_o*wu_afill_t1_p +
-                            wu_afill_t2_o*wu_afill_t2_p, data = dyad.df)
-summary(wu.afill.latency.rt)
+```{r affiliation warm up and robot task latency, include = FALSE}
+##NEED TRANS VAR.
 ```
   
 * Are there effects on warm up antagonism scores (T1, T2) and robot latency to success? **No**  
   
-```{r antagonism warm up and robot task latency}
-wu.antag.latency.rt <- lm(latency_3sec ~ wu_antag_t1_o + wu_antag_t2_o + 
-                            wu_antag_t1_p + wu_antag_t2_p + 
-                            wu_antag_t1_o*wu_antag_t1_p +
-                            wu_antag_t2_o*wu_antag_t2_p, data = dyad.df)
-summary(wu.antag.latency.rt)
+```{r antagonism warm up and robot task latency, include = FALSE}
+##NEED TRANS VAR.
 ```
   
 * Are there effects on warm up joint coodinated engagement scores (T1, T2) and robot latency to success? **No**
   
-```{r jce warm up and robot task latency}
-wu.jce.latency.rt <- lm(latency_3sec ~ wu_jce_t1_o + wu_jce_t2_o + 
-                            wu_jce_t1_p + wu_jce_t2_p + 
-                            wu_jce_t1_o*wu_jce_t1_p +
-                            wu_jce_t2_o*wu_jce_t2_p, data = dyad.df)
-summary(wu.jce.latency.rt)
+```{r jce warm up and robot task latency, include = FALSE}
+##NEED TRANS VAR.
 ```
   
 * Are there effects on warm up contribution to toy tidy scores and robot latency to success? **No**  
-```{r contribution warm up and robot task latency}
-wu.contrib.latency.rt <- lm(latency_3sec ~ wu_contrib_o + wu_contrib_o + 
-                            wu_contrib_p + wu_contrib_p + 
-                            wu_contrib_o*wu_contrib_p +
-                            wu_contrib_o*wu_contrib_p, data = dyad.df)
-summary(wu.contrib.latency.rt)
+```{r contribution warm up and robot task latency, include = FALSE}
+##NEED TRANS VAR.
 ```
-  
-  
-  These analyses used structural equation modeling with maximum 
-likelihood estimation using the program lavaan (Rosseel, 2012). The tests 
-of coefficients are Z tests. Effect sizes for actor and partner effects 
-are partial correlations. Betas use the overall standard deviation across 
-all persons (o) for standardization. The FIML 
-standard deviations differ from the raw ones by the square root of N - 1 
-divided by N.
   
 * Are there actor-partner effects on warm up affiliation (T1, T2) and initiating behaviours?  **No**
   
-  The focus of this study is the investigation of the effect of warm 
-up affiliation t1 on initiating freq and of warm up affiliation t2 on 
-initiating freq. The dyad members are treated as if they are 
-indistinguishable. Both the effect of own warm up affiliation t1 and warm 
-up affiliation t2 (actor) and the effect of partner's warm up affiliation 
-t1 and warm up affiliation t2 (partner) on initiating freq are studied.  
-The total number of dyads (N) is 149. There are missing data for one or 
-more of the variables: The number of cases for Women on warm up 
-affiliation t1 is 112, on warm up affiliation t2 114 and on initiating 
-freq 137. For Men the number of cases on warm up affiliation t1 is 113, on 
-warm up affiliation t2 114 and on initiating freq 136.  The variable 
-responding freq of peer is treated as a within dyad covariate and contains 
-136 (first role) and 137 (second role) observations.
-  
-```{r APIM warm up affill and initiating frequency}
-APIM_afill_sc_wu_rt.init <- 
-  '
-
-                        initiate_freq_3s_o  ~ a*wu_afill_t1_o
-                        initiate_freq_3s_p  ~ a*wu_afill_t1_p
-                        initiate_freq_3s_o  ~ p*wu_afill_t1_p
-                        initiate_freq_3s_p  ~ p*wu_afill_t1_o
-                        wu_afill_t1_o ~ mx*1
-                        wu_afill_t1_p ~ mx*1
-                        initiate_freq_3s_o ~ my*1
-                        initiate_freq_3s_p ~ my*1
-                        wu_afill_t1_o ~~ vx*wu_afill_t1_o
-                        wu_afill_t1_p ~~ vx*wu_afill_t1_p
-                        initiate_freq_3s_o ~~ vy*initiate_freq_3s_o
-                        initiate_freq_3s_p ~~ vy*initiate_freq_3s_p
-                        wu_afill_t1_p ~~ cx*wu_afill_t1_o
-                        initiate_freq_3s_p ~~ cy*initiate_freq_3s_o 
- initiate_freq_3s_o  ~ ab*wu_afill_t2_o
-                           initiate_freq_3s_p  ~ ab*wu_afill_t2_p
-                           initiate_freq_3s_o  ~ pb*wu_afill_t2_p
-                           initiate_freq_3s_p  ~ pb*wu_afill_t2_o
-                           wu_afill_t2_o ~ mxb*1
-                           wu_afill_t2_p ~ mxb*1
-                           wu_afill_t2_o ~~ vxb*wu_afill_t2_o
-                           wu_afill_t2_p ~~ vxb*wu_afill_t2_p
-                           wu_afill_t2_p ~~ cxb*wu_afill_t2_o
-                           wu_afill_t1_o ~~ c1*wu_afill_t2_o
-                           wu_afill_t1_o ~~ c2*wu_afill_t2_p
-                           wu_afill_t1_p ~~ c3*wu_afill_t2_o
-                           wu_afill_t1_p ~~ c4*wu_afill_t2_p
-                           kb := pb/ab
-                           sumb := (pb + ab)/2
-                           contb := ab - pb  
-  
-  
-  
-  
- initiate_freq_3s_o ~ respond_freq_3s_p*respond_freq_3s_p
-                      initiate_freq_3s_p ~ respond_freq_3s_o*respond_freq_3s_o 
-                      respond_freq_3s_p~~ vwc1a*respond_freq_3s_p
-                      respond_freq_3s_o~~ vwc1b*respond_freq_3s_o
-                      respond_freq_3s_p~ mwc1a*1 
-                      respond_freq_3s_o~ mwc1b*1 
-                      respond_freq_3s_p ~~ w1aw1b*respond_freq_3s_o 
- 
-  
- k := p/a
-                        sum := (p + a)/2
-                        cont := a - p  
-'
-apimd_afill_sc_wu_rt.init <- sem(APIM_afill_sc_wu_rt.init,fixed.x=FALSE, data = dyad.df, missing = "FIML")
-summary(apimd_afill_sc_wu_rt.init, fit.measures=TRUE, standardize=TRUE)
-parameterEstimates(apimd_afill_sc_wu_rt.init, standardized = TRUE)
+```{r APIM warm up affill and initiating frequency, include = FALSE}
+apim_rt.afill.ca <- glmer(initiate_yn_3s_A ~ wu_afill_yn_t1_A + wu_afill_yn_t1_P
+                          + wu_afill_yn_t2_A + wu_afill_yn_t2_P + gender
+                  + (1|dyad_id),
+                  data = pairwise.data,
+                  family = binomial,
+                  na.action = na.omit)
+summary(apim_rt.afill.ca)
 ```
   
 * Are there actor-partner effects on warm up affiliation (T1, T2) and responding behaviours? **No**
-```{r APIM warm up affill and responding frequency}
-APIM_afill_sc_wu_rt.resp <- '
-
-                        respond_freq_3s_o  ~ a*wu_afill_t1_o
-                        respond_freq_3s_p  ~ a*wu_afill_t1_p
-                        respond_freq_3s_o  ~ p*wu_afill_t1_p
-                        respond_freq_3s_p  ~ p*wu_afill_t1_o
-                        wu_afill_t1_o ~ mx*1
-                        wu_afill_t1_p ~ mx*1
-                        respond_freq_3s_o ~ my*1
-                        respond_freq_3s_p ~ my*1
-                        wu_afill_t1_o ~~ vx*wu_afill_t1_o
-                        wu_afill_t1_p ~~ vx*wu_afill_t1_p
-                        respond_freq_3s_o ~~ vy*respond_freq_3s_o
-                        respond_freq_3s_p ~~ vy*respond_freq_3s_p
-                        wu_afill_t1_p ~~ cx*wu_afill_t1_o
-                        respond_freq_3s_p ~~ cy*respond_freq_3s_o 
- respond_freq_3s_o  ~ ab*wu_afill_t2_o
-                           respond_freq_3s_p  ~ ab*wu_afill_t2_p
-                           respond_freq_3s_o  ~ pb*wu_afill_t2_p
-                           respond_freq_3s_p  ~ pb*wu_afill_t2_o
-                           wu_afill_t2_o ~ mxb*1
-                           wu_afill_t2_p ~ mxb*1
-                           wu_afill_t2_o ~~ vxb*wu_afill_t2_o
-                           wu_afill_t2_p ~~ vxb*wu_afill_t2_p
-                           wu_afill_t2_p ~~ cxb*wu_afill_t2_o
-                           wu_afill_t1_o ~~ c1*wu_afill_t2_o
-                           wu_afill_t1_o ~~ c2*wu_afill_t2_p
-                           wu_afill_t1_p ~~ c3*wu_afill_t2_o
-                           wu_afill_t1_p ~~ c4*wu_afill_t2_p
-                           kb := pb/ab
-                           sumb := (pb + ab)/2
-                           contb := ab - pb  
-  
-  
-  
-  
- respond_freq_3s_o ~ initiate_freq_3s_p*initiate_freq_3s_p
-                      respond_freq_3s_p ~ initiate_freq_3s_o*initiate_freq_3s_o 
-                      initiate_freq_3s_p~~ vwc1a*initiate_freq_3s_p
-                      initiate_freq_3s_o~~ vwc1b*initiate_freq_3s_o
-                      initiate_freq_3s_p~ mwc1a*1 
-                      initiate_freq_3s_o~ mwc1b*1 
-                      initiate_freq_3s_p ~~ w1aw1b*initiate_freq_3s_o 
- 
-  
- k := p/a
-                        sum := (p + a)/2
-                        cont := a - p  
-'
-
-apimd_afill_sc_wu_rt.resp <- sem(APIM_afill_sc_wu_rt.resp,fixed.x=FALSE, data = dyad.df, missing = "FIML")
-summary(apimd_afill_sc_wu_rt.resp, fit.measures=TRUE, standardize=TRUE)
-parameterEstimates(apimd_afill_sc_wu_rt.resp, standardized = TRUE)
+```{r APIM warm up affill and responding frequency, include = FALSE}
+APIM_afill_sc_wu_rt.resp <- glmer(respond_yn_3s_A ~ wu_afill_yn_t1_A + wu_afill_yn_t1_P
+                          + wu_afill_yn_t2_A + wu_afill_yn_t2_P + gender + age_p4_A + age_p4_P
+                  + (1|dyad_id),
+                  data = pairwise.data,
+                  family = binomial,
+                  na.action = na.omit)
+summary(APIM_afill_sc_wu_rt.resp)
 ```
   
   
 * Are there actor-partner effects on warm up antagonism (T1, T2) and initiating behaviours?  **No**
   
-```{r APIM warm up antag and initiating frequency}
-APIM_antag_sc_wu_rt.init <- 
-  '
-
-                        initiate_freq_3s_o  ~ a*wu_antag_t1_o
-                        initiate_freq_3s_p  ~ a*wu_antag_t1_p
-                        initiate_freq_3s_o  ~ p*wu_antag_t1_p
-                        initiate_freq_3s_p  ~ p*wu_antag_t1_o
-                        wu_antag_t1_o ~ mx*1
-                        wu_antag_t1_p ~ mx*1
-                        initiate_freq_3s_o ~ my*1
-                        initiate_freq_3s_p ~ my*1
-                        wu_antag_t1_o ~~ vx*wu_antag_t1_o
-                        wu_antag_t1_p ~~ vx*wu_antag_t1_p
-                        initiate_freq_3s_o ~~ vy*initiate_freq_3s_o
-                        initiate_freq_3s_p ~~ vy*initiate_freq_3s_p
-                        wu_antag_t1_p ~~ cx*wu_antag_t1_o
-                        initiate_freq_3s_p ~~ cy*initiate_freq_3s_o 
- initiate_freq_3s_o  ~ ab*wu_antag_t2_o
-                           initiate_freq_3s_p  ~ ab*wu_antag_t2_p
-                           initiate_freq_3s_o  ~ pb*wu_antag_t2_p
-                           initiate_freq_3s_p  ~ pb*wu_antag_t2_o
-                           wu_antag_t2_o ~ mxb*1
-                           wu_antag_t2_p ~ mxb*1
-                           wu_antag_t2_o ~~ vxb*wu_antag_t2_o
-                           wu_antag_t2_p ~~ vxb*wu_antag_t2_p
-                           wu_antag_t2_p ~~ cxb*wu_antag_t2_o
-                           wu_antag_t1_o ~~ c1*wu_antag_t2_o
-                           wu_antag_t1_o ~~ c2*wu_antag_t2_p
-                           wu_antag_t1_p ~~ c3*wu_antag_t2_o
-                           wu_antag_t1_p ~~ c4*wu_antag_t2_p
-                           kb := pb/ab
-                           sumb := (pb + ab)/2
-                           contb := ab - pb  
-  
-  
-  
-  
- initiate_freq_3s_o ~ respond_freq_3s_p*respond_freq_3s_p
-                      initiate_freq_3s_p ~ respond_freq_3s_o*respond_freq_3s_o 
-                      respond_freq_3s_p~~ vwc1a*respond_freq_3s_p
-                      respond_freq_3s_o~~ vwc1b*respond_freq_3s_o
-                      respond_freq_3s_p~ mwc1a*1 
-                      respond_freq_3s_o~ mwc1b*1 
-                      respond_freq_3s_p ~~ w1aw1b*respond_freq_3s_o 
- 
-  
- k := p/a
-                        sum := (p + a)/2
-                        cont := a - p  
-'
-apimd_antag_sc_wu_rt.init <- sem(APIM_antag_sc_wu_rt.init,fixed.x=FALSE, data = dyad.df, missing = "FIML")
-summary(apimd_antag_sc_wu_rt.init, fit.measures=TRUE, standardize=TRUE)
-parameterEstimates(apimd_antag_sc_wu_rt.init, standardized = TRUE)
+```{r APIM warm up antag and initiating frequency, include = FALSE}
+APIM_antag_sc_wu_rt.init <- glmer(initiate_yn_3s_A ~ wu_antag_yn_t1_A + wu_antag_yn_t1_P
+                          + wu_antag_yn_t2_A + wu_antag_yn_t2_P + gender
+                  + (1|dyad_id),
+                  data = pairwise.data,
+                  family = binomial,
+                  na.action = na.omit)
+summary(APIM_antag_sc_wu_rt.init)
 ```
   
 * Are there actor-partner effects on warm up antagonism (T1, T2) and responding behaviours? **No**
-```{r APIM warm up antag and responding frequency}
-APIM_antag_sc_wu_rt.resp <- '
-
-                        respond_freq_3s_o  ~ a*wu_antag_t1_o
-                        respond_freq_3s_p  ~ a*wu_antag_t1_p
-                        respond_freq_3s_o  ~ p*wu_antag_t1_p
-                        respond_freq_3s_p  ~ p*wu_antag_t1_o
-                        wu_antag_t1_o ~ mx*1
-                        wu_antag_t1_p ~ mx*1
-                        respond_freq_3s_o ~ my*1
-                        respond_freq_3s_p ~ my*1
-                        wu_antag_t1_o ~~ vx*wu_antag_t1_o
-                        wu_antag_t1_p ~~ vx*wu_antag_t1_p
-                        respond_freq_3s_o ~~ vy*respond_freq_3s_o
-                        respond_freq_3s_p ~~ vy*respond_freq_3s_p
-                        wu_antag_t1_p ~~ cx*wu_antag_t1_o
-                        respond_freq_3s_p ~~ cy*respond_freq_3s_o 
- respond_freq_3s_o  ~ ab*wu_antag_t2_o
-                           respond_freq_3s_p  ~ ab*wu_antag_t2_p
-                           respond_freq_3s_o  ~ pb*wu_antag_t2_p
-                           respond_freq_3s_p  ~ pb*wu_antag_t2_o
-                           wu_antag_t2_o ~ mxb*1
-                           wu_antag_t2_p ~ mxb*1
-                           wu_antag_t2_o ~~ vxb*wu_antag_t2_o
-                           wu_antag_t2_p ~~ vxb*wu_antag_t2_p
-                           wu_antag_t2_p ~~ cxb*wu_antag_t2_o
-                           wu_antag_t1_o ~~ c1*wu_antag_t2_o
-                           wu_antag_t1_o ~~ c2*wu_antag_t2_p
-                           wu_antag_t1_p ~~ c3*wu_antag_t2_o
-                           wu_antag_t1_p ~~ c4*wu_antag_t2_p
-                           kb := pb/ab
-                           sumb := (pb + ab)/2
-                           contb := ab - pb  
-  
-  
-  
-  
- respond_freq_3s_o ~ initiate_freq_3s_p*initiate_freq_3s_p
-                      respond_freq_3s_p ~ initiate_freq_3s_o*initiate_freq_3s_o 
-                      initiate_freq_3s_p~~ vwc1a*initiate_freq_3s_p
-                      initiate_freq_3s_o~~ vwc1b*initiate_freq_3s_o
-                      initiate_freq_3s_p~ mwc1a*1 
-                      initiate_freq_3s_o~ mwc1b*1 
-                      initiate_freq_3s_p ~~ w1aw1b*initiate_freq_3s_o 
- 
-  
- k := p/a
-                        sum := (p + a)/2
-                        cont := a - p  
-'
-
-apimd_antag_sc_wu_rt.resp <- sem(APIM_antag_sc_wu_rt.resp,fixed.x=FALSE, data = dyad.df, missing = "FIML")
-summary(apimd_antag_sc_wu_rt.resp, fit.measures=TRUE, standardize=TRUE)
-parameterEstimates(apimd_antag_sc_wu_rt.resp, standardized = TRUE)
+```{r APIM warm up antag and responding frequency, include = FALSE}
+APIM_antag_sc_wu_rt.resp <- glmer(respond_yn_3s_A ~ wu_antag_yn_t1_A + wu_antag_yn_t1_P
+                          + wu_antag_yn_t2_A + wu_antag_yn_t2_P + gender + age_p4_A + age_p4_P
+                  + (1|dyad_id),
+                  data = pairwise.data,
+                  family = binomial,
+                  na.action = na.omit)
+summary(APIM_antag_sc_wu_rt.resp)
 ```
   
   
 * Are there actor-partner effects on warm up jce (T1, T2) and initiating behaviours?  **No**
   
-```{r APIM warm up jce and initiating frequency}
-APIM_jce_sc_wu_rt.init <- 
-  '
-
-                        initiate_freq_3s_o  ~ a*wu_jce_t1_o
-                        initiate_freq_3s_p  ~ a*wu_jce_t1_p
-                        initiate_freq_3s_o  ~ p*wu_jce_t1_p
-                        initiate_freq_3s_p  ~ p*wu_jce_t1_o
-                        wu_jce_t1_o ~ mx*1
-                        wu_jce_t1_p ~ mx*1
-                        initiate_freq_3s_o ~ my*1
-                        initiate_freq_3s_p ~ my*1
-                        wu_jce_t1_o ~~ vx*wu_jce_t1_o
-                        wu_jce_t1_p ~~ vx*wu_jce_t1_p
-                        initiate_freq_3s_o ~~ vy*initiate_freq_3s_o
-                        initiate_freq_3s_p ~~ vy*initiate_freq_3s_p
-                        wu_jce_t1_p ~~ cx*wu_jce_t1_o
-                        initiate_freq_3s_p ~~ cy*initiate_freq_3s_o 
- initiate_freq_3s_o  ~ ab*wu_jce_t2_o
-                           initiate_freq_3s_p  ~ ab*wu_jce_t2_p
-                           initiate_freq_3s_o  ~ pb*wu_jce_t2_p
-                           initiate_freq_3s_p  ~ pb*wu_jce_t2_o
-                           wu_jce_t2_o ~ mxb*1
-                           wu_jce_t2_p ~ mxb*1
-                           wu_jce_t2_o ~~ vxb*wu_jce_t2_o
-                           wu_jce_t2_p ~~ vxb*wu_jce_t2_p
-                           wu_jce_t2_p ~~ cxb*wu_jce_t2_o
-                           wu_jce_t1_o ~~ c1*wu_jce_t2_o
-                           wu_jce_t1_o ~~ c2*wu_jce_t2_p
-                           wu_jce_t1_p ~~ c3*wu_jce_t2_o
-                           wu_jce_t1_p ~~ c4*wu_jce_t2_p
-                           kb := pb/ab
-                           sumb := (pb + ab)/2
-                           contb := ab - pb  
-  
-  
-  
-  
- initiate_freq_3s_o ~ respond_freq_3s_p*respond_freq_3s_p
-                      initiate_freq_3s_p ~ respond_freq_3s_o*respond_freq_3s_o 
-                      respond_freq_3s_p~~ vwc1a*respond_freq_3s_p
-                      respond_freq_3s_o~~ vwc1b*respond_freq_3s_o
-                      respond_freq_3s_p~ mwc1a*1 
-                      respond_freq_3s_o~ mwc1b*1 
-                      respond_freq_3s_p ~~ w1aw1b*respond_freq_3s_o 
- 
-  
- k := p/a
-                        sum := (p + a)/2
-                        cont := a - p  
-'
-apimd_jce_sc_wu_rt.init <- sem(APIM_jce_sc_wu_rt.init,fixed.x=FALSE, data = dyad.df, missing = "FIML")
-summary(apimd_jce_sc_wu_rt.init, fit.measures=TRUE, standardize=TRUE)
-parameterEstimates(apimd_jce_sc_wu_rt.init, standardized = TRUE)
+```{r APIM warm up jce and initiating frequency, include = FALSE}
+APIM_jce_sc_wu_rt.init <- glmer(initiate_yn_3s_A ~ wu_jce_t1_A + wu_jce_t1_P
+                          + wu_jce_t2_A + wu_jce_t2_P + gender
+                  + (1|dyad_id),
+                  data = pairwise.data,
+                  family = binomial,
+                  na.action = na.omit)
+summary(APIM_jce_sc_wu_rt.init)
 ```
   
 * Are there actor-partner effects on warm up jce (T1, T2) and responding behaviours? **No**
   
-```{r APIM warm up jce and responding frequency}
-APIM_jce_sc_wu_rt.resp <- '
-
-                        respond_freq_3s_o  ~ a*wu_jce_t1_o
-                        respond_freq_3s_p  ~ a*wu_jce_t1_p
-                        respond_freq_3s_o  ~ p*wu_jce_t1_p
-                        respond_freq_3s_p  ~ p*wu_jce_t1_o
-                        wu_jce_t1_o ~ mx*1
-                        wu_jce_t1_p ~ mx*1
-                        respond_freq_3s_o ~ my*1
-                        respond_freq_3s_p ~ my*1
-                        wu_jce_t1_o ~~ vx*wu_jce_t1_o
-                        wu_jce_t1_p ~~ vx*wu_jce_t1_p
-                        respond_freq_3s_o ~~ vy*respond_freq_3s_o
-                        respond_freq_3s_p ~~ vy*respond_freq_3s_p
-                        wu_jce_t1_p ~~ cx*wu_jce_t1_o
-                        respond_freq_3s_p ~~ cy*respond_freq_3s_o 
- respond_freq_3s_o  ~ ab*wu_jce_t2_o
-                           respond_freq_3s_p  ~ ab*wu_jce_t2_p
-                           respond_freq_3s_o  ~ pb*wu_jce_t2_p
-                           respond_freq_3s_p  ~ pb*wu_jce_t2_o
-                           wu_jce_t2_o ~ mxb*1
-                           wu_jce_t2_p ~ mxb*1
-                           wu_jce_t2_o ~~ vxb*wu_jce_t2_o
-                           wu_jce_t2_p ~~ vxb*wu_jce_t2_p
-                           wu_jce_t2_p ~~ cxb*wu_jce_t2_o
-                           wu_jce_t1_o ~~ c1*wu_jce_t2_o
-                           wu_jce_t1_o ~~ c2*wu_jce_t2_p
-                           wu_jce_t1_p ~~ c3*wu_jce_t2_o
-                           wu_jce_t1_p ~~ c4*wu_jce_t2_p
-                           kb := pb/ab
-                           sumb := (pb + ab)/2
-                           contb := ab - pb  
-  
-  
-  
-  
- respond_freq_3s_o ~ initiate_freq_3s_p*initiate_freq_3s_p
-                      respond_freq_3s_p ~ initiate_freq_3s_o*initiate_freq_3s_o 
-                      initiate_freq_3s_p~~ vwc1a*initiate_freq_3s_p
-                      initiate_freq_3s_o~~ vwc1b*initiate_freq_3s_o
-                      initiate_freq_3s_p~ mwc1a*1 
-                      initiate_freq_3s_o~ mwc1b*1 
-                      initiate_freq_3s_p ~~ w1aw1b*initiate_freq_3s_o 
- 
-  
- k := p/a
-                        sum := (p + a)/2
-                        cont := a - p  
-'
-
-apimd_jce_sc_wu_rt.resp <- sem(APIM_jce_sc_wu_rt.resp,fixed.x=FALSE, data = dyad.df, missing = "FIML")
-summary(apimd_jce_sc_wu_rt.resp, fit.measures=TRUE, standardize=TRUE)
-parameterEstimates(apimd_jce_sc_wu_rt.resp, standardized = TRUE)
+```{r APIM warm up jce and responding frequency, include = FALSE}
+APIM_jce_sc_wu_rt.resp <- glmer(respond_yn_3s_A ~ wu_jce_t1_A + wu_jce_t1_P
+                          + wu_jce_t2_A + wu_jce_t2_P + gender + age_p4_A + age_p4_P
+                  + (1|dyad_id),
+                  data = pairwise.data,
+                  family = binomial,
+                  na.action = na.omit)
+summary(APIM_jce_sc_wu_rt.resp)
 ```
   
 * Are there actor-partner effects on warm up contribution (T1, T2) and initiating behaviours?  **No**
   
-```{r APIM warm up contrib and initiating frequency}
-APIM_contrib_sc_wu_rt.init <- 
-  '
-
-                        initiate_freq_3s_o  ~ a*wu_contrib_o
-                        initiate_freq_3s_p  ~ a*wu_contrib_p
-                        initiate_freq_3s_o  ~ p*wu_contrib_p
-                        initiate_freq_3s_p  ~ p*wu_contrib_o
-                        wu_contrib_o ~ mx*1
-                        wu_contrib_p ~ mx*1
-                        initiate_freq_3s_o ~ my*1
-                        initiate_freq_3s_p ~ my*1
-                        wu_contrib_o ~~ vx*wu_contrib_o
-                        wu_contrib_p ~~ vx*wu_contrib_p
-                        initiate_freq_3s_o ~~ vy*initiate_freq_3s_o
-                        initiate_freq_3s_p ~~ vy*initiate_freq_3s_p
-                        wu_contrib_p ~~ cx*wu_contrib_o
-                        initiate_freq_3s_p ~~ cy*initiate_freq_3s_o 
-  
-  
-  
-  
- initiate_freq_3s_o ~ respond_freq_3s_p*respond_freq_3s_p
-                      initiate_freq_3s_p ~ respond_freq_3s_o*respond_freq_3s_o 
-                      respond_freq_3s_p~~ vwc1a*respond_freq_3s_p
-                      respond_freq_3s_o~~ vwc1b*respond_freq_3s_o
-                      respond_freq_3s_p~ mwc1a*1 
-                      respond_freq_3s_o~ mwc1b*1 
-                      respond_freq_3s_p ~~ w1aw1b*respond_freq_3s_o 
- 
-  
- k := p/a
-                        sum := (p + a)/2
-                        cont := a - p  
-'
-apimd_contrib_sc_wu_rt.init <- sem(APIM_contrib_sc_wu_rt.init,fixed.x=FALSE, data = dyad.df, missing = "FIML")
-summary(apimd_contrib_sc_wu_rt.init, fit.measures=TRUE, standardize=TRUE)
-parameterEstimates(apimd_contrib_sc_wu_rt.init, standardized = TRUE)
+```{r APIM warm up contrib and initiating frequency, include = FALSE}
+#NEED YPDATED PAIRWISE DATA
 ```
   
 * Are there actor-partner effects on warm up contribution (T1, T2) and responding behaviours? **No**  
-```{r APIM warm up contrib and responding frequency}
-APIM_contrib_sc_wu_rt.resp <- '
-
-                        respond_freq_3s_o  ~ a*wu_contrib_o
-                        respond_freq_3s_p  ~ a*wu_contrib_p
-                        respond_freq_3s_o  ~ p*wu_contrib_p
-                        respond_freq_3s_p  ~ p*wu_contrib_o
-                        wu_contrib_o ~ mx*1
-                        wu_contrib_p ~ mx*1
-                        respond_freq_3s_o ~ my*1
-                        respond_freq_3s_p ~ my*1
-                        wu_contrib_o ~~ vx*wu_contrib_o
-                        wu_contrib_p ~~ vx*wu_contrib_p
-                        respond_freq_3s_o ~~ vy*respond_freq_3s_o
-                        respond_freq_3s_p ~~ vy*respond_freq_3s_p
-                        wu_contrib_p ~~ cx*wu_contrib_o
-                        respond_freq_3s_p ~~ cy*respond_freq_3s_o 
-  
-  
-  
-  
- respond_freq_3s_o ~ initiate_freq_3s_p*initiate_freq_3s_p
-                      respond_freq_3s_p ~ initiate_freq_3s_o*initiate_freq_3s_o 
-                      initiate_freq_3s_p~~ vwc1a*initiate_freq_3s_p
-                      initiate_freq_3s_o~~ vwc1b*initiate_freq_3s_o
-                      initiate_freq_3s_p~ mwc1a*1 
-                      initiate_freq_3s_o~ mwc1b*1 
-                      initiate_freq_3s_p ~~ w1aw1b*initiate_freq_3s_o 
- 
-  
- k := p/a
-                        sum := (p + a)/2
-                        cont := a - p  
-'
-
-apimd_contrib_sc_wu_rt.resp <- sem(APIM_contrib_sc_wu_rt.resp,fixed.x=FALSE, data = dyad.df, missing = "FIML")
-summary(apimd_contrib_sc_wu_rt.resp, fit.measures=TRUE, standardize=TRUE)
-parameterEstimates(apimd_contrib_sc_wu_rt.resp, standardized = TRUE)
+```{r APIM warm up contrib and responding frequency, include = FALSE}
+#NEED YPDATED PAIRWISE DATA
 ```
   
 ##### Robot Social Context + Robot Social Context - Individual Level
   
-* Does robot affiliation relate to robot task cooperative ability? **Yes, but only for initiating and responding behaviours. An increase in affiliation predicts an increase in both behaviours**
+* Does robot affiliation relate to robot task cooperative ability? **Yes, according to the GEE, being affiliative is associated with a liklihood of being successful on the robot task by 5%.**
   
 ```{r robot afill + robot ability}
-# latency
-rtsc.rt.lat.afill <- lm(Latency_3sec ~ RT_Afill, data = indiv.df)
+#latency y/n
+#GEE
+#create dataframe with complete observations
+df.rtsc.rt.lat.afill.gee <- subset(indiv.df, select = c ("Dyad_Number", "Latency_3sec_yn", "RT_Afill_yn"))
+df.rtsc.rt.lat.afill.gee <- na.omit(df.rtsc.rt.lat.afill.gee)
+
+rtsc.rt.lat.afill.gee <- geeglm(Latency_3sec_yn ~ RT_Afill_yn, family=binomial,
+data=df.rtsc.rt.lat.afill.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(rtsc.rt.lat.afill.gee)
+anova(rtsc.rt.lat.afill.gee)
+exp(-0.0471) #.95
+
+# latency - continuous
+#LMM
+rtsc.rt.lat.afill <- lmer(Latency_3sec_Trans ~ RT_Afill_yn
+                        + (1|Dyad_Number),
+                    data = indiv.df,
+                 na.action = na.omit,
+                 REML=FALSE)
 summary(rtsc.rt.lat.afill)
 
 # init
-rtsc.rt.init.afill <- lm(Initiate_freq_3s ~ RT_Afill, data = indiv.df)
+
+#GEE
+#create dataframe with complete observations
+df.rtsc.rt.init.afill.gee <- subset(indiv.df, select = c ("Dyad_Number", "Initiate_yn_3s", "RT_Afill_yn", "Gender"))
+df.rtsc.rt.init.afill.gee <- na.omit(df.rtsc.rt.init.afill.gee)
+
+rtsc.rt.init.afill.gee <- geeglm(Initiate_yn_3s ~ RT_Afill_yn + Gender, family=binomial,
+data=df.rtsc.rt.init.afill.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(rtsc.rt.init.afill.gee)
+anova(rtsc.rt.init.afill.gee)
+
+#GLMM
+rtsc.rt.init.afill <- glmer(Initiate_yn_3s ~ RT_Afill_yn + Gender
+                  + (1|Dyad_Number),
+                  data = indiv.df,
+                  family = binomial,
+                  na.action = na.omit)
 summary(rtsc.rt.init.afill)
 
 # responding
-rtsc.rt.resp.afill <- lm(Respond_freq_3s ~ RT_Afill + Age_P4, data = indiv.df)
+
+#GEE
+#create dataframe with complete observations
+df.rtsc.rt.resp.afill.gee <- subset(indiv.df, select = c ("Dyad_Number", "Respond_yn_3s", "RT_Afill_yn", "Gender", "Age_P4"))
+df.rtsc.rt.resp.afill.gee <- na.omit(df.rtsc.rt.resp.afill.gee)
+
+rtsc.rt.resp.afill.gee <- geeglm(Respond_yn_3s ~ RT_Afill_yn + Gender + Age_P4, family=binomial,
+data=df.rtsc.rt.resp.afill.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(rtsc.rt.resp.afill.gee)
+anova(rtsc.rt.resp.afill.gee)
+
+#GLMM
+rtsc.rt.resp.afill <- glmer(Respond_yn_3s ~ RT_Afill_yn 
+                            + Gender
+                            + Age_P4
+                  + (1|Dyad_Number),
+                  data = indiv.df,
+                  family = binomial,
+                  na.action = na.omit)
 summary(rtsc.rt.resp.afill)
 ```
   
 * Does robot antgonism relate to robot task cooperative ability? **No**
   
 ```{r robot antag + robot ability}
-# latency
-rtsc.rt.lat.antag <- lm(Latency_3sec ~ RT_Antag, data = indiv.df)
+#Latency y/n
+#GEE
+#create dataframe with complete observations
+df.rtsc.rt.lat.antag.gee <- subset(indiv.df, select = c ("Dyad_Number", "Latency_3sec_yn", "RT_Antag_yn"))
+df.rtsc.rt.lat.antag.gee <- na.omit(df.rtsc.rt.lat.antag.gee)
+
+rtsc.rt.lat.antag.gee <- geeglm(Latency_3sec_yn ~ RT_Antag_yn, family=binomial,
+data=df.rtsc.rt.lat.antag.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(rtsc.rt.lat.antag.gee)
+anova(rtsc.rt.lat.antag.gee)
+
+# latency - continuous
+rtsc.rt.lat.antag <- lmer(Latency_3sec_Trans ~ RT_Antag_yn
+                        + (1|Dyad_Number),
+                    data = indiv.df,
+                 na.action = na.omit,
+                 REML=FALSE)
 summary(rtsc.rt.lat.antag)
 
 # init
-rtsc.rt.init.antag <- lm(Initiate_freq_3s ~ RT_Antag, data = indiv.df)
+
+#GEE
+#create dataframe with complete observations
+df.rtsc.rt.init.antag.gee <- subset(indiv.df, select = c ("Dyad_Number", "Initiate_yn_3s", "RT_Antag_yn", "Gender"))
+df.rtsc.rt.init.antag.gee <- na.omit(df.rtsc.rt.init.antag.gee)
+
+rtsc.rt.init.antag.gee <- geeglm(Initiate_yn_3s ~ RT_Antag_yn + Gender, family=binomial,
+data=df.rtsc.rt.init.antag.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(rtsc.rt.init.antag.gee)
+anova(rtsc.rt.init.antag.gee)
+
+
+#GLMM
+rtsc.rt.init.antag <- glmer(Initiate_yn_3s ~ RT_Antag_yn + Gender
+                  + (1|Dyad_Number),
+                  data = indiv.df,
+                  family = binomial,
+                  na.action = na.omit)
 summary(rtsc.rt.init.antag)
 
 # responding
-rtsc.rt.resp.antag <- lm(Respond_freq_3s ~ RT_Antag + Age_P4, data = indiv.df)
+#GEE
+#create dataframe with complete observations
+df.rtsc.rt.resp.antag.gee <- subset(indiv.df, select = c ("Dyad_Number", "Respond_yn_3s", "RT_Antag_yn", "Gender", "Age_P4"))
+df.rtsc.rt.resp.antag.gee <- na.omit(df.rtsc.rt.resp.antag.gee)
+
+rtsc.rt.resp.antag.gee <- geeglm(Respond_yn_3s ~ RT_Antag_yn + Gender, family=binomial,
+data=df.rtsc.rt.resp.antag.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(rtsc.rt.resp.antag.gee)
+anova(rtsc.rt.resp.antag.gee)
+
+
+#GLMM
+rtsc.rt.resp.antag <- glmer(Respond_yn_3s ~ RT_Antag_yn + Gender
+                  + (1|Dyad_Number),
+                  data = indiv.df,
+                  family = binomial,
+                  na.action = na.omit)
 summary(rtsc.rt.resp.antag)
 ```
   
-* Does robot antgonism relate to robot task cooperative ability? **Yes, an increase in JCE predicts an decrease in latency to success and an increase in initiating and responding behaviours.**
+* Does robot jce relate to robot task cooperative ability? **Yes - according to the GEE models for everyone 1 unit increase in JCE, the liklihood of being successful on the robot task increases by .85 or 15% and the liklihood of engaging in an initiating behaviour increases by 2.45x or 145% and the liklihood of engaging in a responding behaviour increases by 2.79x or 179% The GLMM for responding behaviour had a large effect as well with 262x or 26100% liklihood.**
   
 ```{r robot jce + robot ability}
-# latency
-rtsc.rt.lat.jce <- lm(Latency_3sec ~ RT_JCE, data = indiv.df)
+#Latency y/n
+#GEE
+#create dataframe with complete observations
+df.rtsc.rt.lat.jce.gee <- subset(indiv.df, select = c ("Dyad_Number", "Latency_3sec_yn", "RT_JCE"))
+df.rtsc.rt.lat.jce.gee <- na.omit(df.rtsc.rt.lat.jce.gee)
+
+rtsc.rt.lat.jce.gee <- geeglm(Latency_3sec_yn ~ RT_JCE, family=binomial,
+data=df.rtsc.rt.lat.jce.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(rtsc.rt.lat.jce.gee)
+anova(rtsc.rt.lat.jce.gee)
+exp( -0.1589)
+
+
+# latency - continuous
+rtsc.rt.lat.jce <- lmer(Latency_3sec_Trans ~ RT_JCE
+                        + (1|Dyad_Number),
+                    data = indiv.df,
+                 na.action = na.omit,
+                 REML=FALSE)
 summary(rtsc.rt.lat.jce)
 
 # init
-rtsc.rt.init.jce <- lm(Initiate_freq_3s ~ RT_JCE, data = indiv.df)
+#GEE
+#create dataframe with complete observations
+df.rtsc.rt.init.jce.gee <- subset(indiv.df, select = c ("Dyad_Number", "Initiate_yn_3s", "RT_JCE", "Gender"))
+df.rtsc.rt.init.jce.gee <- na.omit(df.rtsc.rt.init.jce.gee)
+
+rtsc.rt.init.jce.gee <- geeglm(Initiate_yn_3s ~ RT_JCE + Gender, family=binomial,
+data=df.rtsc.rt.init.jce.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(rtsc.rt.init.jce.gee)
+anova(rtsc.rt.init.jce.gee)
+exp(0.898) #2.45
+
+#GLMM
+rtsc.rt.init.jce <- glmer(Initiate_yn_3s ~ RT_JCE + Gender
+                  + (1|Dyad_Number),
+                  data = indiv.df,
+                  family = binomial,
+                  na.action = na.omit)
 summary(rtsc.rt.init.jce)
 
 # responding
-rtsc.rt.resp.jce <- lm(Respond_freq_3s ~ RT_JCE + Age_P4, data = indiv.df)
+#GEE
+#create dataframe with complete observations
+df.rtsc.rt.resp.jce.gee <- subset(indiv.df, select = c ("Dyad_Number", "Respond_yn_3s", "RT_JCE", "Gender" , "Age_P4"))
+df.rtsc.rt.resp.jce.gee <- na.omit(df.rtsc.rt.resp.jce.gee)
+
+rtsc.rt.resp.jce.gee <- geeglm(Respond_yn_3s ~ RT_JCE + Gender + Age_P4, family=binomial,
+data=df.rtsc.rt.resp.jce.gee, id=Dyad_Number, corstr = "exchangeable", std.err="san.se") 
+summary(rtsc.rt.resp.jce.gee)
+anova(rtsc.rt.resp.jce.gee)
+exp(1.0273) #262 
+
+#GLMM
+rtsc.rt.resp.jce <- glmer(Respond_yn_3s ~ RT_JCE + Gender + Age_P4
+                  + (1|Dyad_Number),
+                  data = indiv.df,
+                  family = binomial,
+                  na.action = na.omit)
 summary(rtsc.rt.resp.jce)
+exp(5.570)
 ```
   
 ##### Robot Social Context + Robot Task Social Context - Dyadic Analyses
   
 * Are there effects on robot affiliation scores and robot latency to success? **No**
-```{r affiliation robot and robot task latency}
+```{r affiliation robot and robot task latency, include = FALSE}
 rtsc.afill.latency.rt <- lm(latency_3sec ~ rt_afill_o + rt_afill_o + 
                             rt_afill_p + rt_afill_p + 
                             rt_afill_o*rt_afill_p +
@@ -1228,7 +922,7 @@ summary(rtsc.afill.latency.rt)
 ```
   
 * Are there effects on robot antagonism scores and robot latency to success? **No**
-```{r antagonism robot and robot task latency}
+```{r antagonism robot and robot task latency, include = FALSE}
 rtsc.antag.latency.rt <- lm(latency_3sec ~ rt_antag_o + rt_antag_o + 
                             rt_antag_p + rt_antag_p + 
                             rt_antag_o*rt_antag_p +
@@ -1237,7 +931,7 @@ summary(rtsc.antag.latency.rt)
 ```
   
 * Are there effects on robot jce scores and robot latency to success? **No**
-```{r jce robot and robot task latency}
+```{r jce robot and robot task latency, include = FALSE}
 rtsc.jce.latency.rt <- lm(latency_3sec ~ rt_jce_o + rt_jce_o + 
                             rt_jce_p + rt_jce_p + 
                             rt_jce_o*rt_jce_p +
@@ -1245,17 +939,10 @@ rtsc.jce.latency.rt <- lm(latency_3sec ~ rt_jce_o + rt_jce_o +
 summary(rtsc.jce.latency.rt)
 ```
   
-These analyses used structural equation modeling with maximum 
-likelihood estimation using the program lavaan (Rosseel, 2012). The tests 
-of coefficients are Z tests. Effect sizes for actor and partner effects 
-are partial correlations. Betas use the overall standard deviation across 
-all persons (o) for standardization. The FIML 
-standard deviations differ from the raw ones by the square root of N - 1 
-divided by N.
   
 * Are there actor-partner effects on robot affiliation and initiating behaviours?  **No**
   
-```{r APIM robot task afill and initiating frequency}
+```{r APIM robot task afill and initiating frequency, include = FALSE}
 APIM_afill_sc_rtsc_rt.init <- 
  '
 
@@ -1297,7 +984,7 @@ parameterEstimates(apimd_afill_sc_rtsc_rt.init, standardized = TRUE)
   
 * Are there actor-partner effects on warm up affiliation  and responding behaviours?  **No**
   
-```{r APIM robot task afill and responding frequency}
+```{r APIM robot task afill and responding frequency, include = FALSE}
 APIM_afill_sc_rtsc_rt.resp <- 
  '
 
@@ -1338,10 +1025,9 @@ parameterEstimates(apimd_afill_sc_rtsc_rt.resp, standardized = TRUE)
 ```
   
   
-  
 * Are there actor-partner effects on robot antagonism and initiating behaviours?  **No**
   
-```{r APIM robot task antag and initiating frequency}
+```{r APIM robot task antag and initiating frequency, include = FALSE}
 APIM_antag_sc_rtsc_rt.init <- 
  '
 
@@ -1383,7 +1069,7 @@ parameterEstimates(apimd_antag_sc_rtsc_rt.init, standardized = TRUE)
   
 * Are there actor-partner effects on warm up antagonism and responding behaviours?  **No**
   
-```{r APIM robot task antag and responding frequency}
+```{r APIM robot task antag and responding frequency, include = FALSE}
 APIM_antag_sc_rtsc_rt.resp <- 
  '
 
@@ -1425,7 +1111,7 @@ parameterEstimates(apimd_antag_sc_rtsc_rt.resp, standardized = TRUE)
   
 * Are there actor-partner effects on robot jce and initiating behaviours?  **No**
   
-```{r APIM robot task jce and initiating frequency}
+```{r APIM robot task jce and initiating frequency, include = FALSE}
 APIM_jce_sc_rtsc_rt.init <- 
  '
 
@@ -1467,7 +1153,7 @@ parameterEstimates(apimd_jce_sc_rtsc_rt.init, standardized = TRUE)
   
 * Are there actor-partner effects on warm up jce and responding behaviours?  **No**
   
-```{r APIM robot task jce and responding frequency}
+```{r APIM robot task jce and responding frequency, include = FALSE}
 APIM_jce_sc_rtsc_rt.resp <- 
  '
 
@@ -1517,41 +1203,34 @@ parameterEstimates(apimd_jce_sc_rtsc_rt.resp, standardized = TRUE)
   
 ##### Warm Up Social Context
   
-* Are there differences between T1 and T2 for all social context warm up variables? **Yes, for antagonism scores and JCE scores**
+* Are there differences between T1 and T2 for all social context warm up variables? **Yes, for all social context variables except antagonism - all subsequent analyses comparing the warm up to other variables will be split between T1 and T2**
   
-Due to differences in the other variables, all subsequent analyses comparing the warm up to other variables will be split between T1 and T2 (including affiliation).
-  
-```{r warm up data restructure for wilcox test, include = FALSE}
-#restructure variables from wide to long
-## affiliation score - warm up
-WU.afill <- subset(indiv.df, select=c("WU_Afill_T1", "WU_Afill_T2"))
-WU.afill <- gather(WU.afill, time, score, WU_Afill_T1:WU_Afill_T2, factor_key=TRUE)
-WU.afill <- na.omit(WU.afill)
-## antagonistic score - warm up
-WU.antag <- subset(indiv.df, select=c("WU_Antag_T1", "WU_Antag_T2"))
-WU.antag <- gather(WU.antag, time, score, WU_Antag_T1:WU_Antag_T2, factor_key=TRUE)
-WU.antag <- na.omit(WU.antag)
+```{r warm up social context time sampling differences}
+#test for differences between warm up T1 and T2 averages for all social context binary variables
+
+##affiliation differences - yes
+#contingency table
+afill.wu.tab <- table(indiv.df$WU_Afill_yn_T1, indiv.df$WU_Afill_yn_T2)
+afill.wu.tab
+#chi-square test - sig
+chisq.test(afill.wu.tab)
+
+##antagonism differences - yes
+#contingency table
+antag.wu.tab <- table(indiv.df$WU_Antag_yn_T1, indiv.df$WU_Antag_yn_T2)
+antag.wu.tab
+#chi-square test - sig
+chisq.test(antag.wu.tab)
+
+##jce differences - yes
+
+#JCE subset
 ## jce score - warm up
 WU.jce <- subset(indiv.df, select=c("WU_JCE_T1", "WU_JCE_T2"))
 WU.jce <- gather(WU.jce, time, score, WU_JCE_T1:WU_JCE_T2, factor_key=TRUE)
 WU.jce <- na.omit(WU.jce)
-```
-  
-```{r warm up social context time sampling differences}
-#data for afilliation, antagonism, and JCE is non normally distributed - non parametric tests utilized.
-#test for differences between warm up T1 and T2 averages for all social context variables
+#wilcox test
 
-##affiliation differences - ns
-wilcox.test(score ~ time, data = WU.afill, paired=FALSE)
-##antagonistic differences - SIG DIFFERENCES
-wilcox.test(score ~ time, data = WU.antag, paired=FALSE)
-group_by(WU.antag, time) %>%
-  summarise(
-    count = n(),
-    median = median(score, na.rm = TRUE),
-    IQR = IQR(score, na.rm = TRUE)
-  )
-##jce differences - SIG DIFFERECES
 wilcox.test(score ~ time, data = WU.jce, paired=FALSE)
 group_by(WU.jce, time) %>%
   summarise(
@@ -1564,72 +1243,93 @@ group_by(WU.jce, time) %>%
 * Are there gender differences for warm up social context variables? **Yes, there is a gender difference in the affiliation score between genders for T1**
   
 ```{r warm up social context gender differences}
-#gender differences for warm up affiliation T1
-wilcox.test(WU_Afill_T1 ~ Gender, data = indiv.df, paired=FALSE)
-group_by(indiv.df, Gender) %>%
-  summarise(
-    count = n(),
-    median = median(WU_Afill_T1, na.rm = TRUE),
-    IQR = IQR(WU_Afill_T1, na.rm = TRUE)
-  )
+#gender differences for warm up affiliation T1 binary variable
 
-#gender differences for warm up affiliation T2
-wilcox.test(WU_Afill_T2 ~ Gender, data = indiv.df, paired=FALSE)
+##affiliation differences - yes
+#contingency table
+afill.wu.gen.tab <- table(indiv.df$WU_Afill_yn_T1, indiv.df$Gender)
+afill.wu.gen.tab 
+#chi-square test - sig
+chisq.test(afill.wu.gen.tab)
 
-##gender differences for warm up antagonism T1
-wilcox.test(WU_Antag_T1 ~ Gender, data = indiv.df, paired=FALSE)
+#gender differences for warm up affiliation T2 - No
+afill2.wu.gen.tab <- table(indiv.df$WU_Afill_yn_T2, indiv.df$Gender)
+afill2.wu.gen.tab 
+#chi-square test 
+chisq.test(afill2.wu.gen.tab)
 
-##gender differences for warm up antagonism T2
-wilcox.test(WU_Antag_T2 ~ Gender, data = indiv.df, paired=FALSE)
+##gender differences for warm up antagonism T1 - No
+antag.wu.gen.tab <- table(indiv.df$WU_Antag_yn_T1, indiv.df$Gender)
+antag.wu.gen.tab 
+#chi-square test - 
+chisq.test(antag.wu.gen.tab)
 
-##gender differences for warm up jce T1
+##gender differences for warm up antagonism T2 - No
+antag2.wu.gen.tab <- table(indiv.df$WU_Antag_yn_T2, indiv.df$Gender)
+antag2.wu.gen.tab 
+#chi-square test 
+chisq.test(antag2.wu.gen.tab)
+
+##gender differences for warm up jce T1 - no
 wilcox.test(WU_JCE_T1 ~ Gender, data = indiv.df, paired=FALSE)
-
+#on transformed variable - no
+t.test(WU_JCE_T1_Trans ~ Gender, data = indiv.df, paired=FALSE)
 ##gender differences for warm up jce T2
 wilcox.test(WU_JCE_T2 ~ Gender, data = indiv.df, paired=FALSE)
-
+#on transformed variable - no
+t.test(WU_JCE_T2_Trans ~ Gender, data = indiv.df, paired=FALSE)
 ##gender differences for warm up contribution
 wilcox.test(WU_Contrib ~ Gender, data = indiv.df, paired=FALSE)
+#on transformed variable - no
+t.test(WU_Contrib_Trans ~ Gender, data = indiv.df, paired=FALSE)
 ```
   
 * Is there a relationship between age and warm up social context variables? **No**
   
 ```{r warm up social context age differences}
 
-#association between age and warm up affiliation t1
-age.wu.afill.t1 <- cor.test(x = indiv.df$Age_P4, 
-                       y = indiv.df$WU_Afill_T1, method = 'spearman')
-age.wu.afill.t1
+#association between age and warm up affiliation t1 - no
+t.test(indiv.df$Age_P4 ~ indiv.df$WU_Afill_yn_T1)
 
-#association between age and warm up affiliation t2
-age.wu.afill.t2 <- cor.test(x = indiv.df$Age_P4, 
-                       y = indiv.df$WU_Afill_T2, method = 'spearman')
-age.wu.afill.t2
+#association between age and warm up affiliation t2 - no
+t.test(indiv.df$Age_P4 ~ indiv.df$WU_Afill_yn_T2)
 
-#association between age and warm up antagonism t1
-age.wu.antag.t1 <- cor.test(x = indiv.df$Age_P4, 
-                       y = indiv.df$WU_Antag_T1, method = 'spearman')
-age.wu.antag.t1
+#association between age and warm up antagonism t1 - no
+t.test(indiv.df$Age_P4 ~ indiv.df$WU_Antag_yn_T1)
 
-#association between age and warm up antagonism t2
-age.wu.antag.t2 <- cor.test(x = indiv.df$Age_P4, 
-                       y = indiv.df$WU_Antag_T2, method = 'spearman')
-age.wu.antag.t2
+#association between age and warm up antagonism t2 - no
+t.test(indiv.df$Age_P4 ~ indiv.df$WU_Antag_yn_T2)
 
-#association between age and warm up jce t1
+#association between age and warm up jce t1 - no
 age.wu.jce.t1 <- cor.test(x = indiv.df$Age_P4, 
                        y = indiv.df$WU_JCE_T1, method = 'spearman')
 age.wu.jce.t1
 
-#association between age and warm up jce t2
+#association between age and warm up jce t1 transformed - no
+age.wu.jce.t1.trans <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_JCE_T1_Trans, method = 'spearman')
+age.wu.jce.t1.trans
+
+
+#association between age and warm up jce t2 - no
 age.wu.jce.t2 <- cor.test(x = indiv.df$Age_P4, 
                        y = indiv.df$WU_JCE_T2, method = 'spearman')
 age.wu.jce.t2
 
-#association between age and warm up contributions
+#association between age and warm up jce t2 transformed - no
+age.wu.jce.t2.trans <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_JCE_T2_Trans, method = 'spearman')
+age.wu.jce.t2.trans
+
+#association between age and warm up contributions - no
 age.wu.contrib <- cor.test(x = indiv.df$Age_P4, 
                        y = indiv.df$WU_Contrib, method = 'spearman')
 age.wu.contrib
+
+#association between age and warm up contributions transformed - no
+age.wu.contrib.trans <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_Contrib_Trans, method = 'spearman')
+age.wu.contrib.trans
 ```
 
 ##### Robot Social Context
@@ -1637,36 +1337,53 @@ age.wu.contrib
 * Are there gender differences for robot social context variables? **No**
   
 ```{r robot social context gender differences}
-#gender differences for robot task affiliation 
-wilcox.test(RT_Afill ~ Gender, data = indiv.df, paired=FALSE)
+#gender differences for robot task affiliation - no
 
-##gender differences for robot task antagonism 
-wilcox.test(RT_Antag ~ Gender, data = indiv.df, paired=FALSE)
+afill.rt.gen.tab <- table(indiv.df$RT_Afill_yn, indiv.df$Gender)
+afill.rt.gen.tab
+#chi-square test 
+chisq.test(afill.rt.gen.tab)
+
+##gender differences for robot task antagonism - no
+antag.rt.gen.tab <- table(indiv.df$RT_Antag_yn, indiv.df$Gender)
+antag.rt.gen.tab
+#chi-square test 
+chisq.test(antag.rt.gen.tab)
 
 ##gender differences for robot task jce
 wilcox.test(RT_JCE ~ Gender, data = indiv.df, paired=FALSE)
 
+##gender differences for robot task jce transformed - no
+t.test(RT_JCE_Trans ~ Gender, data = indiv.df, paired=FALSE)
+
+##gender differences for robot task jce transformed + windsorized - no
+t.test(RT_JCE_Trans_OR ~ Gender, data = indiv.df, paired=FALSE)
 ```
   
 * Is there a relationship between age and robot social context variables? **No**
   
 ```{r robot social context age differences}
 
-#association between age and warm up affiliation
-age.rt.afill <- cor.test(x = indiv.df$Age_P4, 
-                       y = indiv.df$RT_Afill, method = 'spearman')
-age.rt.afill
+#association between age and warm robot task affiliation - no
+t.test(indiv.df$Age_P4 ~ indiv.df$RT_Afill_yn)
 
-#association between age and warm up antagonism t1
-age.rt.antag <- cor.test(x = indiv.df$Age_P4, 
-                       y = indiv.df$RT_Antag, method = 'spearman')
-age.rt.antag
+#association between age and robot task antagonism - no
+t.test(indiv.df$Age_P4 ~ indiv.df$RT_Antag_yn)
 
-#association between age and warm up jce t2
+#association between age and warm up jce - no
 age.rt.jce <- cor.test(x = indiv.df$Age_P4, 
                        y = indiv.df$RT_JCE, method = 'spearman')
 age.rt.jce
 
+#association between age and warm up jce transformed - no
+age.rt.jce.trans <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$RT_JCE_Trans, method = 'spearman')
+age.rt.jce.trans
+
+#association between age and warm up jce transformed + windsorized - no
+age.rt.jce.trans.or <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$RT_JCE_Trans_OR, method = 'spearman')
+age.rt.jce.trans.or
 ```
   
 #### Robot Cooperative Ability
@@ -1675,35 +1392,29 @@ age.rt.jce
   
 ```{r regression between age for orca and peer and latency to success}
 #regression for age of peer and orca and predicting latency
-age.latency <- lm(latency_3sec ~ age_p4_o + age_p4_p, data = dyad.df)
-summary(age.latency)
+age.latency <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$Latency_3sec, method = 'pearson')
+age.latency
+
+age.latency.trans <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$Latency_3sec_Trans, method = 'pearson')
+age.latency.trans
 ```
   
 * Does the age difference between the participants correlate to latency to success **No**
   
 ```{r correlation between age difference within the dyad and latency to success}
 #correlation between age difference and latency scores
-agediff.latency.df <- subset(dyad.df, select = c("age_p4_diff","latency_3sec"))
+agediff.latency.df <- subset(dyad.df, select = c("age_p4_diff","latency_3sec", "latency_3sec_trans"))
 agediff.latency.df <- na.omit(agediff.latency.df)
 agediff.latency.corr <- cor.test(x = agediff.latency.df$age_p4_diff, 
                        y = agediff.latency.df$latency_3sec, method = 'spearman')
 agediff.latency.corr 
-```
-  
-* Does age relate to frequency of initiating behaviours? **No**  
-```{r age and initating behaviours}
-#correlation between age and initating behaviours
-age.init.corr <- cor.test(x = indiv.df$Age_P4, 
-                       y = indiv.df$Initiate_freq_3s, method = 'spearman')
-age.init.corr
-```
-  
-* Does age relate to frequency of responding behaviours? **Yes - an increase in age is weakly/moderately associated with an increase in responding behaviours**  
-```{r age and responding behaviours}
-#correlation between age and responding behaviours
-age.resp.corr <- cor.test(x = indiv.df$Age_P4, 
-                       y = indiv.df$Respond_freq_3s, method = 'spearman')
-age.resp.corr
+
+#transformed variable
+agediff.latency.corr.trans <- cor.test(x = agediff.latency.df$age_p4_diff, 
+                       y = agediff.latency.df$latency_3sec_trans, method = 'pearson')
+agediff.latency.corr.trans 
 ```
   
 * Are there age differences between groups of children who did and did NOT engage in initiating/responding behaviours? **Yes, but only for the 'responded group.' In other words, the group of children who exhibited a cooperative handle response behaviour were older than the group who did not.**
@@ -1725,47 +1436,28 @@ t.test(indiv.df$Age_P4~indiv.df$Respond_yn_3s)
 ```{r gender and robot latency to success}
 #gender differences for robot latency to success
 wilcox.test(latency_3sec ~ gender, data = dyad.df, paired=FALSE)
+#transformed variable
+t.test(latency_3sec_trans ~ gender, data = dyad.df, paired=FALSE)
 ```
   
-* Are there gender differences in initating behaviours? **No**
-  
-```{r gender and robot initiate freq}
-#gender differences for robot initating behaviours
-wilcox.test(Initiate_freq_3s ~ Gender, data = indiv.df, paired=FALSE)
-```
-  
-* Are there gender differences in responding behaviours? **No**
-  
-```{r gender and robot respond freq}
-#gender differences for robot responding behaviours
-wilcox.test(Respond_freq_3s ~ Gender, data = indiv.df, paired=FALSE)
-```
-
 * Are there gender differences between whether or not the child engaged in initating behaviours? **Yes**
   
 ```{r gender and robot initiate yn}
 #gender differences for if the child initated a cooperation sequence ever
-wilcox.test(Initiate_yn_3s ~ Gender, data = indiv.df, paired=FALSE)
-group_by(indiv.df, Gender) %>%
-  summarise(
-    count = n(),
-    median = median(Initiate_yn_3s, na.rm = TRUE),
-    IQR = IQR(Initiate_yn_3s , na.rm = TRUE)
-  )
+init.yn.gender.tab <- table(indiv.df$Initiate_yn_3s, indiv.df$Gender)
+init.yn.gender.tab
+#chi-square test 
+chisq.test(init.yn.gender.tab)
 ```
   
-
 * Are there gender differences between whether or not the child engaged in responding behaviours? **Yes**
   
 ```{r gender and robot respond yn}
-#gender differences for if the child initated a cooperation sequence ever
-wilcox.test(Respond_yn_3s ~ Gender, data = indiv.df, paired=FALSE)
-group_by(indiv.df, Gender) %>%
-  summarise(
-    count = n(),
-    median = median(Respond_yn_3s, na.rm = TRUE),
-    IQR = IQR(Respond_yn_3s , na.rm = TRUE)
-  )
+#gender differences for if the child responded a cooperation sequence ever
+resp.yn.gender.tab <- table(indiv.df$Respond_yn_3s, indiv.df$Gender)
+resp.yn.gender.tab
+#chi-square test 
+chisq.test(resp.yn.gender.tab)
 ```
 
 * Does age correlate frequency of initiating behaviours, when controlling for the initiating/responding behaviour of the peer?  
@@ -1851,13 +1543,291 @@ test <- subset(dyad.df_pcgm.p5, select = c("dyad_id", "Freq_CA_p4","rt_afill_o",
 write.csv(test, "dyadicdata.csv")
 ```
 ```{r}
-dyadic.wu.rt.sc <- subset(dyad.df, select = c ("wu_afill_t1_o", "wu_afill_t2_o", "wu_antag_t1_o", "wu_antag_t2_o", "wu_jce_t1_o", "wu_jce_t2_o", "wu_afill_t1_p", "wu_afill_t2_p", "wu_antag_t1_p", "wu_antag_t2_p", "wu_jce_t1_p", "wu_jce_t2_p", "rt_afill_o", "rt_antag_o", "rt_jce_o", "rt_afill_p", "rt_antag_p", "rt_jce_p", "gender", "respond_freq_3s_o", "respond_freq_3s_p", "initiate_freq_3s_o", "initiate_freq_3s_p"))
+dyadic.wu.rt.sc <- subset(dyad.df, select = c ("dyad_id", "gender", "latency_3sec", "Freq_CA_p4", "age_p4_diff", "age_p4_o", "age_p4_p", "wu_afill_yn_t1_o", "wu_afill_yn_t2_o", "wu_antag_yn_t1_o", "wu_antag_yn_t2_o", "wu_jce_t1_o", "wu_jce_t2_o", "wu_contrib_o", "wu_afill_yn_t1_p", "wu_afill_yn_t2_p", "wu_antag_yn_t1_p", "wu_antag_yn_t2_p", "wu_jce_t1_p", "wu_jce_t2_p", "wu_contrib_p", "rt_afill_yn_o", "rt_antag_yn_o", "rt_jce_o", "rt_afill_yn_p", "rt_antag_yn_p", "rt_jce_p", "respond_freq_3s_o", "respond_yn_3s_o", "respond_yn_3s_p", "respond_freq_3s_p", "initiate_freq_3s_o", "initiate_yn_3s_o", "initiate_yn_3s_p", "initiate_freq_3s_p"))
 
 write.csv(dyadic.wu.rt.sc, "dyadic.sc.wu.rt.csv")
 ```
  
 ## Variables & Descriptions
-### ORCA
+
+
+### Individual Level Descriptives
+
+#### Age of all participants
+* Type: Continuous  
+* Function: Control, IV 
+```{r Participant age on all P4 study in participants}
+with(indiv.df, hist(Age_P4,breaks = 20,
+                   xlab = "age (months)",
+                   main = "hist participant (N = 294) age"))
+mean(indiv.df$Age_P4, na.rm = TRUE)
+sd(indiv.df$Age_P4, na.rm = TRUE)
+median(indiv.df$Age_P4, na.rm = TRUE)
+range(indiv.df$Age_P4, na.rm = TRUE)
+#number of observations NAs removed
+sum(!is.na(indiv.df$Age_P4))
+```
+
+#### Age difference
+* Type: Continuous  
+* Function: IV  
+* Description: The difference in age (in months) between the ORCA child and peer child
+ 
+```{r Age difference in months - dyad}
+with(dyad.df, hist(age_p4_diff,breaks = 20,
+                   xlab = "Age difference",
+                   main = "hist of dyad age differences"))
+mean(dyad.df$age_p4_diff, na.rm = TRUE)
+sd(dyad.df$age_p4_diff, na.rm = TRUE)
+range(dyad.df$age_p4_diff, na.rm = TRUE)
+```
+  
+#### Gender of all participants
+* Type: Categorical  
+* Function: Control, IV  
+```{r Participant gender}
+table(indiv.df$Gender)
+#1 = male, 2 = female
+```
+#### Social Context Variables
+  
+Warm Up Social Context
+  
+**Note. Due to lack of variability and normality issues we have chosen to analyse affiliation and antagonism variables as binary. JCE is cube root transformed while contributions is square root transformed**
+```{r warm up social context individual level}
+
+#Affiliation T1
+with(indiv.df, hist(WU_Afill_yn_T1,breaks = 2,
+                   xlab = "yes or no affiliation",
+                   main = "hist of y/n afilliation \n at time 1"))
+table(indiv.df$WU_Afill_yn_T1)
+
+#Afilliation Time 2
+with(indiv.df, hist(WU_Afill_yn_T2,breaks = 2,
+                   xlab = "yes or no affiliation",
+                   main = "hist of y/n affilliation \n at time 2"))
+table(indiv.df$WU_Afill_yn_T2)
+
+#antagonism T1
+with(indiv.df, hist(WU_Antag_yn_T1,breaks = 2,
+                   xlab = "yes or no antagonism",
+                   main = "hist of y/n antagonism \n at time 1"))
+table(indiv.df$WU_Antag_yn_T1)
+
+#Antagonism Time 2
+with(indiv.df, hist(WU_Antag_yn_T2,breaks = 2,
+                   xlab = "yes or no antagonism",
+                   main = "hist of y/n antagonism \n at time 2"))
+table(indiv.df$WU_Antag_yn_T2)
+
+#JCE T1 - untransformed - #!OUTLIERS PRESENT
+with(indiv.df, hist(WU_JCE_T1,breaks = 5,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$WU_JCE_T1, na.rm = TRUE)
+sd(indiv.df$WU_JCE_T1, na.rm = TRUE)
+range(indiv.df$WU_JCE_T1, na.rm = TRUE)
+
+#JCE T1 - cube root transformed - no outliers
+with(indiv.df, hist(WU_JCE_T1_Trans,breaks = 5,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$WU_JCE_T1_Trans, na.rm = TRUE)
+sd(indiv.df$WU_JCE_T1_Trans, na.rm = TRUE)
+range(indiv.df$WU_JCE_T1_Trans, na.rm = TRUE)
+
+
+#JCE T2 - untransformed - #!OUTLIERS PRESENT
+with(indiv.df, hist(WU_JCE_T2,breaks = 5,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$WU_JCE_T2, na.rm = TRUE)
+sd(indiv.df$WU_JCE_T2, na.rm = TRUE)
+range(indiv.df$WU_JCE_T2, na.rm = TRUE)
+
+#JCE T2 - cube root transformed - no outliers
+with(indiv.df, hist(WU_JCE_T2_Trans,breaks = 5,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$WU_JCE_T2_Trans, na.rm = TRUE)
+sd(indiv.df$WU_JCE_T2_Trans, na.rm = TRUE)
+range(indiv.df$WU_JCE_T2_Trans, na.rm = TRUE)
+
+#contribution scores - untransformed - no outliers
+with(indiv.df, hist(WU_Contrib,breaks = 10,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$WU_Contrib, na.rm = TRUE)
+sd(indiv.df$WU_Contrib, na.rm = TRUE)
+range(indiv.df$WU_Contrib, na.rm = TRUE)
+
+#contribution scores - square root tansformed - no outliers
+with(indiv.df, hist(WU_Contrib_Trans,breaks = 5,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$WU_Contrib_Trans, na.rm = TRUE)
+sd(indiv.df$WU_Contrib_Trans, na.rm = TRUE)
+range(indiv.df$WU_Contrib_Trans, na.rm = TRUE)
+```
+  
+Robot Task Social Context
+  
+**Note. Due to lack of variability and normality issues we have chosen to analyse affiliation and antagonism variables as binary, JCE has outliers present and normality issues. 2 new variables are created where one is cube root transformed and another is cube root transfromed AND windsorized.**
+```{r robot task social context individual level}
+#Affiliation RT
+with(indiv.df, hist(RT_Afill_yn,breaks = 2,
+                   xlab = "yes or no affiliation",
+                   main = "hist of y/n afilliation"))
+table(indiv.df$RT_Afill_yn)
+
+#Antag RT
+with(indiv.df, hist(RT_Antag_yn,breaks = 2,
+                   xlab = "yes or no antagonism",
+                   main = "hist of y/n antagonism"))
+table(indiv.df$RT_Antag_yn)
+
+#JCE RT - untransformed - #OUTLIERS PRESENT
+with(indiv.df, hist(RT_JCE,breaks = 10,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$RT_JCE, na.rm = TRUE)
+sd(indiv.df$RT_JCE, na.rm = TRUE)
+range(indiv.df$RT_JCE, na.rm = TRUE)
+
+#JCE RT - cube root transformed - #OUTLIERS PRESENT
+with(indiv.df, hist(RT_JCE_Trans,breaks = 10,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$RT_JCE_Trans, na.rm = TRUE)
+sd(indiv.df$RT_JCE_Trans, na.rm = TRUE)
+range(indiv.df$RT_JCE_Trans, na.rm = TRUE)
+
+#JCE RT - cube root transformed - outliers (> 3SD+MEAN windsorized)
+with(indiv.df, hist(RT_JCE_Trans_OR,breaks = 10,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$RT_JCE_Trans_OR, na.rm = TRUE)
+sd(indiv.df$RT_JCE_Trans_OR, na.rm = TRUE)
+range(indiv.df$RT_JCE_Trans_OR, na.rm = TRUE)
+
+```
+#### Length of Robot Task Interaction
+* Type: Continuous  
+* Function: IV  
+* Description: How long (in seconds) the dyad interacted with the robot task. Task began once the experimenter finished instructions ("remember you have to push both handles at the same time) and task finished once the experimenter started to say "I know lets look at a new game"
+```{r Dyad time on task - robot task}
+with(dyad.df, hist(rt_tt_sec,breaks = 20,
+                   xlab = "seconds",
+                   main = "hist of robot task length"))
+mean(dyad.df$rt_tt_sec, na.rm = TRUE)
+sd(dyad.df$rt_tt_sec, na.rm = TRUE)
+range(dyad.df$rt_tt_sec, na.rm = TRUE)
+```
+  
+#### Latency to first success  
+* Type: Continuous  
+* Function: DV  
+* Description: Between-dyad variable (joint measure of cooperation). How long did it take for the dyad to hold the handles completely down within 3s of one another  CALCULATED VIA INTERACT  
+```{r Latency to success - dyad - untransformed}
+with(dyad.df, hist(latency_3sec,breaks = 20,
+                   xlab = "Latency to success in seconds",
+                   main = "hist dyad latency"))
+mean(dyad.df$latency_3sec, na.rm = TRUE)
+sd(dyad.df$latency_3sec, na.rm = TRUE)
+range(dyad.df$latency_3sec, na.rm = TRUE)
+#number of observations NAs removed
+sum(!is.na(dyad.df$latency_3sec))
+```
+  
+* Because the data is heavily skewed, a cube root transformation may be appropriate - this is also appropriate for variables contianing 0 values. (see McElwain et al., 2016)
+
+```{r latency to success cube transformed}
+
+with(dyad.df, hist(latency_3sec_trans, breaks = 5,
+                   xlab = "Latency to success in cube root seconds",
+                   main = "hist dyad latency - \n cube root transformed"))
+```
+  
+#### Frequency of cooperative action sequences  
+* Type: Continuous  
+* Function: DV  
+* Description: Between-dyad variable (joint measure of cooperation). How many times did the dyad hold the handles completely down within 3s of one another  CALCULATED VIA INTERACT  
+```{r Freq CA sequences dyad}
+with(dyad.df, hist(Freq_CA_p4,breaks = 10,
+                   xlab = "# cooperative action sequences",
+                   main = "hist dyad cooperative actions"))
+mean(dyad.df$Freq_CA_p4, na.rm = TRUE)
+sd(dyad.df$Freq_CA_p4, na.rm = TRUE)
+range(dyad.df$Freq_CA_p4, na.rm = TRUE)
+table(dyad.df$Freq_CA_p4)
+#number of observations NAs removed
+sum(!is.na(dyad.df$Freq_CA_p4))
+```
+#### Descriptive Statistics for entire dataset - indiv structure
+  
+Means and SD for initiating behaviours (3sec)
+  
+**Despite the strongest transformation for both variables, normality issues still present. Therefore we have chosen to classify as a binary variable (y/n)**
+```{r Initiating behaviours entire sample -3s}
+#Untransformed
+with(indiv.df, hist(Initiate_freq_3s ,breaks = 5,
+                   xlab = "# initiating behaviours",
+                   main = "hist dyad initiating actions"))
+mean(indiv.df$Initiate_freq_3s, na.rm = TRUE)
+sd(indiv.df$Initiate_freq_3s, na.rm = TRUE)
+
+
+#Transformed
+with(indiv.df, hist(Initiate_freq_3s_LogTrans ,breaks = 5,
+                   xlab = "# log initiating behaviours",
+                   main = "hist dyad initiating actions log"))
+mean(indiv.df$Initiate_freq_3s_LogTrans, na.rm = TRUE)
+sd(indiv.df$Initiate_freq_3s_LogTrans, na.rm = TRUE)
+
+
+#Binary
+with(indiv.df, hist(Initiate_yn_3s ,breaks = 2,
+                   xlab = "# y or n initiating behaviours",
+                   main = "hist dyad initiating actions yes or no"))
+table(indiv.df$Initiate_yn_3s)
+```
+  
+Means and SD for responding behaviours (3sec)
+  
+```{r Responding behaviours entire sample -3s}
+#Untransformed
+with(indiv.df, hist((Respond_freq_3s),breaks = 10,
+                   xlab = "# responding behaviours",
+                   main = "hist dyad responding actions"))
+mean(indiv.df$Respond_freq_3s, na.rm = TRUE)
+sd(indiv.df$Respond_freq_3s, na.rm = TRUE)
+
+#Transformed
+with(indiv.df, hist(Respond_freq_3s_LogTrans,breaks = 10,
+                   xlab = "# responding behaviours",
+                   main = "hist dyad responding actions"))
+mean(indiv.df$Respond_freq_3s_LogTrans, na.rm = TRUE)
+sd(indiv.df$Respond_freq_3s_LogTrans, na.rm = TRUE)
+
+#Binary
+with(indiv.df, hist(Respond_yn_3s ,breaks = 2,
+                   xlab = "# y or n responding behaviours",
+                   main = "hist dyad responding actions yes or no"))
+table(indiv.df$Respond_yn_3s)
+```
+
+Means and SD for initiating behaviours (0sec)
+```{r Initiating behaviours entire sample -0s}
+mean(pp.data$Initiate_freq_0s, na.rm = TRUE)
+sd(pp.data$Initiate_freq_0s, na.rm = TRUE)
+```
+Means and SD for responding behaviours (0sec)
+```{r Responding behaviours entire sample -0s}
+mean(pp.data$Respond_freq_0s, na.rm = TRUE)
+sd(pp.data$Respond_freq_0s, na.rm = TRUE)
+```
+  
+### Dyad Level - ORCA
 
 #### Afilliative score (Warm Up)  
 * Type: Continuous  
@@ -2074,7 +2044,7 @@ table(dyad.df$initiate_yn_3s_o)
 ```
   
 
-### Peer
+### Dyad Level - Peer
 #### PEER Afilliative score (Warm Up)  
 * Type: Continuous  
 * Function: IV, DV  
@@ -2256,120 +2226,6 @@ sd(dyad.df$initiate_freq_3s_p, na.rm = TRUE)
 range(dyad.df$initiate_freq_3s_p, na.rm = TRUE)
 #number of observations NAs removed
 sum(!is.na(dyad.df$initiate_freq_3s_p))
-```
-
-### Dyad  
-#### Age of all participants
-* Type: Continuous  
-* Function: Control, IV 
-```{r Participant age on all P4 study in participants}
-with(indiv.df, hist(Age_P4,breaks = 20,
-                   xlab = "age (months)",
-                   main = "hist participant (N = 294) age"))
-mean(indiv.df$Age_P4, na.rm = TRUE)
-sd(indiv.df$Age_P4, na.rm = TRUE)
-median(indiv.df$Age_P4, na.rm = TRUE)
-range(indiv.df$Age_P4, na.rm = TRUE)
-#number of observations NAs removed
-sum(!is.na(indiv.df$Age_P4))
-```
-#### Gender of all participants
-* Type: Categorical  
-* Function: Control, IV  
-```{r Participant gender}
-table(indiv.df$Gender)
-#1 = male, 2 = female
-```
-  
-#### Length of Robot Task Interaction
-* Type: Continuous  
-* Function: IV  
-* Description: How long (in seconds) the dyad interacted with the robot task. Task began once the experimenter finished instructions ("remember you have to push both handles at the same time) and task finished once the experimenter started to say "I know lets look at a new game"
-```{r Dyad time on task - robot task}
-with(dyad.df, hist(rt_tt_sec,breaks = 20,
-                   xlab = "seconds",
-                   main = "hist of robot task length"))
-mean(dyad.df$rt_tt_sec, na.rm = TRUE)
-sd(dyad.df$rt_tt_sec, na.rm = TRUE)
-range(dyad.df$rt_tt_sec, na.rm = TRUE)
-```
-
-  
-#### Age difference
-* Type: Continuous  
-* Function: IV  
-* Description: The difference in age (in months) between the ORCA child and peer child
- 
-```{r Age difference in months - dyad}
-with(dyad.df, hist(age_p4_diff,breaks = 20,
-                   xlab = "Age difference",
-                   main = "hist of dyad age differences"))
-mean(dyad.df$age_p4_diff, na.rm = TRUE)
-sd(dyad.df$age_p4_diff, na.rm = TRUE)
-range(dyad.df$age_p4_diff, na.rm = TRUE)
-```
-#### Latency to first success  
-* Type: Continuous  
-* Function: DV  
-* Description: Between-dyad variable (joint measure of cooperation). How long did it take for the dyad to hold the handles completely down within 3s of one another  CALCULATED VIA INTERACT  
-```{r Latency to success - dyad - untransformed}
-with(dyad.df, hist(latency_3sec,breaks = 20,
-                   xlab = "Latency to success in seconds",
-                   main = "hist dyad latency"))
-mean(dyad.df$latency_3sec, na.rm = TRUE)
-sd(dyad.df$latency_3sec, na.rm = TRUE)
-range(dyad.df$latency_3sec, na.rm = TRUE)
-#number of observations NAs removed
-sum(!is.na(dyad.df$latency_3sec))
-```
-  
-  
-* Because the data is heavily skewed, a log transformation may be appropriate (see McElwain et al., 2016)
-
-```{r latency to success log transformed}
-
-with(dyad.df, hist(log(latency_3sec),breaks = 20,
-                   xlab = "Latency to success in log seconds",
-                   main = "hist dyad latency - \n log transformed"))
-```
-  
-#### Frequency of cooperative action sequences  
-* Type: Continuous  
-* Function: DV  
-* Description: Between-dyad variable (joint measure of cooperation). How many times did the dyad hold the handles completely down within 3s of one another  CALCULATED VIA INTERACT  
-```{r Freq CA sequences dyad}
-with(dyad.df, hist(Freq_CA_p4,breaks = 20,
-                   xlab = "# cooperative action sequences",
-                   main = "hist dyad cooperative actions"))
-mean(dyad.df$Freq_CA_p4, na.rm = TRUE)
-sd(dyad.df$Freq_CA_p4, na.rm = TRUE)
-range(dyad.df$Freq_CA_p4, na.rm = TRUE)
-table(dyad.df$Freq_CA_p4)
-#number of observations NAs removed
-sum(!is.na(dyad.df$Freq_CA_p4))
-```
-#### Descriptive Statistics for entire dataset - indiv structure
-
-Means and SD for initiating behaviours (3sec)
-```{r Initiating behaviours entire sample -3s}
-mean(pp.data$Initiate_freq_3s, na.rm = TRUE)
-sd(pp.data$Initiate_freq_3s, na.rm = TRUE)
-```
-Means and SD for responding behaviours (3sec)
-```{r Responding behaviours entire sample -3s}
-mean(pp.data$Respond_freq_3s, na.rm = TRUE)
-sd(pp.data$Respond_freq_3s, na.rm = TRUE)
-```
-
-Means and SD for initiating behaviours (0sec)
-```{r Initiating behaviours entire sample -0s}
-mean(pp.data$Initiate_freq_0s, na.rm = TRUE)
-sd(pp.data$Initiate_freq_0s, na.rm = TRUE)
-```
-Means and SD for responding behaviours (0sec)
-```{r Responding behaviours entire sample -0s}
-mean(pp.data$Respond_freq_0s, na.rm = TRUE)
-sd(pp.data$Respond_freq_0s, na.rm = TRUE)
 ```
   
 ### ORCA Parent data/demographics
