@@ -1,6 +1,6 @@
 ---
 title: "Warm-up Play Impacts Children's Cooperation  -  Reliability"
-author: "Nichole Breeland"
+author: ""
 date: "14/01/2021"
 output: html_document
 ---
@@ -636,39 +636,39 @@ robot.data$Coders[robot.data$Coders == "NB_OB"] <- 1
 robot.data$Coders[robot.data$Coders == "NB_SC"] <- 2
 robot.data$Coders[robot.data$Coders == "SC_OB"] <- 3
 
-#Nichole Scores - Child A
+#NB Scores - Child A
 
 robot.data$Child_A_Afill_NB <- rowMeans(robot.data[,3:12], na.rm=TRUE)
 robot.data$Child_A_Antag_NB <- rowMeans(robot.data[,13:22], na.rm=TRUE)
 robot.data$Child_A_Eng_NB <- rowMeans(robot.data[,23:32], na.rm=TRUE)
 robot.data$Child_A_JCE_NB <- rowMeans(robot.data[,33:42], na.rm=TRUE)
 
-#Sasha Scores - Child A
+#SC Scores - Child A
 robot.data$Child_A_Afill_SC <- rowMeans(robot.data[,43:52], na.rm=TRUE)
 robot.data$Child_A_Antag_SC <- rowMeans(robot.data[,53:62], na.rm=TRUE)
 robot.data$Child_A_Eng_SC <- rowMeans(robot.data[,63:72], na.rm=TRUE)
 robot.data$Child_A_JCE_SC <- rowMeans(robot.data[,73:82], na.rm=TRUE)
 
-#Olivia Scores - Child A
+#OB Scores - Child A
 robot.data$Child_A_Afill_OB <- rowMeans(robot.data[,83:92], na.rm=TRUE)
 robot.data$Child_A_Antag_OB <- rowMeans(robot.data[,93:102], na.rm=TRUE)
 robot.data$Child_A_Eng_OB <- rowMeans(robot.data[,103:112], na.rm=TRUE)
 robot.data$Child_A_JCE_OB <- rowMeans(robot.data[,113:122], na.rm=TRUE)
 
-#Nichole Scores - Child B
+#NB Scores - Child B
 
 robot.data$Child_B_Afill_NB <- rowMeans(robot.data[,163:172], na.rm=TRUE)
 robot.data$Child_B_Antag_NB <- rowMeans(robot.data[,173:182], na.rm=TRUE)
 robot.data$Child_B_Eng_NB <- rowMeans(robot.data[,183:192], na.rm=TRUE)
 robot.data$Child_B_JCE_NB <- rowMeans(robot.data[,193:202], na.rm=TRUE)
 
-#Sasha Scores - Child B
+#SC Scores - Child B
 robot.data$Child_B_Afill_SC <- rowMeans(robot.data[,203:212], na.rm=TRUE)
 robot.data$Child_B_Antag_SC <- rowMeans(robot.data[,213:222], na.rm=TRUE)
 robot.data$Child_B_Eng_SC <- rowMeans(robot.data[,223:232], na.rm=TRUE)
 robot.data$Child_B_JCE_SC <- rowMeans(robot.data[,233:242], na.rm=TRUE)
 
-#Olivia Scores - Child B
+#OB Scores - Child B
 robot.data$Child_B_Afill_OB <- rowMeans(robot.data[,243:252], na.rm=TRUE)
 robot.data$Child_B_Antag_OB <- rowMeans(robot.data[,253:262], na.rm=TRUE)
 robot.data$Child_B_Eng_OB <- rowMeans(robot.data[,263:272], na.rm=TRUE)
