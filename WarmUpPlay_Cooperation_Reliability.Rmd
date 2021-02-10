@@ -1,0 +1,881 @@
+---
+title: "Warm-up Play Impacts Children's Cooperation  -  Reliability"
+author: ""
+date: "14/01/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# P4 Peer Warm Up Social Context Reliability Document Set up ---------------------------------
+```{r read data}
+all.data = read.csv("ORCA_p4_PeerWarmUp_SocialContextCodes.csv", stringsAsFactors = FALSE)
+
+options(scipen = 999)
+
+all.data[all.data == 888] <- 0
+
+#999 = child missing from view, 
+#coded as 999 but recode as 0 as to not overinflate ICC's but to include for reliability.
+all.data[all.data == 999] <- 0
+```
+
+```{r coder categories}
+#Coder categories for reliability check
+
+#AO_BC = 1
+#AO_CC = 2
+#BC_CC = 3
+#NB_AO = 4
+#NB_BC = 5
+#NB_SC = 6
+#SC_AO = 7
+
+all.data$Coders[all.data$Coders == "AO_BC"] <- 1
+all.data$Coders[all.data$Coders == "AO_CC"] <- 2
+all.data$Coders[all.data$Coders == "BC_CC"] <- 3
+all.data$Coders[all.data$Coders == "NB_AO"] <- 4
+all.data$Coders[all.data$Coders == "NB_BC"] <- 5
+all.data$Coders[all.data$Coders == "NB_SC"] <- 6
+all.data$Coders[all.data$Coders == "SC_AO"] <- 7
+
+```
+
+
+```{r coder final scores}
+#NB Scores
+
+all.data$Child_A_Afill_Block1_NB <- rowMeans(all.data[,11:13], na.rm=TRUE)
+all.data$Child_A_Antag_Block1_NB <- rowMeans(all.data[,17:19], na.rm=TRUE)
+all.data$Child_A_JCE_Block1_NB <- rowMeans(all.data[,29:31], na.rm=TRUE)
+all.data$Child_A_Afill_Block2_NB <- rowMeans(all.data[,14:16], na.rm=TRUE)
+all.data$Child_A_Antag_Block2_NB <- rowMeans(all.data[,20:22], na.rm=TRUE)
+all.data$Child_A_JCE_Block2_NB <- rowMeans(all.data[,32:34], na.rm=TRUE)
+all.data$Child_A_Contrib_NB <- rowMeans(all.data[,35:37], na.rm=TRUE)
+
+all.data$Child_B_Afill_Block1_NB <- rowMeans(all.data[,173:175], na.rm=TRUE)
+all.data$Child_B_Afill_Block2_NB <- rowMeans(all.data[,176:178], na.rm=TRUE)
+all.data$Child_B_Antag_Block1_NB <- rowMeans(all.data[,179:181], na.rm=TRUE)
+all.data$Child_B_Antag_Block2_NB <- rowMeans(all.data[,182:184], na.rm=TRUE)
+all.data$Child_B_JCE_Block1_NB <- rowMeans(all.data[,191:193], na.rm=TRUE)
+all.data$Child_B_JCE_Block2_NB <- rowMeans(all.data[,194:196], na.rm=TRUE)
+all.data$Child_B_Contrib_NB <- rowMeans(all.data[,197:199], na.rm=TRUE)
+
+#SC scores
+all.data$Child_A_Afill_Block1_SC <- rowMeans(all.data[,38:40], na.rm=TRUE)
+all.data$Child_A_Afill_Block2_SC <- rowMeans(all.data[,41:43], na.rm=TRUE)
+all.data$Child_A_Antag_Block1_SC <- rowMeans(all.data[,44:46], na.rm=TRUE)
+all.data$Child_A_Antag_Block2_SC <- rowMeans(all.data[,47:49], na.rm=TRUE)
+all.data$Child_A_JCE_Block1_SC <- rowMeans(all.data[,56:58], na.rm=TRUE)
+all.data$Child_A_JCE_Block2_SC <- rowMeans(all.data[,59:61], na.rm=TRUE)
+all.data$Child_A_Contrib_SC <- rowMeans(all.data[,62:64], na.rm=TRUE)
+
+all.data$Child_B_Afill_Block1_SC <- rowMeans(all.data[,200:202], na.rm=TRUE)
+all.data$Child_B_Afill_Block2_SC <- rowMeans(all.data[,203:205], na.rm=TRUE)
+all.data$Child_B_Antag_Block1_SC <- rowMeans(all.data[,206:208], na.rm=TRUE)
+all.data$Child_B_Antag_Block2_SC <- rowMeans(all.data[,209:211], na.rm=TRUE)
+all.data$Child_B_JCE_Block1_SC <- rowMeans(all.data[,218:220], na.rm=TRUE)
+all.data$Child_B_JCE_Block2_SC <- rowMeans(all.data[,221:223], na.rm=TRUE)
+all.data$Child_B_Contrib_SC <- rowMeans(all.data[,224:226], na.rm=TRUE)
+
+#AO scores
+
+all.data$Child_A_Afill_Block1_AO <- rowMeans(all.data[,65:67], na.rm=TRUE)
+all.data$Child_A_Afill_Block2_AO <- rowMeans(all.data[,68:70], na.rm=TRUE)
+all.data$Child_A_Antag_Block1_AO <- rowMeans(all.data[,71:73], na.rm=TRUE)
+all.data$Child_A_Antag_Block2_AO <- rowMeans(all.data[,74:76], na.rm=TRUE)
+all.data$Child_A_JCE_Block1_AO <- rowMeans(all.data[,83:85], na.rm=TRUE)
+all.data$Child_A_JCE_Block2_AO <- rowMeans(all.data[,86:88], na.rm=TRUE)
+all.data$Child_A_Contrib_AO <- rowMeans(all.data[,89:91], na.rm=TRUE)
+
+all.data$Child_B_Afill_Block1_AO <- rowMeans(all.data[,227:229], na.rm=TRUE)
+all.data$Child_B_Afill_Block2_AO <- rowMeans(all.data[,230:232], na.rm=TRUE)
+all.data$Child_B_Antag_Block1_AO <- rowMeans(all.data[,233:235], na.rm=TRUE)
+all.data$Child_B_Antag_Block2_AO <- rowMeans(all.data[,236:238], na.rm=TRUE)
+all.data$Child_B_JCE_Block1_AO <- rowMeans(all.data[,245:247], na.rm=TRUE)
+all.data$Child_B_JCE_Block2_AO <- rowMeans(all.data[,248:250], na.rm=TRUE)
+all.data$Child_B_Contrib_AO <- rowMeans(all.data[,251:253], na.rm=TRUE)
+
+#BC scores
+
+all.data$Child_A_Afill_Block1_BC <- rowMeans(all.data[,92:94], na.rm=TRUE)
+all.data$Child_A_Afill_Block2_BC <- rowMeans(all.data[,95:97], na.rm=TRUE)
+all.data$Child_A_Antag_Block1_BC <- rowMeans(all.data[,98:100], na.rm=TRUE)
+all.data$Child_A_Antag_Block2_BC <- rowMeans(all.data[,101:103], na.rm=TRUE)
+all.data$Child_A_JCE_Block1_BC <- rowMeans(all.data[,110:112], na.rm=TRUE)
+all.data$Child_A_JCE_Block2_BC <- rowMeans(all.data[,113:115], na.rm=TRUE)
+all.data$Child_A_Contrib_BC <- rowMeans(all.data[,116:118], na.rm=TRUE)
+
+all.data$Child_B_Afill_Block1_BC <- rowMeans(all.data[,254:256], na.rm=TRUE)
+all.data$Child_B_Afill_Block2_BC <- rowMeans(all.data[,257:259], na.rm=TRUE)
+all.data$Child_B_Antag_Block1_BC <- rowMeans(all.data[,260:262], na.rm=TRUE)
+all.data$Child_B_Antag_Block2_BC <- rowMeans(all.data[,263:265], na.rm=TRUE)
+all.data$Child_B_JCE_Block1_BC <- rowMeans(all.data[,272:274], na.rm=TRUE)
+all.data$Child_B_JCE_Block2_BC <- rowMeans(all.data[,275:277], na.rm=TRUE)
+all.data$Child_B_Contrib_BC <- rowMeans(all.data[,278:280], na.rm=TRUE)
+
+#CC scores
+
+all.data$Child_A_Afill_Block1_CC <- rowMeans(all.data[,119:121], na.rm=TRUE)
+all.data$Child_A_Afill_Block2_CC <- rowMeans(all.data[,122:124], na.rm=TRUE)
+all.data$Child_A_Antag_Block1_CC <- rowMeans(all.data[,125:127], na.rm=TRUE)
+all.data$Child_A_Antag_Block2_CC <- rowMeans(all.data[,128:130], na.rm=TRUE)
+all.data$Child_A_JCE_Block1_CC <- rowMeans(all.data[,137:139], na.rm=TRUE)
+all.data$Child_A_JCE_Block2_CC <- rowMeans(all.data[,140:142], na.rm=TRUE)
+all.data$Child_A_Contrib_CC <- rowMeans(all.data[,143:145], na.rm=TRUE)
+
+all.data$Child_B_Afill_Block1_CC <- rowMeans(all.data[,281:283], na.rm=TRUE)
+all.data$Child_B_Afill_Block2_CC <- rowMeans(all.data[,284:286], na.rm=TRUE)
+all.data$Child_B_Antag_Block1_CC <- rowMeans(all.data[,287:289], na.rm=TRUE)
+all.data$Child_B_Antag_Block2_CC <- rowMeans(all.data[,290:292], na.rm=TRUE)
+all.data$Child_B_JCE_Block1_CC <- rowMeans(all.data[,299:301], na.rm=TRUE)
+all.data$Child_B_JCE_Block2_CC <- rowMeans(all.data[,302:304], na.rm=TRUE)
+all.data$Child_B_Contrib_CC <- rowMeans(all.data[,305:307], na.rm=TRUE)
+
+```
+
+
+```{r data subsets}
+#data subsets for raters
+
+#subset for pair 1
+sc.df_AO_BC <- all.data[which(all.data$Coders == 1),]
+
+#subset for pair 2
+sc.df_AO_CC <- all.data[which(all.data$Coders == 2),]
+
+#subset for pair 3
+sc.df_BC_CC <- all.data[which(all.data$Coders == 3),]
+
+#subset for pair 4
+sc.df_NB_AO <- all.data[which(all.data$Coders == 4),]
+
+#subset for pair 5
+sc.df_NB_BC <- all.data[which(all.data$Coders == 5),]
+
+#subset for pair 6
+sc.df_NB_SC <- all.data[which(all.data$Coders == 6),]
+
+#subset for pair 7
+sc.df_SC_AO <- all.data[which(all.data$Coders == 7),]
+
+#Afill Block 1 and Block 2 subsets
+
+sc.df_AO_BC_afill <- subset(sc.df_AO_BC, select = c("Child_A_Afill_Block1_AO", "Child_A_Afill_Block2_AO",
+                                                    "Child_B_Afill_Block1_AO", "Child_B_Afill_Block2_AO",
+                                                    "Child_A_Afill_Block1_BC", "Child_A_Afill_Block2_BC",
+                                                    "Child_B_Afill_Block1_BC", "Child_B_Afill_Block2_BC"))
+sc.df_AO_BC_afill <- data.frame(Block1_Afill_AO = c(sc.df_AO_BC_afill[,"Child_A_Afill_Block1_AO"], 
+                                                     sc.df_AO_BC_afill[,"Child_B_Afill_Block1_AO"]),
+                                Block2_Afill_AO = c(sc.df_AO_BC_afill[,"Child_A_Afill_Block2_AO"], 
+                                                    sc.df_AO_BC_afill[,"Child_B_Afill_Block2_AO"]),
+                                Block1_Afill_BC = c(sc.df_AO_BC_afill[,"Child_A_Afill_Block1_BC"], 
+                                                    sc.df_AO_BC_afill[,"Child_B_Afill_Block1_BC"]),
+                                Block2_Afill_BC = c(sc.df_AO_BC_afill[,"Child_A_Afill_Block2_BC"], 
+                                                    sc.df_AO_BC_afill[,"Child_B_Afill_Block2_BC"]))
+
+sc.df_AO_CC_afill <- subset(sc.df_AO_CC, select = c("Child_A_Afill_Block1_AO", "Child_A_Afill_Block2_AO",
+                                                    "Child_B_Afill_Block1_AO", "Child_B_Afill_Block2_AO",
+                                                    "Child_A_Afill_Block1_CC", "Child_A_Afill_Block2_CC",
+                                                    "Child_B_Afill_Block1_CC", "Child_B_Afill_Block2_CC"))
+sc.df_AO_CC_afill <- data.frame(Block1_Afill_AO = c(sc.df_AO_CC_afill[,"Child_A_Afill_Block1_AO"], 
+                                                    sc.df_AO_CC_afill[,"Child_B_Afill_Block1_AO"]),
+                                Block2_Afill_AO = c(sc.df_AO_CC_afill[,"Child_A_Afill_Block2_AO"], 
+                                                    sc.df_AO_CC_afill[,"Child_B_Afill_Block2_AO"]),
+                                Block1_Afill_CC = c(sc.df_AO_CC_afill[,"Child_A_Afill_Block1_CC"], 
+                                                    sc.df_AO_CC_afill[,"Child_B_Afill_Block1_CC"]),
+                                Block2_Afill_CC = c(sc.df_AO_CC_afill[,"Child_A_Afill_Block2_CC"], 
+                                                    sc.df_AO_CC_afill[,"Child_B_Afill_Block2_CC"]))
+
+sc.df_BC_CC_afill <- subset(sc.df_BC_CC, select = c("Child_A_Afill_Block1_BC", "Child_A_Afill_Block2_BC",
+                                                    "Child_B_Afill_Block1_BC", "Child_B_Afill_Block2_BC",
+                                                    "Child_A_Afill_Block1_CC", "Child_A_Afill_Block2_CC",
+                                                    "Child_B_Afill_Block1_CC", "Child_B_Afill_Block2_CC"))
+sc.df_BC_CC_afill <- data.frame(Block1_Afill_BC = c(sc.df_BC_CC_afill[,"Child_A_Afill_Block1_BC"], 
+                                                    sc.df_BC_CC_afill[,"Child_B_Afill_Block1_BC"]),
+                                Block2_Afill_BC = c(sc.df_BC_CC_afill[,"Child_A_Afill_Block2_BC"], 
+                                                    sc.df_BC_CC_afill[,"Child_B_Afill_Block2_BC"]),
+                                Block1_Afill_CC = c(sc.df_BC_CC_afill[,"Child_A_Afill_Block1_CC"], 
+                                                    sc.df_BC_CC_afill[,"Child_B_Afill_Block1_CC"]),
+                                Block2_Afill_CC = c(sc.df_BC_CC_afill[,"Child_A_Afill_Block2_CC"], 
+                                                    sc.df_BC_CC_afill[,"Child_B_Afill_Block2_CC"]))
+
+sc.df_NB_AO_afill <- subset(sc.df_NB_AO, select = c("Child_A_Afill_Block1_NB", "Child_A_Afill_Block2_NB",
+                                                    "Child_B_Afill_Block1_NB", "Child_B_Afill_Block2_NB",
+                                                    "Child_A_Afill_Block1_AO", "Child_A_Afill_Block2_AO",
+                                                    "Child_B_Afill_Block1_AO", "Child_B_Afill_Block2_AO"))
+sc.df_NB_AO_afill <- data.frame(Block1_Afill_NB = c(sc.df_NB_AO_afill[,"Child_A_Afill_Block1_NB"], 
+                                                    sc.df_NB_AO_afill[,"Child_B_Afill_Block1_NB"]),
+                                Block2_Afill_NB = c(sc.df_NB_AO_afill[,"Child_A_Afill_Block2_NB"], 
+                                                    sc.df_NB_AO_afill[,"Child_B_Afill_Block2_NB"]),
+                                Block1_Afill_AO = c(sc.df_NB_AO_afill[,"Child_A_Afill_Block1_AO"], 
+                                                    sc.df_NB_AO_afill[,"Child_B_Afill_Block1_AO"]),
+                                Block2_Afill_AO = c(sc.df_NB_AO_afill[,"Child_A_Afill_Block2_AO"], 
+                                                    sc.df_NB_AO_afill[,"Child_B_Afill_Block2_AO"]))
+
+sc.df_NB_BC_afill <- subset(sc.df_NB_BC, select = c("Child_A_Afill_Block1_NB", "Child_A_Afill_Block2_NB",
+                                                    "Child_B_Afill_Block1_NB", "Child_B_Afill_Block2_NB",
+                                                    "Child_A_Afill_Block1_BC", "Child_A_Afill_Block2_BC",
+                                                    "Child_B_Afill_Block1_BC", "Child_B_Afill_Block2_BC"))
+sc.df_NB_BC_afill <- data.frame(Block1_Afill_NB = c(sc.df_NB_BC_afill[,"Child_A_Afill_Block1_NB"], 
+                                                    sc.df_NB_BC_afill[,"Child_B_Afill_Block1_NB"]),
+                                Block2_Afill_NB = c(sc.df_NB_BC_afill[,"Child_A_Afill_Block2_NB"], 
+                                                    sc.df_NB_BC_afill[,"Child_B_Afill_Block2_NB"]),
+                                Block1_Afill_BC = c(sc.df_NB_BC_afill[,"Child_A_Afill_Block1_BC"], 
+                                                    sc.df_NB_BC_afill[,"Child_B_Afill_Block1_BC"]),
+                                Block2_Afill_BC = c(sc.df_NB_BC_afill[,"Child_A_Afill_Block2_BC"], 
+                                                    sc.df_NB_BC_afill[,"Child_B_Afill_Block2_BC"]))
+
+sc.df_NB_SC_afill <- subset(sc.df_NB_SC, select = c("Child_A_Afill_Block1_NB", "Child_A_Afill_Block2_NB",
+                                                    "Child_B_Afill_Block1_NB", "Child_B_Afill_Block2_NB",
+                                                    "Child_A_Afill_Block1_SC", "Child_A_Afill_Block2_SC",
+                                                    "Child_B_Afill_Block1_SC", "Child_B_Afill_Block2_SC"))
+sc.df_NB_SC_afill <- data.frame(Block1_Afill_NB = c(sc.df_NB_SC_afill[,"Child_A_Afill_Block1_NB"], 
+                                                    sc.df_NB_SC_afill[,"Child_B_Afill_Block1_NB"]),
+                                Block2_Afill_NB = c(sc.df_NB_SC_afill[,"Child_A_Afill_Block2_NB"], 
+                                                    sc.df_NB_SC_afill[,"Child_B_Afill_Block2_NB"]),
+                                Block1_Afill_SC = c(sc.df_NB_SC_afill[,"Child_A_Afill_Block1_SC"], 
+                                                    sc.df_NB_SC_afill[,"Child_B_Afill_Block1_SC"]),
+                                Block2_Afill_SC = c(sc.df_NB_SC_afill[,"Child_A_Afill_Block2_SC"], 
+                                                    sc.df_NB_SC_afill[,"Child_B_Afill_Block2_SC"]))
+
+sc.df_SC_AO_afill <- subset(sc.df_SC_AO, select = c("Child_A_Afill_Block1_SC", "Child_A_Afill_Block2_SC",
+                                                    "Child_B_Afill_Block1_SC", "Child_B_Afill_Block2_SC",
+                                                    "Child_A_Afill_Block1_AO", "Child_A_Afill_Block2_AO",
+                                                    "Child_B_Afill_Block1_AO", "Child_B_Afill_Block2_AO"))
+sc.df_SC_AO_afill <- data.frame(Block1_Afill_SC = c(sc.df_SC_AO_afill[,"Child_A_Afill_Block1_SC"], 
+                                                    sc.df_SC_AO_afill[,"Child_B_Afill_Block1_SC"]),
+                                Block2_Afill_SC = c(sc.df_SC_AO_afill[,"Child_A_Afill_Block2_SC"], 
+                                                    sc.df_SC_AO_afill[,"Child_B_Afill_Block2_SC"]),
+                                Block1_Afill_AO = c(sc.df_SC_AO_afill[,"Child_A_Afill_Block1_AO"], 
+                                                    sc.df_SC_AO_afill[,"Child_B_Afill_Block1_AO"]),
+                                Block2_Afill_AO = c(sc.df_SC_AO_afill[,"Child_A_Afill_Block2_AO"], 
+                                                    sc.df_SC_AO_afill[,"Child_B_Afill_Block2_AO"]))
+
+
+
+Afill_Block1 <- data.frame(Block1_R1 = c(sc.df_AO_BC_afill[,"Block1_Afill_AO"],
+                                      sc.df_AO_CC_afill[,"Block1_Afill_AO"],
+                                      sc.df_BC_CC_afill[,"Block1_Afill_BC"],
+                                      sc.df_NB_AO_afill[,"Block1_Afill_NB"],
+                                      sc.df_NB_BC_afill[,"Block1_Afill_NB"],
+                                      sc.df_NB_SC_afill[,"Block1_Afill_NB"],
+                                      sc.df_SC_AO_afill[,"Block1_Afill_SC"]),
+                           Block1_R2 = c(sc.df_AO_BC_afill[,"Block1_Afill_BC"],
+                                         sc.df_AO_CC_afill[,"Block1_Afill_CC"],
+                                         sc.df_BC_CC_afill[,"Block1_Afill_CC"],
+                                         sc.df_NB_AO_afill[,"Block1_Afill_AO"],
+                                         sc.df_NB_BC_afill[,"Block1_Afill_BC"],
+                                         sc.df_NB_SC_afill[,"Block1_Afill_SC"],
+                                         sc.df_SC_AO_afill[,"Block1_Afill_AO"]))
+
+Afill_Block2 <- data.frame(Block2_R1 = c(sc.df_AO_BC_afill[,"Block2_Afill_AO"],
+                                         sc.df_AO_CC_afill[,"Block2_Afill_AO"],
+                                         sc.df_BC_CC_afill[,"Block2_Afill_BC"],
+                                         sc.df_NB_AO_afill[,"Block2_Afill_NB"],
+                                         sc.df_NB_BC_afill[,"Block2_Afill_NB"],
+                                         sc.df_NB_SC_afill[,"Block2_Afill_NB"],
+                                         sc.df_SC_AO_afill[,"Block2_Afill_SC"]),
+                           Block2_R2 = c(sc.df_AO_BC_afill[,"Block2_Afill_BC"],
+                                         sc.df_AO_CC_afill[,"Block2_Afill_CC"],
+                                         sc.df_BC_CC_afill[,"Block2_Afill_CC"],
+                                         sc.df_NB_AO_afill[,"Block2_Afill_AO"],
+                                         sc.df_NB_BC_afill[,"Block2_Afill_BC"],
+                                         sc.df_NB_SC_afill[,"Block2_Afill_SC"],
+                                         sc.df_SC_AO_afill[,"Block2_Afill_AO"]))
+
+
+
+
+#Antag Block 1 and Block 2 subsets
+
+sc.df_AO_BC_antag <- subset(sc.df_AO_BC, select = c("Child_A_Antag_Block1_AO", "Child_A_Antag_Block2_AO",
+                                                    "Child_B_Antag_Block1_AO", "Child_B_Antag_Block2_AO",
+                                                    "Child_A_Antag_Block1_BC", "Child_A_Antag_Block2_BC",
+                                                    "Child_B_Antag_Block1_BC", "Child_B_Antag_Block2_BC"))
+sc.df_AO_BC_antag <- data.frame(Block1_Antag_AO = c(sc.df_AO_BC_antag[,"Child_A_Antag_Block1_AO"], 
+                                                    sc.df_AO_BC_antag[,"Child_B_Antag_Block1_AO"]),
+                                Block2_Antag_AO = c(sc.df_AO_BC_antag[,"Child_A_Antag_Block2_AO"], 
+                                                    sc.df_AO_BC_antag[,"Child_B_Antag_Block2_AO"]),
+                                Block1_Antag_BC = c(sc.df_AO_BC_antag[,"Child_A_Antag_Block1_BC"], 
+                                                    sc.df_AO_BC_antag[,"Child_B_Antag_Block1_BC"]),
+                                Block2_Antag_BC = c(sc.df_AO_BC_antag[,"Child_A_Antag_Block2_BC"], 
+                                                    sc.df_AO_BC_antag[,"Child_B_Antag_Block2_BC"]))
+
+sc.df_AO_CC_antag <- subset(sc.df_AO_CC, select = c("Child_A_Antag_Block1_AO", "Child_A_Antag_Block2_AO",
+                                                    "Child_B_Antag_Block1_AO", "Child_B_Antag_Block2_AO",
+                                                    "Child_A_Antag_Block1_CC", "Child_A_Antag_Block2_CC",
+                                                    "Child_B_Antag_Block1_CC", "Child_B_Antag_Block2_CC"))
+sc.df_AO_CC_antag <- data.frame(Block1_Antag_AO = c(sc.df_AO_CC_antag[,"Child_A_Antag_Block1_AO"], 
+                                                    sc.df_AO_CC_antag[,"Child_B_Antag_Block1_AO"]),
+                                Block2_Antag_AO = c(sc.df_AO_CC_antag[,"Child_A_Antag_Block2_AO"], 
+                                                    sc.df_AO_CC_antag[,"Child_B_Antag_Block2_AO"]),
+                                Block1_Antag_CC = c(sc.df_AO_CC_antag[,"Child_A_Antag_Block1_CC"], 
+                                                    sc.df_AO_CC_antag[,"Child_B_Antag_Block1_CC"]),
+                                Block2_Antag_CC = c(sc.df_AO_CC_antag[,"Child_A_Antag_Block2_CC"], 
+                                                    sc.df_AO_CC_antag[,"Child_B_Antag_Block2_CC"]))
+
+sc.df_BC_CC_antag <- subset(sc.df_BC_CC, select = c("Child_A_Antag_Block1_BC", "Child_A_Antag_Block2_BC",
+                                                    "Child_B_Antag_Block1_BC", "Child_B_Antag_Block2_BC",
+                                                    "Child_A_Antag_Block1_CC", "Child_A_Antag_Block2_CC",
+                                                    "Child_B_Antag_Block1_CC", "Child_B_Antag_Block2_CC"))
+sc.df_BC_CC_antag <- data.frame(Block1_Antag_BC = c(sc.df_BC_CC_antag[,"Child_A_Antag_Block1_BC"], 
+                                                    sc.df_BC_CC_antag[,"Child_B_Antag_Block1_BC"]),
+                                Block2_Antag_BC = c(sc.df_BC_CC_antag[,"Child_A_Antag_Block2_BC"], 
+                                                    sc.df_BC_CC_antag[,"Child_B_Antag_Block2_BC"]),
+                                Block1_Antag_CC = c(sc.df_BC_CC_antag[,"Child_A_Antag_Block1_CC"], 
+                                                    sc.df_BC_CC_antag[,"Child_B_Antag_Block1_CC"]),
+                                Block2_Antag_CC = c(sc.df_BC_CC_antag[,"Child_A_Antag_Block2_CC"], 
+                                                    sc.df_BC_CC_antag[,"Child_B_Antag_Block2_CC"]))
+
+sc.df_NB_AO_antag <- subset(sc.df_NB_AO, select = c("Child_A_Antag_Block1_NB", "Child_A_Antag_Block2_NB",
+                                                    "Child_B_Antag_Block1_NB", "Child_B_Antag_Block2_NB",
+                                                    "Child_A_Antag_Block1_AO", "Child_A_Antag_Block2_AO",
+                                                    "Child_B_Antag_Block1_AO", "Child_B_Antag_Block2_AO"))
+sc.df_NB_AO_antag <- data.frame(Block1_Antag_NB = c(sc.df_NB_AO_antag[,"Child_A_Antag_Block1_NB"], 
+                                                    sc.df_NB_AO_antag[,"Child_B_Antag_Block1_NB"]),
+                                Block2_Antag_NB = c(sc.df_NB_AO_antag[,"Child_A_Antag_Block2_NB"], 
+                                                    sc.df_NB_AO_antag[,"Child_B_Antag_Block2_NB"]),
+                                Block1_Antag_AO = c(sc.df_NB_AO_antag[,"Child_A_Antag_Block1_AO"], 
+                                                    sc.df_NB_AO_antag[,"Child_B_Antag_Block1_AO"]),
+                                Block2_Antag_AO = c(sc.df_NB_AO_antag[,"Child_A_Antag_Block2_AO"], 
+                                                    sc.df_NB_AO_antag[,"Child_B_Antag_Block2_AO"]))
+
+sc.df_NB_BC_antag <- subset(sc.df_NB_BC, select = c("Child_A_Antag_Block1_NB", "Child_A_Antag_Block2_NB",
+                                                    "Child_B_Antag_Block1_NB", "Child_B_Antag_Block2_NB",
+                                                    "Child_A_Antag_Block1_BC", "Child_A_Antag_Block2_BC",
+                                                    "Child_B_Antag_Block1_BC", "Child_B_Antag_Block2_BC"))
+sc.df_NB_BC_antag <- data.frame(Block1_Antag_NB = c(sc.df_NB_BC_antag[,"Child_A_Antag_Block1_NB"], 
+                                                    sc.df_NB_BC_antag[,"Child_B_Antag_Block1_NB"]),
+                                Block2_Antag_NB = c(sc.df_NB_BC_antag[,"Child_A_Antag_Block2_NB"], 
+                                                    sc.df_NB_BC_antag[,"Child_B_Antag_Block2_NB"]),
+                                Block1_Antag_BC = c(sc.df_NB_BC_antag[,"Child_A_Antag_Block1_BC"], 
+                                                    sc.df_NB_BC_antag[,"Child_B_Antag_Block1_BC"]),
+                                Block2_Antag_BC = c(sc.df_NB_BC_antag[,"Child_A_Antag_Block2_BC"], 
+                                                    sc.df_NB_BC_antag[,"Child_B_Antag_Block2_BC"]))
+
+sc.df_NB_SC_antag <- subset(sc.df_NB_SC, select = c("Child_A_Antag_Block1_NB", "Child_A_Antag_Block2_NB",
+                                                    "Child_B_Antag_Block1_NB", "Child_B_Antag_Block2_NB",
+                                                    "Child_A_Antag_Block1_SC", "Child_A_Antag_Block2_SC",
+                                                    "Child_B_Antag_Block1_SC", "Child_B_Antag_Block2_SC"))
+sc.df_NB_SC_antag <- data.frame(Block1_Antag_NB = c(sc.df_NB_SC_antag[,"Child_A_Antag_Block1_NB"], 
+                                                    sc.df_NB_SC_antag[,"Child_B_Antag_Block1_NB"]),
+                                Block2_Antag_NB = c(sc.df_NB_SC_antag[,"Child_A_Antag_Block2_NB"], 
+                                                    sc.df_NB_SC_antag[,"Child_B_Antag_Block2_NB"]),
+                                Block1_Antag_SC = c(sc.df_NB_SC_antag[,"Child_A_Antag_Block1_SC"], 
+                                                    sc.df_NB_SC_antag[,"Child_B_Antag_Block1_SC"]),
+                                Block2_Antag_SC = c(sc.df_NB_SC_antag[,"Child_A_Antag_Block2_SC"], 
+                                                    sc.df_NB_SC_antag[,"Child_B_Antag_Block2_SC"]))
+
+sc.df_SC_AO_antag <- subset(sc.df_SC_AO, select = c("Child_A_Antag_Block1_SC", "Child_A_Antag_Block2_SC",
+                                                    "Child_B_Antag_Block1_SC", "Child_B_Antag_Block2_SC",
+                                                    "Child_A_Antag_Block1_AO", "Child_A_Antag_Block2_AO",
+                                                    "Child_B_Antag_Block1_AO", "Child_B_Antag_Block2_AO"))
+sc.df_SC_AO_antag <- data.frame(Block1_Antag_SC = c(sc.df_SC_AO_antag[,"Child_A_Antag_Block1_SC"], 
+                                                    sc.df_SC_AO_antag[,"Child_B_Antag_Block1_SC"]),
+                                Block2_Antag_SC = c(sc.df_SC_AO_antag[,"Child_A_Antag_Block2_SC"], 
+                                                    sc.df_SC_AO_antag[,"Child_B_Antag_Block2_SC"]),
+                                Block1_Antag_AO = c(sc.df_SC_AO_antag[,"Child_A_Antag_Block1_AO"], 
+                                                    sc.df_SC_AO_antag[,"Child_B_Antag_Block1_AO"]),
+                                Block2_Antag_AO = c(sc.df_SC_AO_antag[,"Child_A_Antag_Block2_AO"], 
+                                                    sc.df_SC_AO_antag[,"Child_B_Antag_Block2_AO"]))
+
+
+
+Antag_Block1 <- data.frame(Block1_R1 = c(sc.df_AO_BC_antag[,"Block1_Antag_AO"],
+                                         sc.df_AO_CC_antag[,"Block1_Antag_AO"],
+                                         sc.df_BC_CC_antag[,"Block1_Antag_BC"],
+                                         sc.df_NB_AO_antag[,"Block1_Antag_NB"],
+                                         sc.df_NB_BC_antag[,"Block1_Antag_NB"],
+                                         sc.df_NB_SC_antag[,"Block1_Antag_NB"],
+                                         sc.df_SC_AO_antag[,"Block1_Antag_SC"]),
+                           Block1_R2 = c(sc.df_AO_BC_antag[,"Block1_Antag_BC"],
+                                         sc.df_AO_CC_antag[,"Block1_Antag_CC"],
+                                         sc.df_BC_CC_antag[,"Block1_Antag_CC"],
+                                         sc.df_NB_AO_antag[,"Block1_Antag_AO"],
+                                         sc.df_NB_BC_antag[,"Block1_Antag_BC"],
+                                         sc.df_NB_SC_antag[,"Block1_Antag_SC"],
+                                         sc.df_SC_AO_antag[,"Block1_Antag_AO"]))
+
+Antag_Block2 <- data.frame(Block2_R1 = c(sc.df_AO_BC_antag[,"Block2_Antag_AO"],
+                                         sc.df_AO_CC_antag[,"Block2_Antag_AO"],
+                                         sc.df_BC_CC_antag[,"Block2_Antag_BC"],
+                                         sc.df_NB_AO_antag[,"Block2_Antag_NB"],
+                                         sc.df_NB_BC_antag[,"Block2_Antag_NB"],
+                                         sc.df_NB_SC_antag[,"Block2_Antag_NB"],
+                                         sc.df_SC_AO_antag[,"Block2_Antag_SC"]),
+                           Block2_R2 = c(sc.df_AO_BC_antag[,"Block2_Antag_BC"],
+                                         sc.df_AO_CC_antag[,"Block2_Antag_CC"],
+                                         sc.df_BC_CC_antag[,"Block2_Antag_CC"],
+                                         sc.df_NB_AO_antag[,"Block2_Antag_AO"],
+                                         sc.df_NB_BC_antag[,"Block2_Antag_BC"],
+                                         sc.df_NB_SC_antag[,"Block2_Antag_SC"],
+                                         sc.df_SC_AO_antag[,"Block2_Antag_AO"]))
+
+#JCE Block 1 and Block 2 subsets
+
+sc.df_AO_BC_jce <- subset(sc.df_AO_BC, select = c("Child_A_JCE_Block1_AO", "Child_A_JCE_Block2_AO",
+                                                    "Child_B_JCE_Block1_AO", "Child_B_JCE_Block2_AO",
+                                                    "Child_A_JCE_Block1_BC", "Child_A_JCE_Block2_BC",
+                                                    "Child_B_JCE_Block1_BC", "Child_B_JCE_Block2_BC"))
+sc.df_AO_BC_jce <- data.frame(Block1_JCE_AO = c(sc.df_AO_BC_jce[,"Child_A_JCE_Block1_AO"], 
+                                                    sc.df_AO_BC_jce[,"Child_B_JCE_Block1_AO"]),
+                                Block2_JCE_AO = c(sc.df_AO_BC_jce[,"Child_A_JCE_Block2_AO"], 
+                                                    sc.df_AO_BC_jce[,"Child_B_JCE_Block2_AO"]),
+                                Block1_JCE_BC = c(sc.df_AO_BC_jce[,"Child_A_JCE_Block1_BC"], 
+                                                    sc.df_AO_BC_jce[,"Child_B_JCE_Block1_BC"]),
+                                Block2_JCE_BC = c(sc.df_AO_BC_jce[,"Child_A_JCE_Block2_BC"], 
+                                                    sc.df_AO_BC_jce[,"Child_B_JCE_Block2_BC"]))
+
+sc.df_AO_CC_jce <- subset(sc.df_AO_CC, select = c("Child_A_JCE_Block1_AO", "Child_A_JCE_Block2_AO",
+                                                    "Child_B_JCE_Block1_AO", "Child_B_JCE_Block2_AO",
+                                                    "Child_A_JCE_Block1_CC", "Child_A_JCE_Block2_CC",
+                                                    "Child_B_JCE_Block1_CC", "Child_B_JCE_Block2_CC"))
+sc.df_AO_CC_jce <- data.frame(Block1_JCE_AO = c(sc.df_AO_CC_jce[,"Child_A_JCE_Block1_AO"], 
+                                                    sc.df_AO_CC_jce[,"Child_B_JCE_Block1_AO"]),
+                                Block2_JCE_AO = c(sc.df_AO_CC_jce[,"Child_A_JCE_Block2_AO"], 
+                                                    sc.df_AO_CC_jce[,"Child_B_JCE_Block2_AO"]),
+                                Block1_JCE_CC = c(sc.df_AO_CC_jce[,"Child_A_JCE_Block1_CC"], 
+                                                    sc.df_AO_CC_jce[,"Child_B_JCE_Block1_CC"]),
+                                Block2_JCE_CC = c(sc.df_AO_CC_jce[,"Child_A_JCE_Block2_CC"], 
+                                                    sc.df_AO_CC_jce[,"Child_B_JCE_Block2_CC"]))
+
+sc.df_BC_CC_jce <- subset(sc.df_BC_CC, select = c("Child_A_JCE_Block1_BC", "Child_A_JCE_Block2_BC",
+                                                    "Child_B_JCE_Block1_BC", "Child_B_JCE_Block2_BC",
+                                                    "Child_A_JCE_Block1_CC", "Child_A_JCE_Block2_CC",
+                                                    "Child_B_JCE_Block1_CC", "Child_B_JCE_Block2_CC"))
+sc.df_BC_CC_jce <- data.frame(Block1_JCE_BC = c(sc.df_BC_CC_jce[,"Child_A_JCE_Block1_BC"], 
+                                                    sc.df_BC_CC_jce[,"Child_B_JCE_Block1_BC"]),
+                                Block2_JCE_BC = c(sc.df_BC_CC_jce[,"Child_A_JCE_Block2_BC"], 
+                                                    sc.df_BC_CC_jce[,"Child_B_JCE_Block2_BC"]),
+                                Block1_JCE_CC = c(sc.df_BC_CC_jce[,"Child_A_JCE_Block1_CC"], 
+                                                    sc.df_BC_CC_jce[,"Child_B_JCE_Block1_CC"]),
+                                Block2_JCE_CC = c(sc.df_BC_CC_jce[,"Child_A_JCE_Block2_CC"], 
+                                                    sc.df_BC_CC_jce[,"Child_B_JCE_Block2_CC"]))
+
+sc.df_NB_AO_jce <- subset(sc.df_NB_AO, select = c("Child_A_JCE_Block1_NB", "Child_A_JCE_Block2_NB",
+                                                    "Child_B_JCE_Block1_NB", "Child_B_JCE_Block2_NB",
+                                                    "Child_A_JCE_Block1_AO", "Child_A_JCE_Block2_AO",
+                                                    "Child_B_JCE_Block1_AO", "Child_B_JCE_Block2_AO"))
+sc.df_NB_AO_jce <- data.frame(Block1_JCE_NB = c(sc.df_NB_AO_jce[,"Child_A_JCE_Block1_NB"], 
+                                                    sc.df_NB_AO_jce[,"Child_B_JCE_Block1_NB"]),
+                                Block2_JCE_NB = c(sc.df_NB_AO_jce[,"Child_A_JCE_Block2_NB"], 
+                                                    sc.df_NB_AO_jce[,"Child_B_JCE_Block2_NB"]),
+                                Block1_JCE_AO = c(sc.df_NB_AO_jce[,"Child_A_JCE_Block1_AO"], 
+                                                    sc.df_NB_AO_jce[,"Child_B_JCE_Block1_AO"]),
+                                Block2_JCE_AO = c(sc.df_NB_AO_jce[,"Child_A_JCE_Block2_AO"], 
+                                                    sc.df_NB_AO_jce[,"Child_B_JCE_Block2_AO"]))
+
+sc.df_NB_BC_jce <- subset(sc.df_NB_BC, select = c("Child_A_JCE_Block1_NB", "Child_A_JCE_Block2_NB",
+                                                    "Child_B_JCE_Block1_NB", "Child_B_JCE_Block2_NB",
+                                                    "Child_A_JCE_Block1_BC", "Child_A_JCE_Block2_BC",
+                                                    "Child_B_JCE_Block1_BC", "Child_B_JCE_Block2_BC"))
+sc.df_NB_BC_jce <- data.frame(Block1_JCE_NB = c(sc.df_NB_BC_jce[,"Child_A_JCE_Block1_NB"], 
+                                                    sc.df_NB_BC_jce[,"Child_B_JCE_Block1_NB"]),
+                                Block2_JCE_NB = c(sc.df_NB_BC_jce[,"Child_A_JCE_Block2_NB"], 
+                                                    sc.df_NB_BC_jce[,"Child_B_JCE_Block2_NB"]),
+                                Block1_JCE_BC = c(sc.df_NB_BC_jce[,"Child_A_JCE_Block1_BC"], 
+                                                    sc.df_NB_BC_jce[,"Child_B_JCE_Block1_BC"]),
+                                Block2_JCE_BC = c(sc.df_NB_BC_jce[,"Child_A_JCE_Block2_BC"], 
+                                                    sc.df_NB_BC_jce[,"Child_B_JCE_Block2_BC"]))
+
+sc.df_NB_SC_jce <- subset(sc.df_NB_SC, select = c("Child_A_JCE_Block1_NB", "Child_A_JCE_Block2_NB",
+                                                    "Child_B_JCE_Block1_NB", "Child_B_JCE_Block2_NB",
+                                                    "Child_A_JCE_Block1_SC", "Child_A_JCE_Block2_SC",
+                                                    "Child_B_JCE_Block1_SC", "Child_B_JCE_Block2_SC"))
+sc.df_NB_SC_jce <- data.frame(Block1_JCE_NB = c(sc.df_NB_SC_jce[,"Child_A_JCE_Block1_NB"], 
+                                                    sc.df_NB_SC_jce[,"Child_B_JCE_Block1_NB"]),
+                                Block2_JCE_NB = c(sc.df_NB_SC_jce[,"Child_A_JCE_Block2_NB"], 
+                                                    sc.df_NB_SC_jce[,"Child_B_JCE_Block2_NB"]),
+                                Block1_JCE_SC = c(sc.df_NB_SC_jce[,"Child_A_JCE_Block1_SC"], 
+                                                    sc.df_NB_SC_jce[,"Child_B_JCE_Block1_SC"]),
+                                Block2_JCE_SC = c(sc.df_NB_SC_jce[,"Child_A_JCE_Block2_SC"], 
+                                                    sc.df_NB_SC_jce[,"Child_B_JCE_Block2_SC"]))
+
+sc.df_SC_AO_jce <- subset(sc.df_SC_AO, select = c("Child_A_JCE_Block1_SC", "Child_A_JCE_Block2_SC",
+                                                    "Child_B_JCE_Block1_SC", "Child_B_JCE_Block2_SC",
+                                                    "Child_A_JCE_Block1_AO", "Child_A_JCE_Block2_AO",
+                                                    "Child_B_JCE_Block1_AO", "Child_B_JCE_Block2_AO"))
+sc.df_SC_AO_jce <- data.frame(Block1_JCE_SC = c(sc.df_SC_AO_jce[,"Child_A_JCE_Block1_SC"], 
+                                                    sc.df_SC_AO_jce[,"Child_B_JCE_Block1_SC"]),
+                                Block2_JCE_SC = c(sc.df_SC_AO_jce[,"Child_A_JCE_Block2_SC"], 
+                                                    sc.df_SC_AO_jce[,"Child_B_JCE_Block2_SC"]),
+                                Block1_JCE_AO = c(sc.df_SC_AO_jce[,"Child_A_JCE_Block1_AO"], 
+                                                    sc.df_SC_AO_jce[,"Child_B_JCE_Block1_AO"]),
+                                Block2_JCE_AO = c(sc.df_SC_AO_jce[,"Child_A_JCE_Block2_AO"], 
+                                                    sc.df_SC_AO_jce[,"Child_B_JCE_Block2_AO"]))
+
+
+
+JCE_Block1 <- data.frame(Block1_R1 = c(sc.df_AO_BC_jce[,"Block1_JCE_AO"],
+                                         sc.df_AO_CC_jce[,"Block1_JCE_AO"],
+                                         sc.df_BC_CC_jce[,"Block1_JCE_BC"],
+                                         sc.df_NB_AO_jce[,"Block1_JCE_NB"],
+                                         sc.df_NB_BC_jce[,"Block1_JCE_NB"],
+                                         sc.df_NB_SC_jce[,"Block1_JCE_NB"],
+                                         sc.df_SC_AO_jce[,"Block1_JCE_SC"]),
+                           Block1_R2 = c(sc.df_AO_BC_jce[,"Block1_JCE_BC"],
+                                         sc.df_AO_CC_jce[,"Block1_JCE_CC"],
+                                         sc.df_BC_CC_jce[,"Block1_JCE_CC"],
+                                         sc.df_NB_AO_jce[,"Block1_JCE_AO"],
+                                         sc.df_NB_BC_jce[,"Block1_JCE_BC"],
+                                         sc.df_NB_SC_jce[,"Block1_JCE_SC"],
+                                         sc.df_SC_AO_jce[,"Block1_JCE_AO"]))
+
+JCE_Block2 <- data.frame(Block2_R1 = c(sc.df_AO_BC_jce[,"Block2_JCE_AO"],
+                                         sc.df_AO_CC_jce[,"Block2_JCE_AO"],
+                                         sc.df_BC_CC_jce[,"Block2_JCE_BC"],
+                                         sc.df_NB_AO_jce[,"Block2_JCE_NB"],
+                                         sc.df_NB_BC_jce[,"Block2_JCE_NB"],
+                                         sc.df_NB_SC_jce[,"Block2_JCE_NB"],
+                                         sc.df_SC_AO_jce[,"Block2_JCE_SC"]),
+                           Block2_R2 = c(sc.df_AO_BC_jce[,"Block2_JCE_BC"],
+                                         sc.df_AO_CC_jce[,"Block2_JCE_CC"],
+                                         sc.df_BC_CC_jce[,"Block2_JCE_CC"],
+                                         sc.df_NB_AO_jce[,"Block2_JCE_AO"],
+                                         sc.df_NB_BC_jce[,"Block2_JCE_BC"],
+                                         sc.df_NB_SC_jce[,"Block2_JCE_SC"],
+                                         sc.df_SC_AO_jce[,"Block2_JCE_AO"]))
+
+#Contrib
+
+sc.df_AO_BC_contrib <- subset(sc.df_AO_BC, select = c("Child_A_Contrib_AO", "Child_B_Contrib_AO",
+                                                      "Child_A_Contrib_BC", "Child_B_Contrib_BC"))
+sc.df_AO_BC_contrib <- data.frame(Contrib_AO = c(sc.df_AO_BC_contrib[,"Child_A_Contrib_AO"], 
+                                                sc.df_AO_BC_contrib[,"Child_B_Contrib_AO"]),
+                                  Contrib_BC = c(sc.df_AO_BC_contrib[,"Child_A_Contrib_BC"], 
+                                                sc.df_AO_BC_contrib[,"Child_B_Contrib_BC"]))
+
+sc.df_AO_CC_contrib <- subset(sc.df_AO_CC, select = c("Child_A_Contrib_AO", "Child_B_Contrib_AO",
+                                                      "Child_A_Contrib_CC", "Child_B_Contrib_CC"))
+sc.df_AO_CC_contrib <- data.frame(Contrib_AO = c(sc.df_AO_CC_contrib[,"Child_A_Contrib_AO"], 
+                                                 sc.df_AO_CC_contrib[,"Child_B_Contrib_AO"]),
+                                  Contrib_CC = c(sc.df_AO_CC_contrib[,"Child_A_Contrib_CC"], 
+                                                 sc.df_AO_CC_contrib[,"Child_B_Contrib_CC"]))
+
+sc.df_BC_CC_contrib <- subset(sc.df_BC_CC, select = c("Child_A_Contrib_BC", "Child_B_Contrib_BC",
+                                                      "Child_A_Contrib_CC", "Child_B_Contrib_CC"))
+sc.df_BC_CC_contrib <- data.frame(Contrib_BC = c(sc.df_BC_CC_contrib[,"Child_A_Contrib_BC"], 
+                                                 sc.df_BC_CC_contrib[,"Child_B_Contrib_BC"]),
+                                  Contrib_CC = c(sc.df_BC_CC_contrib[,"Child_A_Contrib_CC"], 
+                                                 sc.df_BC_CC_contrib[,"Child_B_Contrib_CC"]))
+
+sc.df_NB_AO_contrib <- subset(sc.df_NB_AO, select = c("Child_A_Contrib_NB", "Child_B_Contrib_NB",
+                                                      "Child_A_Contrib_AO", "Child_B_Contrib_AO"))
+sc.df_NB_AO_contrib <- data.frame(Contrib_NB = c(sc.df_NB_AO_contrib[,"Child_A_Contrib_NB"], 
+                                                 sc.df_NB_AO_contrib[,"Child_B_Contrib_NB"]),
+                                  Contrib_AO = c(sc.df_NB_AO_contrib[,"Child_A_Contrib_AO"], 
+                                                 sc.df_NB_AO_contrib[,"Child_B_Contrib_AO"]))
+
+sc.df_NB_BC_contrib <- subset(sc.df_NB_BC, select = c("Child_A_Contrib_NB", "Child_B_Contrib_NB",
+                                                      "Child_A_Contrib_BC", "Child_B_Contrib_BC"))
+sc.df_NB_BC_contrib <- data.frame(Contrib_NB = c(sc.df_NB_BC_contrib[,"Child_A_Contrib_NB"], 
+                                                 sc.df_NB_BC_contrib[,"Child_B_Contrib_NB"]),
+                                  Contrib_BC = c(sc.df_NB_BC_contrib[,"Child_A_Contrib_BC"], 
+                                                 sc.df_NB_BC_contrib[,"Child_B_Contrib_BC"]))
+
+sc.df_NB_SC_contrib <- subset(sc.df_NB_SC, select = c("Child_A_Contrib_NB", "Child_B_Contrib_NB",
+                                                      "Child_A_Contrib_SC", "Child_B_Contrib_SC"))
+sc.df_NB_SC_contrib <- data.frame(Contrib_NB = c(sc.df_NB_SC_contrib[,"Child_A_Contrib_NB"], 
+                                                 sc.df_NB_SC_contrib[,"Child_B_Contrib_NB"]),
+                                  Contrib_SC = c(sc.df_NB_SC_contrib[,"Child_A_Contrib_SC"], 
+                                                 sc.df_NB_SC_contrib[,"Child_B_Contrib_SC"]))
+
+sc.df_SC_AO_contrib <- subset(sc.df_SC_AO, select = c("Child_A_Contrib_SC", "Child_B_Contrib_SC",
+                                                      "Child_A_Contrib_AO", "Child_B_Contrib_AO"))
+sc.df_SC_AO_contrib <- data.frame(Contrib_SC = c(sc.df_SC_AO_contrib[,"Child_A_Contrib_SC"], 
+                                                 sc.df_SC_AO_contrib[,"Child_B_Contrib_SC"]),
+                                  Contrib_AO = c(sc.df_SC_AO_contrib[,"Child_A_Contrib_AO"], 
+                                                 sc.df_SC_AO_contrib[,"Child_B_Contrib_AO"]))
+
+
+Contrib <- data.frame(Contrib_R1 = c(sc.df_AO_BC_contrib[,"Contrib_AO"],
+                                       sc.df_AO_CC_contrib[,"Contrib_AO"],
+                                       sc.df_BC_CC_contrib[,"Contrib_BC"],
+                                       sc.df_NB_AO_contrib[,"Contrib_NB"],
+                                       sc.df_NB_BC_contrib[,"Contrib_NB"],
+                                       sc.df_NB_SC_contrib[,"Contrib_NB"],
+                                       sc.df_SC_AO_contrib[,"Contrib_SC"]),
+                         Contrib_R2 = c(sc.df_AO_BC_contrib[,"Contrib_BC"],
+                                       sc.df_AO_CC_contrib[,"Contrib_CC"],
+                                       sc.df_BC_CC_contrib[,"Contrib_CC"],
+                                       sc.df_NB_AO_contrib[,"Contrib_AO"],
+                                       sc.df_NB_BC_contrib[,"Contrib_BC"],
+                                       sc.df_NB_SC_contrib[,"Contrib_SC"],
+                                       sc.df_SC_AO_contrib[,"Contrib_AO"]))
+
+```
+
+
+```{r robot sc set up}
+# P4 Cooperative Social Context Reliability ----------------------------------
+
+
+robot.data <- read.csv("ORCA_p4_RobotSC_Codes_Combined.csv", stringsAsFactors = FALSE)
+
+options(scipen = 999)
+
+robot.data[robot.data == 888] <- 0
+
+#999 = child missing from view, 
+#coded as 999 but recode as 0 as to not overinflate ICC's but to include for reliability.
+robot.data[robot.data == 999] <- 0
+```
+
+```{r robot categories and subsets}
+#Coder categories for reliability check
+
+#NB_OB = 1
+#NB_SC = 2
+#SC_OB = 3
+
+robot.data$Coders[robot.data$Coders == "NB_OB"] <- 1
+robot.data$Coders[robot.data$Coders == "NB_SC"] <- 2
+robot.data$Coders[robot.data$Coders == "SC_OB"] <- 3
+
+#NB Scores - Child A
+
+robot.data$Child_A_Afill_NB <- rowMeans(robot.data[,3:12], na.rm=TRUE)
+robot.data$Child_A_Antag_NB <- rowMeans(robot.data[,13:22], na.rm=TRUE)
+robot.data$Child_A_Eng_NB <- rowMeans(robot.data[,23:32], na.rm=TRUE)
+robot.data$Child_A_JCE_NB <- rowMeans(robot.data[,33:42], na.rm=TRUE)
+
+#SC Scores - Child A
+robot.data$Child_A_Afill_SC <- rowMeans(robot.data[,43:52], na.rm=TRUE)
+robot.data$Child_A_Antag_SC <- rowMeans(robot.data[,53:62], na.rm=TRUE)
+robot.data$Child_A_Eng_SC <- rowMeans(robot.data[,63:72], na.rm=TRUE)
+robot.data$Child_A_JCE_SC <- rowMeans(robot.data[,73:82], na.rm=TRUE)
+
+#OB Scores - Child A
+robot.data$Child_A_Afill_OB <- rowMeans(robot.data[,83:92], na.rm=TRUE)
+robot.data$Child_A_Antag_OB <- rowMeans(robot.data[,93:102], na.rm=TRUE)
+robot.data$Child_A_Eng_OB <- rowMeans(robot.data[,103:112], na.rm=TRUE)
+robot.data$Child_A_JCE_OB <- rowMeans(robot.data[,113:122], na.rm=TRUE)
+
+#NB Scores - Child B
+
+robot.data$Child_B_Afill_NB <- rowMeans(robot.data[,163:172], na.rm=TRUE)
+robot.data$Child_B_Antag_NB <- rowMeans(robot.data[,173:182], na.rm=TRUE)
+robot.data$Child_B_Eng_NB <- rowMeans(robot.data[,183:192], na.rm=TRUE)
+robot.data$Child_B_JCE_NB <- rowMeans(robot.data[,193:202], na.rm=TRUE)
+
+#SC Scores - Child B
+robot.data$Child_B_Afill_SC <- rowMeans(robot.data[,203:212], na.rm=TRUE)
+robot.data$Child_B_Antag_SC <- rowMeans(robot.data[,213:222], na.rm=TRUE)
+robot.data$Child_B_Eng_SC <- rowMeans(robot.data[,223:232], na.rm=TRUE)
+robot.data$Child_B_JCE_SC <- rowMeans(robot.data[,233:242], na.rm=TRUE)
+
+#OB Scores - Child B
+robot.data$Child_B_Afill_OB <- rowMeans(robot.data[,243:252], na.rm=TRUE)
+robot.data$Child_B_Antag_OB <- rowMeans(robot.data[,253:262], na.rm=TRUE)
+robot.data$Child_B_Eng_OB <- rowMeans(robot.data[,263:272], na.rm=TRUE)
+robot.data$Child_B_JCE_OB <- rowMeans(robot.data[,273:282], na.rm=TRUE)
+
+#subset for pair 1
+sc.df_NB_OB <- robot.data[which(robot.data$Coders == 1),]
+#subset for pair 2
+sc.df_NB_SC <- robot.data[which(robot.data$Coders == 2),]
+#subset for pair 3
+sc.df_SC_OB <- robot.data[which(robot.data$Coders == 3),]
+
+#pair 1 variable subsets
+
+sc.df_NB_OB_afill <- subset(sc.df_NB_OB, select = c("Child_A_Afill_NB", "Child_B_Afill_NB", 
+                                                    "Child_A_Afill_OB", "Child_B_Afill_OB"))
+sc.df_NB_OB_afill <- data.frame(Child_A_Afill_NB = c(sc.df_NB_OB_afill[,"Child_A_Afill_NB"], 
+                                                     sc.df_NB_OB_afill[,"Child_B_Afill_NB"]),
+                                Child_A_Afill_OB = c(sc.df_NB_OB_afill[,"Child_A_Afill_OB"], 
+                                                     sc.df_NB_OB_afill[,"Child_B_Afill_OB"]))
+
+
+sc.df_NB_OB_antag <- subset(sc.df_NB_OB, select = c("Child_A_Antag_NB", "Child_B_Antag_NB", 
+                                                    "Child_A_Antag_OB", "Child_B_Antag_OB"))
+sc.df_NB_OB_antag <- data.frame(Child_A_Antag_NB = c(sc.df_NB_OB_antag[,"Child_A_Antag_NB"], 
+                                                     sc.df_NB_OB_antag[,"Child_B_Antag_NB"]),
+                                Child_A_Antag_OB = c(sc.df_NB_OB_antag[,"Child_A_Antag_OB"], 
+                                                     sc.df_NB_OB_antag[,"Child_B_Antag_OB"]))
+
+sc.df_NB_OB_jce <- subset(sc.df_NB_OB, select = c("Child_A_JCE_NB", "Child_B_JCE_NB", 
+                                                  "Child_A_JCE_OB", "Child_B_JCE_OB"))
+sc.df_NB_OB_jce <- data.frame(Child_A_JCE_NB = c(sc.df_NB_OB_jce[,"Child_A_JCE_NB"], 
+                                                 sc.df_NB_OB_jce[,"Child_B_JCE_NB"]),
+                              Child_A_JCE_OB = c(sc.df_NB_OB_jce[,"Child_A_JCE_OB"], 
+                                                 sc.df_NB_OB_jce[,"Child_B_JCE_OB"]))
+
+#pair 2 variable subsets
+
+sc.df_NB_SC_afill <- subset(sc.df_NB_SC, select = c("Child_A_Afill_NB", "Child_B_Afill_NB", 
+                                                    "Child_A_Afill_SC", "Child_B_Afill_SC"))
+sc.df_NB_SC_afill <- data.frame(Child_A_Afill_NB = c(sc.df_NB_SC_afill[,"Child_A_Afill_NB"], 
+                                                     sc.df_NB_SC_afill[,"Child_B_Afill_NB"]),
+                                Child_A_Afill_SC = c(sc.df_NB_SC_afill[,"Child_A_Afill_SC"], 
+                                                     sc.df_NB_SC_afill[,"Child_B_Afill_SC"]))
+
+
+sc.df_NB_SC_antag <- subset(sc.df_NB_SC, select = c("Child_A_Antag_NB", "Child_B_Antag_NB", 
+                                                    "Child_A_Antag_SC", "Child_B_Antag_SC"))
+sc.df_NB_SC_antag <- data.frame(Child_A_Antag_NB = c(sc.df_NB_SC_antag[,"Child_A_Antag_NB"], 
+                                                     sc.df_NB_SC_antag[,"Child_B_Antag_NB"]),
+                                Child_A_Antag_SC = c(sc.df_NB_SC_antag[,"Child_A_Antag_SC"], 
+                                                     sc.df_NB_SC_antag[,"Child_B_Antag_SC"]))
+
+sc.df_NB_SC_jce <- subset(sc.df_NB_SC, select = c("Child_A_JCE_NB", "Child_B_JCE_NB", 
+                                                  "Child_A_JCE_SC", "Child_B_JCE_SC"))
+sc.df_NB_SC_jce <- data.frame(Child_A_JCE_NB = c(sc.df_NB_SC_jce[,"Child_A_JCE_NB"], 
+                                                 sc.df_NB_SC_jce[,"Child_B_JCE_NB"]),
+                              Child_A_JCE_SC = c(sc.df_NB_SC_jce[,"Child_A_JCE_SC"], 
+                                                 sc.df_NB_SC_jce[,"Child_B_JCE_SC"]))
+
+#pair 3 variable subsets
+
+sc.df_SC_OB_afill <- subset(sc.df_SC_OB, select = c("Child_A_Afill_SC", "Child_B_Afill_SC", 
+                                                    "Child_A_Afill_OB", "Child_B_Afill_OB"))
+sc.df_SC_OB_afill <- data.frame(Child_A_Afill_SC = c(sc.df_SC_OB_afill[,"Child_A_Afill_SC"], 
+                                                     sc.df_SC_OB_afill[,"Child_B_Afill_SC"]),
+                                Child_A_Afill_OB = c(sc.df_SC_OB_afill[,"Child_A_Afill_OB"], 
+                                                     sc.df_SC_OB_afill[,"Child_B_Afill_OB"]))
+
+
+sc.df_SC_OB_antag <- subset(sc.df_SC_OB, select = c("Child_A_Antag_SC", "Child_B_Antag_SC", 
+                                                    "Child_A_Antag_OB", "Child_B_Antag_OB"))
+sc.df_SC_OB_antag <- data.frame(Child_A_Antag_SC = c(sc.df_SC_OB_antag[,"Child_A_Antag_SC"], 
+                                                     sc.df_SC_OB_antag[,"Child_B_Antag_SC"]),
+                                Child_A_Antag_OB = c(sc.df_SC_OB_antag[,"Child_A_Antag_OB"], 
+                                                     sc.df_SC_OB_antag[,"Child_B_Antag_OB"]))
+
+
+sc.df_SC_OB_jce <- subset(sc.df_SC_OB, select = c("Child_A_JCE_SC", "Child_B_JCE_SC", 
+                                                  "Child_A_JCE_OB", "Child_B_JCE_OB"))
+sc.df_SC_OB_jce <- data.frame(Child_A_JCE_SC = c(sc.df_SC_OB_jce[,"Child_A_JCE_SC"], 
+                                                 sc.df_SC_OB_jce[,"Child_B_JCE_SC"]),
+                              Child_A_JCE_OB = c(sc.df_SC_OB_jce[,"Child_A_JCE_OB"], 
+                                                 sc.df_SC_OB_jce[,"Child_B_JCE_OB"]))
+
+Afill.CA <- data.frame(Afill_R1 = c(sc.df_NB_OB_afill[,"Child_A_Afill_NB"],
+                                    sc.df_NB_SC_afill[,"Child_A_Afill_NB"],
+                                    sc.df_SC_OB_afill[,"Child_A_Afill_SC"]),
+                       Afill_R2 = c(sc.df_NB_OB_afill[,"Child_A_Afill_OB"],
+                                      sc.df_NB_SC_afill[,"Child_A_Afill_SC"],
+                                      sc.df_SC_OB_afill[,"Child_A_Afill_OB"]))
+
+Antag.CA <- data.frame(Antag_R1 = c(sc.df_NB_OB_antag[,"Child_A_Antag_NB"],
+                                    sc.df_NB_SC_antag[,"Child_A_Antag_NB"],
+                                    sc.df_SC_OB_antag[,"Child_A_Antag_SC"]),
+                       Antag_R2 = c(sc.df_NB_OB_antag[,"Child_A_Antag_OB"],
+                                    sc.df_NB_SC_antag[,"Child_A_Antag_SC"],
+                                    sc.df_SC_OB_antag[,"Child_A_Antag_OB"]))
+
+JCE.CA <- data.frame(JCE_R1 = c(sc.df_NB_OB_jce[,"Child_A_JCE_NB"],
+                                    sc.df_NB_SC_jce[,"Child_A_JCE_NB"],
+                                    sc.df_SC_OB_jce[,"Child_A_JCE_SC"]),
+                       JCE_R2 = c(sc.df_NB_OB_jce[,"Child_A_JCE_OB"],
+                                    sc.df_NB_SC_jce[,"Child_A_JCE_SC"],
+                                    sc.df_SC_OB_jce[,"Child_A_JCE_OB"]))
+
+```
+
+# Reliabiltiy Statistics  for Warm Up Interaction Quality
+
+```{r icc}
+#ICC reliabilities for all pairs all variables
+library(irr)
+
+#Afill Block 1
+icc(Afill_Block1, model="twoway", type="consistency", unit = "average")
+#Afill Block 2
+icc(Afill_Block2, model="twoway", type="consistency", unit = "average")
+
+#Antag Block 1
+icc(Antag_Block1, model="twoway", type="consistency", unit = "average")
+#Antag Block 2
+icc(Antag_Block2, model="twoway", type="consistency", unit = "average")
+
+#JCE Block 1
+icc(JCE_Block1, model="twoway", type="consistency", unit = "average")
+#JCE Block 2
+icc(JCE_Block2, model="twoway", type="consistency", unit = "average")
+
+#Contribution to toy clean up
+
+icc(Contrib, model="twoway", type="consistency", unit = "average")
+
+```
+
+# Reliabiltiy Statistics for Robot Task Interaction Quality
+
+
+```{r}
+#ICC reliabilities for all pairs all variables
+library(irr)
+
+#Afill
+icc(Afill.CA, model="twoway", type="consistency", unit = "average")
+#Antag
+icc(Antag.CA, model="twoway", type="consistency", unit = "average")
+#JCE
+icc(JCE.CA, model="twoway", type="consistency", unit = "average")
+
+```
+
+
+# P4 Cooperative Ability Reliability -----------------------------------------
+
+```{r}
+#RELIBILITY -- JW + NB
+ability.data <- read.csv("P4RobotReliabilites_JWNB.csv", stringsAsFactors = FALSE)
+
+#Recode child category as numeric
+ability.data$Participant_JW[ability.data$Participant_JW == "Child A"] <- 1
+ability.data$Participant_JW[ability.data$Participant_JW == "Child B"] <- 2
+ability.data$Participant_NB[ability.data$Participant_NB == "Child A"] <- 1
+ability.data$Participant_NB[ability.data$Participant_NB == "Child B"] <- 2
+
+#Recode handle category as numeric
+ability.data$Handle_JW[ability.data$Handle_JW == "CompleteDown_Blue"] <- 1
+ability.data$Handle_JW[ability.data$Handle_JW == "CompleteDown_Green"] <- 2
+ability.data$Handle_NB[ability.data$Handle_NB == "CompleteDown_Blue"] <- 1
+ability.data$Handle_NB[ability.data$Handle_NB == "CompleteDown_Green"] <- 2
+
+
+#Kappas 
+library(lpSolve)
+library(irr)
+
+#Kappa for participant
+kappa2(ability.data[,c(4,8)], "unweighted")
+
+#Kappa for handle
+kappa2(ability.data[,c(5,9)], "unweighted")
+
+#Percent Agreement
+##NOTE - Data converted into # of frames based on 25fps in Excel
+
+library(irr)
+library(lpSolve)
+#datasubset
+Onset <- subset(ability.data, select = c("Onset_Time_JW", "Onset_Time_NB"))
+Offset <- subset(ability.data, select = c("Offset_Time_JW", "Offset_Time_NB"))
+#Percent Agreement for Onset and offset
+agree(Onset, tolerance = 8)
+agree(Offset, tolerance = 8)
+
+
+#Percent agreement total
+
+total.time <- data.frame(Onset, Offset)
+
+total.time <- data.frame(total.time_NB = c(total.time[,"Onset_Time_NB"], 
+                                           total.time[,"Offset_Time_NB"]),
+                         total.time_JW = c(total.time[,"Onset_Time_JW"],
+                                           total.time[,"Offset_Time_JW"]))
+
+agree(total.time, tolerance = 8)
+
+icc(total.time, model="twoway", type="agreement")
+```
+
+
+
