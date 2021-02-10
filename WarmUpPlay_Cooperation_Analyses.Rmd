@@ -1,0 +1,1991 @@
+---
+title: "Warm-up Play Impacts Children's Cooperation  - Analyses"
+author: ""
+date: "07/09/2020"
+output: html_document
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+
+#required packages
+library(e1071)
+library(haven)
+library(tidyverse)
+library(pixiedust)
+library(ggfortify)
+library(ggplot2)
+library(car)
+library(Hmisc)
+library(corrplot)
+library(MASS)
+library(lavaanPlot)
+library(lavaan)
+library(gee)
+library(lme4)
+library(doBy)
+library(geepack)
+library(ggeffects)
+library(lmerTest)
+```
+```{r main dataframe creation}
+#Read in main data file
+pp.data = read.csv("ORCA+Parent_AnalysesOnly.csv", stringsAsFactors = FALSE)
+#Scientific notation off
+options(scipen = 999)
+#888 recoded as missing/NA
+pp.data[pp.data == 888] <- NA
+#999 recoded as missing/NA
+pp.data[pp.data == 999] <- NA
+#Demographic data file
+demo.df <- read.csv("Demographic_ORCA+Peer.csv", stringsAsFactors = FALSE)
+#demographics excluding study out participants
+so.demo.df <- demo.df[which(demo.df$P4_InOut==1),]
+```
+```{r p4 peer warm up social context scoring}
+#Afilliation scores - T1, T2, T1T2
+pp.data$WU_Afill_T1 <- rowMeans(subset(pp.data, select = c("WU_Afill_Set1", 
+                                                           "WU_Afill_Set2", "WU_Afill_Set3")), na.rm = TRUE)
+pp.data$WU_Afill_T2 <- rowMeans(subset(pp.data, select = c("WU_Afill_Set4", 
+                                                           "WU_Afill_Set5", "WU_Afill_Set6")), na.rm = TRUE)
+pp.data$WU_Afill_T1T2 <- rowMeans(subset(pp.data, select = c("WU_Afill_Set1", 
+                                                           "WU_Afill_Set2", "WU_Afill_Set3", "WU_Afill_Set4", 
+                                                           "WU_Afill_Set5", "WU_Afill_Set6")), na.rm = TRUE)
+#Antagonistic scores - T1, T2, T1T2
+pp.data$WU_Antag_T1 <- rowMeans(subset(pp.data, select = c("WU_Antag_Set1", 
+                                                           "WU_Antag_Set2", "WU_Antag_Set3")), na.rm = TRUE)
+pp.data$WU_Antag_T2 <- rowMeans(subset(pp.data, select = c("WU_Antag_Set4", 
+                                                           "WU_Antag_Set5", "WU_Antag_Set6")), na.rm = TRUE)
+pp.data$WU_Antag_T1T2 <- rowMeans(subset(pp.data, select = c("WU_Antag_Set1", 
+                                                           "WU_Antag_Set2", "WU_Antag_Set3", "WU_Antag_Set4", 
+                                                           "WU_Antag_Set5", "WU_Antag_Set6")), na.rm = TRUE)
+
+#Engagement scores - T1, T2, T1T2
+pp.data$WU_Eng_T1 <- rowMeans(subset(pp.data, select = c("WU_Eng_Set1", 
+                                                           "WU_Eng_Set2", "WU_Eng_Set3")), na.rm = TRUE)
+pp.data$WU_Eng_T2 <- rowMeans(subset(pp.data, select = c("WU_Eng_Set4", 
+                                                           "WU_Eng_Set5", "WU_Eng_Set6")), na.rm = TRUE)
+pp.data$WU_Eng_T1T2 <- rowMeans(subset(pp.data, select = c("WU_Eng_Set1", 
+                                                           "WU_Eng_Set2", "WU_Eng_Set3", "WU_Eng_Set4", 
+                                                           "WU_Eng_Set5", "WU_Eng_Set6")), na.rm = TRUE)
+
+#Joint coordinated engagement - T1, T2, T1T2
+pp.data$WU_JCE_T1 <- rowMeans(subset(pp.data, select = c("WU_JCE_Set1", 
+                                                           "WU_JCE_Set2", "WU_JCE_Set3")), na.rm = TRUE)
+pp.data$WU_JCE_T2 <- rowMeans(subset(pp.data, select = c("WU_JCE_Set4", 
+                                                           "WU_JCE_Set5", "WU_JCE_Set6")), na.rm = TRUE)
+pp.data$WU_JCE_T1T2 <- rowMeans(subset(pp.data, select = c("WU_JCE_Set1", 
+                                                           "WU_JCE_Set2", "WU_JCE_Set3", "WU_JCE_Set4", 
+                                                           "WU_JCE_Set5", "WU_JCE_Set6")), na.rm = TRUE)
+
+#Contribution 
+pp.data$WU_Contrib <- rowMeans(subset(pp.data, select = c("WU_Contrib_Set4", 
+                                                           "WU_Contrib_Set5", "WU_Contrib_Set6")), na.rm = TRUE)
+```
+```{r p4 peer robot task social context scoring, }
+#Afilliation 
+pp.data$RT_Afill <- rowMeans(subset(pp.data, select = c("RT_Afill_Set1_FINAL", "RT_Afill_Set2_FINAL", "RT_Afill_Set3_FINAL", "RT_Afill_Set4_FINAL", "RT_Afill_Set5_FINAL", "RT_Afill_Set6_FINAL", "RT_Afill_Set7_FINAL", "RT_Afill_Set8_FINAL", "RT_Afill_Set9_FINAL", "RT_Afill_Set10_FINAL")), na.rm = TRUE)
+
+#Antagonism
+pp.data$RT_Antag <- rowMeans(subset(pp.data, select = c("RT_Antag_Set1_FINAL", "RT_Antag_Set2_FINAL", "RT_Antag_Set3_FINAL", "RT_Antag_Set4_FINAL", "RT_Antag_Set5_FINAL", "RT_Antag_Set6_FINAL", "RT_Antag_Set7_FINAL", "RT_Antag_Set8_FINAL", "RT_Antag_Set9_FINAL", "RT_Antag_Set10_FINAL")), na.rm = TRUE)
+
+#Engagement
+pp.data$RT_Eng <- rowMeans(subset(pp.data, select = c("RT_Eng_Set1_FINAL", "RT_Eng_Set2_FINAL", "RT_Eng_Set3_FINAL", "RT_Eng_Set4_FINAL", "RT_Eng_Set5_FINAL", "RT_Eng_Set6_FINAL", "RT_Eng_Set7_FINAL", "RT_Eng_Set8_FINAL", "RT_Eng_Set9_FINAL", "RT_Eng_Set10_FINAL")), na.rm = TRUE)
+
+#Joint coordinated engagement
+pp.data$RT_JCE <- rowMeans(subset(pp.data, select = c("RT_JCE_Set1_FINAL", "RT_JCE_Set2_FINAL", "RT_JCE_Set3_FINAL", "RT_JCE_Set4_FINAL", "RT_JCE_Set5_FINAL", "RT_JCE_Set6_FINAL", "RT_JCE_Set7_FINAL", "RT_JCE_Set8_FINAL", "RT_JCE_Set9_FINAL", "RT_JCE_Set10_FINAL")), na.rm = TRUE)
+```
+```{r p4 success (latency y/n), responding and initiating score y/n scoring, }
+pp.data$Initiate_yn_3s[pp.data$Initiate_freq_3s == 0] <- 0
+pp.data$Initiate_yn_3s[pp.data$Initiate_freq_3s > 0] <- 1
+pp.data$Initiate_yn_0s[pp.data$Initiate_freq_0s == 0] <- 0
+pp.data$Initiate_yn_0s[pp.data$Initiate_freq_0s > 0] <- 1
+pp.data$Respond_yn_3s[pp.data$Respond_freq_3s == 0] <- 0
+pp.data$Respond_yn_3s[pp.data$Respond_freq_3s > 0] <- 1
+pp.data$Respond_yn_0s[pp.data$Respond_freq_0s == 0] <- 0
+pp.data$Respond_yn_0s[pp.data$Respond_freq_0s > 0] <- 1
+pp.data$Latency_3sec_yn[pp.data$Latency_3sec >= 0] <- 1
+pp.data$Latency_3sec_yn[pp.data$Initiate_freq_3s == 0
+                        & pp.data$Respond_freq_3s == 0] <- 0
+```
+```{r p4 afill/antag y/n scoring for warm up and robot task, }
+pp.data$WU_Afill_yn_T1[pp.data$WU_Afill_T1 == 1] <- 0
+pp.data$WU_Afill_yn_T1[pp.data$WU_Afill_T1 > 1] <- 1
+pp.data$WU_Afill_yn_T2[pp.data$WU_Afill_T2 == 1] <- 0
+pp.data$WU_Afill_yn_T2[pp.data$WU_Afill_T2 > 1] <- 1
+pp.data$WU_Afill_yn_T1T2[pp.data$WU_Afill_T1T2 == 1] <- 0
+pp.data$WU_Afill_yn_T1T2[pp.data$WU_Afill_T1T2 > 1] <- 1
+pp.data$WU_Antag_yn_T1[pp.data$WU_Antag_T1 == 1] <- 0
+pp.data$WU_Antag_yn_T1[pp.data$WU_Antag_T1 > 1] <- 1
+pp.data$WU_Antag_yn_T2[pp.data$WU_Antag_T2 == 1] <- 0
+pp.data$WU_Antag_yn_T2[pp.data$WU_Antag_T2 > 1] <- 1
+pp.data$WU_Antag_yn_T1T2[pp.data$WU_Antag_T1T2 == 1] <- 0
+pp.data$WU_Antag_yn_T1T2[pp.data$WU_Antag_T1T2 > 1] <- 1
+pp.data$RT_Afill_yn[pp.data$RT_Afill == 1] <- 0
+pp.data$RT_Afill_yn[pp.data$RT_Afill > 1] <- 1
+pp.data$RT_Antag_yn[pp.data$RT_Antag == 1] <- 0
+pp.data$RT_Antag_yn[pp.data$RT_Antag > 1] <- 1
+```
+```{r demographic variables coding, }
+
+#SES - Highest education level achieved all participants
+#none
+so.demo.df$Edu.all_Cat[so.demo.df$Parent_HighestSchoolQual == 0 
+                       & so.demo.df$Parent_otherqual_spec == 0 
+                       | is.na(so.demo.df$Parent_otherqual_spec)] <- 1
+
+#6th form or less/other
+so.demo.df$Edu.all_Cat[so.demo.df$Parent_HighestSchoolQual == 1 
+                       | so.demo.df$Parent_HighestSchoolQual == 2 
+                       | so.demo.df$Parent_HighestSchoolQual == 4 
+                       & so.demo.df$Parent_otherqual_spec == 0 
+                       | is.na(so.demo.df$Parent_otherqual_spec)] <- 2
+
+#7th form only
+so.demo.df$Edu.all_Cat[so.demo.df$Parent_HighestSchoolQual == 3 
+                       & so.demo.df$Parent_otherqual_spec == 0 
+                       | is.na(so.demo.df$Parent_otherqual_spec)] <- 3
+
+#Bachelors/Dip
+so.demo.df$Edu.all_Cat[so.demo.df$Parent_HighestSchoolQual == 0 
+                       | so.demo.df$Parent_HighestSchoolQual == 1 
+                       | so.demo.df$Parent_HighestSchoolQual == 2 
+                       | so.demo.df$Parent_HighestSchoolQual == 3 
+                       & so.demo.df$Parent_otherqual_spec == 1] <- 4
+
+#Post grad
+so.demo.df$Edu.all_Cat[so.demo.df$Parent_HighestSchoolQual == 0 
+                       | so.demo.df$Parent_HighestSchoolQual == 1 
+                       | so.demo.df$Parent_HighestSchoolQual == 2 
+                       | so.demo.df$Parent_HighestSchoolQual == 3 
+                       & so.demo.df$Parent_otherqual_spec == 2 
+                       | so.demo.df$Parent_otherqual_spec == 3 ] <- 5
+
+#Other Tertiary
+so.demo.df$Edu.all_Cat[so.demo.df$Parent_HighestSchoolQual == 0 
+                       | so.demo.df$Parent_HighestSchoolQual == 1 
+                       | so.demo.df$Parent_HighestSchoolQual == 2 
+                       | so.demo.df$Parent_HighestSchoolQual == 3 
+                       & so.demo.df$Parent_otherqual_spec == 4 ] <- 6
+
+so.demo.df$Edu.all_label[so.demo.df$Edu.all_Cat == 1] <- "None"
+so.demo.df$Edu.all_label[so.demo.df$Edu.all_Cat == 2] <- "6th form or less"
+so.demo.df$Edu.all_label[so.demo.df$Edu.all_Cat == 3] <- "7th form"
+so.demo.df$Edu.all_label[so.demo.df$Edu.all_Cat == 4] <- "Bachelors/PgDip"
+so.demo.df$Edu.all_label[so.demo.df$Edu.all_Cat == 5] <- "Honours, Masters, PhD"
+so.demo.df$Edu.all_label[so.demo.df$Edu.all_Cat == 6] <- "Other tertiary"
+so.demo.df$Edu.all_label[is.na(so.demo.df$Edu.all_Cat)] <- "Unknown/Missing"
+so.demo.df$Edu.all_label[so.demo.df$Edu.all_Cat == 999] <- "Unknown/Missing"
+table(so.demo.df$Edu.all_label)
+
+
+#Child ethnicity
+#Ethnicity categories
+#NZE = 1
+#NZE/Maori =2
+#NZE/Asian = 3
+#NZE/Other = 4
+#--
+#Other = 5
+#Asian = 7
+#Pacific = 8
+#Other European = 9
+#NZE/O-E = 10
+#NZE-Pacific = 11
+#NZE-MELAA = 12
+#Asian-OE = 13
+#Maori-OE = 14
+#MELLAA-OE = 15
+
+#NZE
+so.demo.df$Eth_Cat[so.demo.df$NZEur == 1 & so.demo.df$Maori == 0 
+               & so.demo.df$Asian == 0 & so.demo.df$Pacific == 0
+               & so.demo.df$MidEastLatAmAfrican == 0 & so.demo.df$OtherEur == 0 
+               & so.demo.df$Other == 0] <- 1
+
+#NZE/Maori =2
+so.demo.df$Eth_Cat[so.demo.df$NZEur == 1 & so.demo.df$Maori == 1 
+               & so.demo.df$Asian == 0 & so.demo.df$Pacific == 0
+               & so.demo.df$MidEastLatAmAfrican == 0 & so.demo.df$OtherEur == 0 
+               & so.demo.df$Other == 0] <- 2
+
+#NZE/Asian = 3
+so.demo.df$Eth_Cat[so.demo.df$NZEur == 1 & so.demo.df$Maori == 0 
+               & so.demo.df$Asian == 1 & so.demo.df$Pacific == 0
+               & so.demo.df$MidEastLatAmAfrican == 0 & so.demo.df$OtherEur == 0 
+               & so.demo.df$Other == 0] <- 3
+
+
+#NZE/Other/O-E = 4
+so.demo.df$Eth_Cat[so.demo.df$NZEur == 1 & so.demo.df$Maori == 0 
+               & so.demo.df$Asian == 0 & so.demo.df$Pacific == 0
+               & so.demo.df$MidEastLatAmAfrican == 0 & so.demo.df$OtherEur == 1 
+               & so.demo.df$Other == 1] <- 4
+
+#Other = 5
+so.demo.df$Eth_Cat[so.demo.df$NZEur == 0 & so.demo.df$Maori == 0 
+               & so.demo.df$Asian == 0 & so.demo.df$Pacific == 0
+               & so.demo.df$MidEastLatAmAfrican == 0 & so.demo.df$OtherEur == 0 
+               & so.demo.df$Other == 1] <- 5
+
+#Asian = 7
+so.demo.df$Eth_Cat[so.demo.df$NZEur == 0 & so.demo.df$Maori == 0 
+               & so.demo.df$Asian == 1 & so.demo.df$Pacific == 0
+               & so.demo.df$MidEastLatAmAfrican == 0 & so.demo.df$OtherEur == 0 
+               & so.demo.df$Other == 0]<- 7
+
+
+#Pacific = 8
+so.demo.df$Eth_Cat[so.demo.df$NZEur == 0 & so.demo.df$Maori == 0
+               & so.demo.df$Asian == 0 & so.demo.df$Pacific == 1
+               & so.demo.df$MidEastLatAmAfrican == 0 & so.demo.df$OtherEur == 0 
+               & so.demo.df$Other == 0] <- 8
+
+
+#Other European = 9
+so.demo.df$Eth_Cat[so.demo.df$NZEur == 0 & so.demo.df$Maori == 0 
+               & so.demo.df$Asian == 0 & so.demo.df$Pacific == 0
+               & so.demo.df$MidEastLatAmAfrican == 0 & so.demo.df$OtherEur == 1 
+               & so.demo.df$Other == 0] <- 9
+
+#NZE-Pacific = 11
+so.demo.df$Eth_Cat[so.demo.df$NZEur == 1 & so.demo.df$Maori == 0 
+               & so.demo.df$Asian == 0 & so.demo.df$Pacific == 1
+               & so.demo.df$MidEastLatAmAfrican == 0 & so.demo.df$OtherEur == 0 
+               & so.demo.df$Other == 0] <- 11
+
+
+#NZE-MELAA = 12
+so.demo.df$Eth_Cat[so.demo.df$NZEur == 1 & so.demo.df$Maori == 0 
+               & so.demo.df$Asian == 0 & so.demo.df$Pacific == 0
+               & so.demo.df$MidEastLatAmAfrican == 1 & so.demo.df$OtherEur == 0
+               & so.demo.df$Other == 0] <- 12
+
+
+#Asian-OE = 13
+so.demo.df$Eth_Cat[so.demo.df$NZEur == 0 & so.demo.df$Maori == 0 
+               & so.demo.df$Asian == 1 & so.demo.df$Pacific == 0
+               & so.demo.df$MidEastLatAmAfrican == 0 & so.demo.df$OtherEur == 1
+               & so.demo.df$Other == 0] <- 13
+
+#Maori-OE = 14
+so.demo.df$Eth_Cat[so.demo.df$NZEur == 0 & so.demo.df$Maori == 1 
+               & so.demo.df$Asian == 0 & so.demo.df$Pacific == 0
+               & so.demo.df$MidEastLatAmAfrican == 0 & so.demo.df$OtherEur == 1
+               & so.demo.df$Other == 0] <- 14
+
+#MELLAA-OE = 15
+so.demo.df$Eth_Cat[so.demo.df$NZEur == 0 & so.demo.df$Maori == 0 
+               & so.demo.df$Asian == 0 & so.demo.df$Pacific == 0
+               & so.demo.df$MidEastLatAmAfrican == 1 & so.demo.df$OtherEur == 1
+               & so.demo.df$Other == 0] <- 15
+
+so.demo.df$Eth_Cat[is.na(so.demo.df$Eth_Cat)] <- 16
+
+so.demo.df$Eth_CatLabel[so.demo.df$Eth_Cat == 1] <- "NZE"
+so.demo.df$Eth_CatLabel[so.demo.df$Eth_Cat == 7] <- "Asian"
+so.demo.df$Eth_CatLabel[so.demo.df$Eth_Cat == 8] <- "Pacific"
+so.demo.df$Eth_CatLabel[so.demo.df$Eth_Cat == 9] <- "Other European (OE)"
+so.demo.df$Eth_CatLabel[so.demo.df$Eth_Cat == 5] <- "Other"
+so.demo.df$Eth_CatLabel[so.demo.df$Eth_Cat == 2] <- "NZE/Maori"
+so.demo.df$Eth_CatLabel[so.demo.df$Eth_Cat == 3] <- "NZE/Asian"
+so.demo.df$Eth_CatLabel[so.demo.df$Eth_Cat == 4] <- "NZE/Other/OE"
+so.demo.df$Eth_CatLabel[so.demo.df$Eth_Cat == 11] <- "NZE-Pacific"
+so.demo.df$Eth_CatLabel[so.demo.df$Eth_Cat == 12] <- "NZE_MELAA"
+so.demo.df$Eth_CatLabel[so.demo.df$Eth_Cat == 13] <- "Asian-OE"
+so.demo.df$Eth_CatLabel[so.demo.df$Eth_Cat == 14] <- "Maori-OE"
+so.demo.df$Eth_CatLabel[so.demo.df$Eth_Cat == 15] <- "MELLAA-OE"
+so.demo.df$Eth_CatLabel[so.demo.df$Eth_Cat == 16] <- "2 or more/Missing = 21"
+#Missing total is 21 (visual check), 29 = 2 or more
+```
+
+### Variable transformation information
+```{r transformed variable scoring}
+pp.data$Latency_3sec_Trans <- pp.data$Latency_3sec^(1/3)
+pp.data$Initiate_freq_3s_LogTrans <- log(pp.data$Initiate_freq_3s + 1)
+pp.data$Respond_freq_3s_LogTrans <- log(pp.data$Respond_freq_3s + 1)
+pp.data$WU_JCE_T1_Trans <- pp.data$WU_JCE_T1^(1/3)
+pp.data$WU_JCE_T2_Trans <- pp.data$WU_JCE_T2^(1/3)
+pp.data$WU_Contrib_Trans <- pp.data$WU_Contrib^(1/2)
+pp.data$RT_JCE_Trans <- pp.data$RT_JCE^(1/3) #Outliers present will windsorize 
+```
+```{r data subsets and outlier management, results="hide"}
+#Dataset restructure (individual to dyad)
+
+#Subset to include shared variables and p4 study in only (excludes p4 study out and participant number)
+
+indiv.df <- pp.data[which(pp.data$P4_InOut==1),]
+indiv.df <- indiv.df[c(-1)]
+
+### Outlier management ###
+
+#Robot Task JCE Transformed
+mean(indiv.df$RT_JCE_Trans, na.rm = TRUE)
+#1.124617
+#indiv.df
+sd(indiv.df$RT_JCE_Trans, na.rm = TRUE)
+#0.1201474
+3*0.1201474 #3xSD
+#0.3604422
+0.3604422+1.124617 #3xSD+MEAN
+#Scores greater than 1.485059 are outliers
+sort(indiv.df$RT_JCE_Trans)
+#Outlier replacement and variable recreation
+indiv.df$RT_JCE_Trans_OR <- indiv.df$RT_JCE_Trans
+indiv.df$RT_JCE_Trans_OR[indiv.df$RT_JCE_Trans_OR >= 1.485059] <- 1.481248
+#6 values replaced with next highest value
+
+
+# Dyad structure data
+dyad <- indiv.df %>% 
+  rename(dyad_id = Dyad_Number) %>% 
+  rename_all(tolower)
+
+#dyad.df is the final dyadic dataframe
+#data with _o suffix is orca data _p is peer data
+dyad.df <- dyad %>%
+  arrange(dyad_id) %>%
+  gather(key,value,-dyad_id,-p4_inout,-gender,
+         -parent_type_p5,-pcg_p5,-p4_inout_comments, 
+         -parent_type_p1, -pcg_p1, -dyad_level, -rt_tt_sec, 
+         -latency_3sec, -latency_3sec_trans, 
+         -latency_3sec_yn) %>%
+  mutate(dyad_level = ifelse(dyad_level == 1,"o","p")) %>%
+  unite(new_key,key,dyad_level,sep = "_",remove=T) %>%
+  spread(new_key,value)
+
+dyad.df <- dyad.df %>%
+  arrange(dyad_id)
+```
+```{r p4 frequency of cooperative actions dyad scoring, }
+for (i in 1:nrow(dyad.df)) {
+  dyad.df$Freq_CA_p4[i] <- max(dyad.df[i,c("initiate_freq_3s_o","initiate_freq_3s_p","respond_freq_3s_o", "respond_freq_3s_p")])
+}
+```
+```{r P4 Peers age difference scoring, }
+dyad.df$age_p4_diff <- abs(dyad.df$age_p4_o - dyad.df$age_p4_p)
+```
+  
+# Combined Models
+
+```{r models with rt siq predicting ca}
+df.rt.wu <- subset(indiv.df, select = c ("Dyad_Number", "Latency_3sec_yn", 
+                                         "Initiate_yn_3s", "Respond_yn_3s",
+                                         "RT_Afill_yn", "RT_Antag_yn", "RT_JCE"))
+df.rt.wu <- na.omit(df.rt.wu)
+
+#Init
+init.rt.wu <- geeglm(Initiate_yn_3s ~ RT_Afill_yn 
+                    + RT_Antag_yn + RT_JCE, 
+                                family=binomial,
+                                data=df.rt.wu, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(init.rt.wu)
+
+#Resp
+resp.rt.wu <- geeglm(Respond_yn_3s ~ RT_Afill_yn 
+                    + RT_Antag_yn + RT_JCE, 
+                                family=binomial,
+                                data=df.rt.wu, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(resp.rt.wu)
+
+#Success
+suc.rt.wu <- geeglm(Latency_3sec_yn ~ RT_Afill_yn 
+                    + RT_Antag_yn + RT_JCE, 
+                                family=binomial,
+                                data=df.rt.wu, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(suc.rt.wu)
+```
+
+```{r models with rt siq predicting rt siq}
+df.rt.iq <- subset(indiv.df, select = c ("Dyad_Number",
+                                         "RT_Afill_yn", 
+                                         "RT_Antag_yn", 
+                                         "RT_JCE"))
+df.rt.iq <- na.omit(df.rt.iq)
+
+#Afill
+afill.rt.iq <- geeglm(RT_Afill_yn ~ RT_Antag_yn + RT_JCE, 
+                                family=binomial,
+                                data=df.rt.iq, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(afill.rt.iq)
+
+#Antag
+antag.rt.iq <- geeglm(RT_Antag_yn ~ RT_Afill_yn + RT_JCE, 
+                                family=binomial,
+                                data=df.rt.iq, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(antag.rt.iq)
+
+#LMM - affiliation predicting JCE
+jce.rt.iq <- lmer(RT_JCE_Trans ~ RT_Afill_yn +
+                    RT_Antag_yn
+                        + (1|Dyad_Number),
+                    data = indiv.df,
+                 na.action = na.omit,
+                 REML=FALSE)
+summary(jce.rt.iq)
+
+```
+
+```{r models with wu siq predicting ca}
+df.wu.ca <- subset(indiv.df, select = c ("Dyad_Number", "Latency_3sec_yn", 
+                                         "Initiate_yn_3s", "Respond_yn_3s",
+                                         "WU_Afill_yn_T1", "WU_Afill_yn_T2",
+                                         "WU_Antag_yn_T1", "WU_Antag_yn_T2",
+                                         "WU_JCE_T1", "WU_JCE_T2", "WU_Contrib","Gender"))
+df.wu.ca <- na.omit(df.wu.ca)
+
+#Init
+init.wu.ca <- geeglm(Initiate_yn_3s ~ WU_Afill_yn_T1 + WU_Afill_yn_T2 +
+                                         WU_Antag_yn_T1 + WU_Antag_yn_T2 +
+                                         WU_JCE_T1 + WU_JCE_T2 + WU_Contrib+Gender,
+                                family=binomial,
+                                data=df.wu.ca, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(init.wu.ca)
+
+#Resp
+resp.wu.ca <- geeglm(Respond_yn_3s ~ WU_Afill_yn_T1 + WU_Afill_yn_T2 +
+                                         WU_Antag_yn_T1 + WU_Antag_yn_T2 +
+                                         WU_JCE_T1 + WU_JCE_T2 + WU_Contrib+Gender, 
+                                family=binomial,
+                                data=df.wu.ca, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(resp.wu.ca)
+
+#Succ
+succ.wu.ca <- geeglm(Latency_3sec_yn ~ WU_Afill_yn_T1 + WU_Afill_yn_T2 +
+                                         WU_Antag_yn_T1 + WU_Antag_yn_T2 +
+                                         WU_JCE_T1 + WU_JCE_T2 + WU_Contrib, 
+                                family=binomial,
+                                data=df.wu.ca, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(succ.wu.ca)
+```
+
+```{r models with wu siq predicting rt siq}
+df.siq <- subset(indiv.df, select = c ("Dyad_Number", "RT_Afill_yn", 
+                                         "RT_Antag_yn", "RT_JCE_Trans",
+                                         "WU_Afill_yn_T1", "WU_Afill_yn_T2",
+                                         "WU_Antag_yn_T1", "WU_Antag_yn_T2",
+                                         "WU_JCE_T1", "WU_JCE_T2", "WU_Contrib"))
+df.siq <- na.omit(df.siq)
+
+#Afill
+wu.rt.af <- geeglm(RT_Afill_yn ~ WU_Afill_yn_T1 + WU_Afill_yn_T2 +
+                                         WU_Antag_yn_T1 + WU_Antag_yn_T2 +
+                                         WU_JCE_T1 + WU_JCE_T2 + WU_Contrib,
+                                family=binomial,
+                                data=df.siq, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(wu.rt.af)
+
+
+#Antag
+wu.rt.an <- geeglm(RT_Antag_yn ~ WU_Afill_yn_T1 + WU_Afill_yn_T2 +
+                                         WU_Antag_yn_T1 + WU_Antag_yn_T2 +
+                                         WU_JCE_T1 + WU_JCE_T2 + WU_Contrib,
+                                family=binomial,
+                                data=df.siq, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(wu.rt.an)
+
+#JCE
+wu.rt.jc <- lmer(RT_JCE_Trans ~ WU_Afill_yn_T1 + WU_Afill_yn_T2 +
+                   WU_Antag_yn_T1 + WU_Antag_yn_T2 +
+                   WU_JCE_T1 + WU_JCE_T2 + WU_Contrib
+                 + (1|Dyad_Number),
+                    data = indiv.df,
+                 na.action = na.omit,
+                 REML=FALSE)
+summary(wu.rt.jc)
+```
+
+
+# Individual Models
+
+##### Warm Up Social Context + Robot Task Social Context
+  
+* Does warm up affiliation relate to robot task affiliation, antagonism, or JCE? 
+  
+```{r warm up + robot affiliation, antag, jce}
+#GEE
+#create dataframe with complete observations
+#afilliation predicting affiliation
+df.wu.rt.afill.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                   "RT_Afill_yn", 
+                                                   "WU_Afill_yn_T1", 
+                                                   "WU_Afill_yn_T2"))
+df.wu.rt.afill.gee <- na.omit(df.wu.rt.afill.gee)
+
+wu.rt.afill.gee <- geeglm(RT_Afill_yn ~ WU_Afill_yn_T1 
+                          + WU_Afill_yn_T2, 
+                          family=binomial(link = logit),
+                          data=df.wu.rt.afill.gee, 
+                          id=Dyad_Number, 
+                          corstr = "exchangeable", 
+                          std.err="san.se") 
+summary(wu.rt.afill.gee)
+anova(wu.rt.afill.gee)
+
+#affiliation predicting antagonism
+df.g.af.ant <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                   "RT_Antag_yn", 
+                                                   "WU_Afill_yn_T1", 
+                                                   "WU_Afill_yn_T2"))
+df.g.af.ant <- na.omit(df.g.af.ant)
+
+g.af.ant <- geeglm(RT_Antag_yn ~ WU_Afill_yn_T1 
+                          + WU_Afill_yn_T2, 
+                          family=binomial(link = logit),
+                          data=df.g.af.ant, 
+                          id=Dyad_Number, 
+                          corstr = "exchangeable", 
+                          std.err="san.se") 
+summary(g.af.ant)
+
+#LMM - affiliation predicting JCE
+wu.rt.jce.afill<- lmer(RT_JCE_Trans ~ WU_Afill_yn_T1
+                        + WU_Afill_yn_T2
+                        + (1|Dyad_Number),
+                    data = indiv.df,
+                 na.action = na.omit,
+                 REML=FALSE)
+summary(wu.rt.jce.afill)
+
+
+```
+  
+* Does warm up antagonism relate to robot task afill, antagonism, jce? 
+
+```{r warm up + robot antagonism}
+#Warm up afill and RT antag
+df.wu.rt.afill.antag.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                   "RT_Afill_yn", 
+                                                   "WU_Antag_yn_T1", 
+                                                   "WU_Antag_yn_T2"))
+df.wu.rt.afill.antag.gee <- na.omit(df.wu.rt.afill.antag.gee)
+
+wu.rt.afill.antag.gee <- geeglm(RT_Afill_yn ~ WU_Antag_yn_T1 
+                          + WU_Antag_yn_T2, 
+                          family=binomial(link = logit),
+                          data=df.wu.rt.afill.antag.gee, 
+                          id=Dyad_Number, 
+                          corstr = "exchangeable", 
+                          std.err="san.se") 
+summary(wu.rt.afill.antag.gee)
+
+
+#GEE
+#create dataframe with complete observations
+df.wu.rt.antag.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                   "RT_Antag_yn", 
+                                                   "WU_Antag_yn_T1", 
+                                                   "WU_Antag_yn_T2"))
+df.wu.rt.antag.gee <- na.omit(df.wu.rt.antag.gee)
+
+wu.rt.antag.gee <- geeglm(RT_Antag_yn ~ WU_Antag_yn_T1
+                          + WU_Antag_yn_T2, 
+                          family=binomial,
+                          data=df.wu.rt.antag.gee, 
+                          id=Dyad_Number, 
+                          corstr = "exchangeable", 
+                          std.err="san.se") 
+summary(wu.rt.antag.gee)
+anova(wu.rt.antag.gee)
+exp(1.2454)
+
+
+#LMM - affiliation predicting JCE
+wu.rt.jce.antag<- lmer(RT_JCE_Trans ~ WU_Antag_yn_T1
+                        + WU_Antag_yn_T2
+                        + (1|Dyad_Number),
+                    data = indiv.df,
+                 na.action = na.omit,
+                 REML=FALSE)
+summary(wu.rt.jce.antag)
+
+```
+  
+* Does warm up JCE relate to robot task afill, antag, JCE? 
+  
+```{r warm up + robot jce}
+
+
+#Warm up afill and RT jce
+df.wu.rt.afill.jce.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                   "RT_Afill_yn", 
+                                                   "WU_JCE_T1", 
+                                                   "WU_JCE_T2"))
+df.wu.rt.afill.jce.gee <- na.omit(df.wu.rt.afill.jce.gee)
+
+wu.rt.afill.jce.gee <- geeglm(RT_Afill_yn ~ WU_JCE_T1 
+                          + WU_JCE_T2, 
+                          family=binomial(link = logit),
+                          data=df.wu.rt.afill.jce.gee, 
+                          id=Dyad_Number, 
+                          corstr = "exchangeable", 
+                          std.err="san.se") 
+summary(wu.rt.afill.jce.gee)
+
+#warm up JCE and aantag
+#Warm up afill and RT jce
+df.wu.rt.antag.jce.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                   "RT_Antag_yn", 
+                                                   "WU_JCE_T1", 
+                                                   "WU_JCE_T2"))
+df.wu.rt.antag.jce.gee <- na.omit(df.wu.rt.antag.jce.gee)
+
+wu.rt.antag.jce.gee <- geeglm(RT_Antag_yn ~ WU_JCE_T1 
+                          + WU_JCE_T2, 
+                          family=binomial(link = logit),
+                          data=df.wu.rt.antag.jce.gee, 
+                          id=Dyad_Number, 
+                          corstr = "exchangeable", 
+                          std.err="san.se") 
+summary(wu.rt.antag.jce.gee)
+
+#LMM
+wu.rt.jce<- lmer(RT_JCE_Trans ~ WU_JCE_T1
+                        + WU_JCE_T2
+                        + (1|Dyad_Number),
+                    data = indiv.df,
+                 na.action = na.omit,
+                 REML=FALSE)
+summary(wu.rt.jce)
+#Assumption checks
+Plot.wu.rt.jce <- plot(wu.rt.jce)
+Plot.wu.rt.jce
+qqmath(wu.rt.jce, id=0.05)
+
+```
+
+* Does warm up contribution to toy tidy relate to robot task afill, antag, jce? 
+```{r warum up contrib + rt siq}
+#Warm up afill and RT jce
+df.wu.rt.contrib.afill.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                   "RT_Afill_yn", 
+                                                   "WU_Contrib"))
+df.wu.rt.contrib.afill.gee  <- na.omit(df.wu.rt.contrib.afill.gee )
+
+wu.rt.contrib.afill.gee <- geeglm(RT_Afill_yn ~ WU_Contrib, 
+                          family=binomial(link = logit),
+                          data=df.wu.rt.contrib.afill.gee , 
+                          id=Dyad_Number, 
+                          corstr = "exchangeable", 
+                          std.err="san.se") 
+summary(wu.rt.contrib.afill.gee)
+
+
+df.wu.rt.antag.co.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                   "RT_Antag_yn", 
+                                                   "WU_Contrib"))
+df.wu.rt.antag.co.gee <- na.omit(df.wu.rt.antag.co.gee)
+
+wu.rt.antag.co.gee <- geeglm(RT_Antag_yn ~ WU_Contrib, 
+                          family=binomial(link = logit),
+                          data=df.wu.rt.antag.co.gee, 
+                          id=Dyad_Number, 
+                          corstr = "exchangeable", 
+                          std.err="san.se") 
+summary(wu.rt.antag.co.gee)
+
+#LMM
+wu.rt.jce.co<- lmer(RT_JCE_Trans ~ WU_Contrib
+                        + (1|Dyad_Number),
+                    data = indiv.df,
+                 na.action = na.omit,
+                 REML=FALSE)
+summary(wu.rt.jce.co)
+
+```
+
+
+##### Warm Up Social Context + Robot Task Ability
+  
+* Does warm up affiliation relate to robot task cooperative ability?
+  
+```{r warm up affiliation + robot ability}
+#Success - GEE
+#create dataframe with complete observations
+df.wu.rt.lat.t1.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                    "Latency_3sec_yn", 
+                                                    "WU_Afill_yn_T1", 
+                                                    "WU_Afill_yn_T2"))
+df.wu.rt.lat.t1.gee  <- na.omit(df.wu.rt.lat.t1.gee)
+
+wu.rt.lat.t1.gee <- geeglm(Latency_3sec_yn ~ WU_Afill_yn_T1 
+                           + WU_Afill_yn_T2, 
+                           family=binomial, 
+                           data=df.wu.rt.lat.t1.gee, 
+                           id=Dyad_Number, 
+                           corstr = "exchangeable", 
+                           std.err="san.se") 
+summary(wu.rt.lat.t1.gee)
+anova(wu.rt.lat.t1.gee)
+
+#Initiating Behaviours - GEE
+#create dataframe with complete observations
+df.wu.rt.init.gee <- subset(indiv.df, select = c ("Dyad_Number",
+                                                  "Initiate_yn_3s", 
+                                                  "WU_Afill_yn_T1", 
+                                                  "WU_Afill_yn_T2", 
+                                                  "Gender"))
+df.wu.rt.init.gee  <- na.omit(df.wu.rt.init.gee)
+
+wu.rt.init.gee <- geeglm(Initiate_yn_3s ~ WU_Afill_yn_T1 
+                         + WU_Afill_yn_T2, 
+                         family=binomial,
+                         data=df.wu.rt.init.gee, 
+                         id=Dyad_Number, 
+                         corstr = "exchangeable", 
+                         std.err="san.se") 
+summary(wu.rt.init.gee)
+anova(wu.rt.init.gee)
+exp(0.6387) #1.89
+# 1 -  1.89 = 89% likelihood or 1.89 times more likely
+
+#Responding Behaviours - GEE
+#create dataframe with complete observations
+df.wu.rt.resp.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                  "Respond_yn_3s", 
+                                                  "WU_Afill_yn_T1", 
+                                                  "WU_Afill_yn_T2", 
+                                                  "Gender", 
+                                                  "Age_P4"))
+df.wu.rt.resp.gee  <- na.omit(df.wu.rt.resp.gee)
+
+wu.rt.resp.gee <- geeglm(Respond_yn_3s ~ WU_Afill_yn_T1 
+                         + WU_Afill_yn_T2, 
+                         family=binomial,
+                         data=df.wu.rt.resp.gee, 
+                         id=Dyad_Number, 
+                         corstr = "exchangeable", 
+                         std.err="san.se") 
+summary(wu.rt.resp.gee)
+anova(wu.rt.resp.gee)
+```
+  
+* Does warm up antagonism relate to robot task cooperative ability?
+  
+```{r warm up antagonism + robot ability}
+#Success - GEE
+#create dataframe with complete observations
+df.wu.antag.rt.lat.t1.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                          "Latency_3sec_yn", 
+                                                          "WU_Antag_yn_T1", 
+                                                          "WU_Antag_yn_T2"))
+df.wu.antag.rt.lat.t1.gee <- na.omit(df.wu.antag.rt.lat.t1.gee)
+
+wu.antag.rt.lat.t1.gee<- geeglm(Latency_3sec_yn ~ WU_Antag_yn_T1 
+                                + WU_Antag_yn_T2, 
+                                family=binomial,
+                                data=df.wu.antag.rt.lat.t1.gee, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(wu.antag.rt.lat.t1.gee)
+anova(wu.antag.rt.lat.t1.gee)
+
+#Initiating Behaviours - GEE
+#create dataframe with complete observations
+df.wu.antag.rt.init.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                        "Initiate_yn_3s", 
+                                                        "WU_Antag_yn_T1", 
+                                                        "WU_Antag_yn_T2", 
+                                                        "Gender"))
+df.wu.antag.rt.init.gee <- na.omit(df.wu.antag.rt.init.gee)
+
+wu.antag.rt.lat.t1.gee<- geeglm(Initiate_yn_3s ~ WU_Antag_yn_T1 
+                                + WU_Antag_yn_T2, 
+                                family=binomial,
+                                data=df.wu.antag.rt.init.gee, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(wu.antag.rt.lat.t1.gee)
+anova(wu.antag.rt.lat.t1.gee)
+
+# Responding Behaviours - GEE
+#create dataframe with complete observations
+df.wu.antag.rt.resp.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                        "Respond_yn_3s", 
+                                                        "WU_Antag_yn_T1", 
+                                                        "WU_Antag_yn_T2", 
+                                                        "Gender"))
+df.wu.antag.rt.resp.gee <- na.omit(df.wu.antag.rt.resp.gee)
+
+wu.antag.rt.lat.t1.gee<- geeglm(Respond_yn_3s ~ WU_Antag_yn_T1 
+                                + WU_Antag_yn_T2, 
+                                family=binomial,
+                                data=df.wu.antag.rt.resp.gee, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(wu.antag.rt.lat.t1.gee)
+anova(wu.antag.rt.lat.t1.gee)
+```  
+  
+* Does warm up jce relate to robot task cooperative ability? 
+  
+```{r warm up jce + robot ability}
+#Success - GEE
+df.wu.jce.rt.lat.suc <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                     "Latency_3sec_yn", 
+                                                     "WU_JCE_T1", 
+                                                     "WU_JCE_T2"))
+df.wu.jce.rt.lat.suc <- na.omit(df.wu.jce.rt.lat.suc)
+
+wu.jce.rt.lat.suc <- geeglm(Latency_3sec_yn~WU_JCE_T1 
+                         + WU_JCE_T2,
+                         family=binomial,
+                         data=df.wu.jce.rt.lat.suc, 
+                         id=Dyad_Number, 
+                         corstr = "exchangeable", 
+                         std.err="san.se") 
+summary(wu.jce.rt.lat.suc)
+anova(wu.jce.rt.lat.suc)
+
+# Initiating Behaviours - GEE
+#create dataframe with complete observations
+df.wu.jce.rt.init <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                  "Initiate_yn_3s", 
+                                                  "WU_JCE_T1", 
+                                                  "WU_JCE_T2", 
+                                                  "Gender"))
+df.wu.jce.rt.init <- na.omit(df.wu.jce.rt.init)
+
+wu.jce.rt.init <- geeglm(Initiate_yn_3s~WU_JCE_T1
+                         +WU_JCE_T2, 
+                         family=binomial,
+                         data=df.wu.jce.rt.init, 
+                         id=Dyad_Number, 
+                         corstr = "exchangeable", 
+                         std.err="san.se") 
+summary(wu.jce.rt.init)
+anova(wu.jce.rt.init)
+
+exp(0.3654)
+
+# Responding Behaviours - GEE
+#create dataframe with complete observations
+df.wu.jce.rt.resp <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                  "Respond_yn_3s", 
+                                                  "WU_JCE_T1", 
+                                                  "WU_JCE_T2", 
+                                                  "Gender"))
+df.wu.jce.rt.resp <- na.omit(df.wu.jce.rt.resp)
+
+wu.jce.rt.resp <- geeglm(Respond_yn_3s ~ WU_JCE_T1 
+                         + WU_JCE_T2, 
+                         family=binomial,
+                         data=df.wu.jce.rt.resp, 
+                         id=Dyad_Number, 
+                         corstr = "exchangeable", 
+                         std.err="san.se") 
+summary(wu.jce.rt.resp)
+anova(wu.jce.rt.resp)
+```  
+  
+* Does warm up contribution to toy tidy relate to robot task cooperative ability? 
+```{r warm up contrib + robot ability}
+
+#Success - GEE
+#create dataframe with complete observations
+df.wu.contrib.rt.lat.t2.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                            "Latency_3sec_yn", 
+                                                            "WU_Contrib"))
+df.wu.contrib.rt.lat.t2.gee <- na.omit(df.wu.contrib.rt.lat.t2.gee)
+
+wu.contrib.rt.lat.t2.gee <- geeglm(Latency_3sec_yn ~ WU_Contrib, 
+                                   family=binomial,
+                                   data=df.wu.contrib.rt.lat.t2.gee, 
+                                   id=Dyad_Number, 
+                                   corstr = "exchangeable", 
+                                   std.err="san.se") 
+summary(wu.contrib.rt.lat.t2.gee)
+anova(wu.contrib.rt.lat.t2.gee)
+exp(-0.001554)
+
+
+#Initiating Behaviours - GEE
+#create dataframe with complete observations
+df.wu.init.rt.lat.t2.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                         "Initiate_yn_3s", 
+                                                         "WU_Contrib", 
+                                                         "Gender"))
+df.wu.init.rt.lat.t2.gee <- na.omit(df.wu.init.rt.lat.t2.gee)
+
+wu.init.rt.lat.t2.gee <- geeglm(Initiate_yn_3s ~ WU_Contrib, 
+                                family=binomial,
+                                data=df.wu.init.rt.lat.t2.gee, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(wu.init.rt.lat.t2.gee)
+anova(wu.init.rt.lat.t2.gee)
+
+
+#Responding behaviours - GEE
+#create dataframe with complete observations
+df.wu.resp.rt.lat.t2.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                         "Respond_yn_3s", 
+                                                         "WU_Contrib", 
+                                                         "Gender", 
+                                                         "Age_P4"))
+df.wu.resp.rt.lat.t2.gee <- na.omit(df.wu.resp.rt.lat.t2.gee)
+
+wu.resp.rt.lat.t2.gee <- geeglm(Respond_yn_3s ~ WU_Contrib, 
+                                family=binomial,
+                                data=df.wu.resp.rt.lat.t2.gee, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(wu.resp.rt.lat.t2.gee)
+anova(wu.resp.rt.lat.t2.gee)
+exp(0.1440)
+```  
+  
+##### Robot Social Context + Robot Task Ability
+  
+* Does robot affiliation relate to robot task cooperative ability?
+  
+```{r robot afill + robot ability}
+#Success - GEE
+#create dataframe with complete observations
+df.rtsc.rt.lat.afill.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                         "Latency_3sec_yn", 
+                                                         "RT_Afill_yn"))
+df.rtsc.rt.lat.afill.gee <- na.omit(df.rtsc.rt.lat.afill.gee)
+
+rtsc.rt.lat.afill.gee <- geeglm(Latency_3sec_yn ~ RT_Afill_yn, 
+                                family=binomial,
+                                data=df.rtsc.rt.lat.afill.gee, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(rtsc.rt.lat.afill.gee)
+anova(rtsc.rt.lat.afill.gee)
+exp(-0.0479) #.95
+
+
+#Initiating behaviours - GEE
+#create dataframe with complete observations
+df.rtsc.rt.init.afill.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                          "Initiate_yn_3s", 
+                                                          "RT_Afill_yn", 
+                                                          "Gender"))
+df.rtsc.rt.init.afill.gee <- na.omit(df.rtsc.rt.init.afill.gee)
+
+rtsc.rt.init.afill.gee <- geeglm(Initiate_yn_3s ~ RT_Afill_yn, 
+                                 family=binomial,
+                                 data=df.rtsc.rt.init.afill.gee, 
+                                 id=Dyad_Number, 
+                                 corstr = "exchangeable", 
+                                 std.err="san.se") 
+summary(rtsc.rt.init.afill.gee)
+anova(rtsc.rt.init.afill.gee)
+
+#Responding behaviours - GEE
+#create dataframe with complete observations
+df.rtsc.rt.resp.afill.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                          "Respond_yn_3s", 
+                                                          "RT_Afill_yn", 
+                                                          "Gender", 
+                                                          "Age_P4"))
+df.rtsc.rt.resp.afill.gee <- na.omit(df.rtsc.rt.resp.afill.gee)
+
+rtsc.rt.resp.afill.gee <- geeglm(Respond_yn_3s ~ RT_Afill_yn, 
+                                 family=binomial,
+                                 data=df.rtsc.rt.resp.afill.gee, 
+                                 id=Dyad_Number, 
+                                 corstr = "exchangeable", 
+                                 std.err="san.se") 
+summary(rtsc.rt.resp.afill.gee)
+anova(rtsc.rt.resp.afill.gee)
+```
+  
+* Does robot antgonism relate to robot task cooperative ability? 
+  
+```{r robot antag + robot ability}
+
+#Success - GEE
+#create dataframe with complete observations
+df.rtsc.rt.lat.antag.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                         "Latency_3sec_yn", 
+                                                         "RT_Antag_yn"))
+df.rtsc.rt.lat.antag.gee <- na.omit(df.rtsc.rt.lat.antag.gee)
+
+rtsc.rt.lat.antag.gee <- geeglm(Latency_3sec_yn ~ RT_Antag_yn, 
+                                family=binomial,
+                                data=df.rtsc.rt.lat.antag.gee, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(rtsc.rt.lat.antag.gee)
+anova(rtsc.rt.lat.antag.gee)
+
+#Initiating behaviours - GEE
+#create dataframe with complete observations
+df.rtsc.rt.init.antag.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                          "Initiate_yn_3s", 
+                                                          "RT_Antag_yn", 
+                                                          "Gender"))
+df.rtsc.rt.init.antag.gee <- na.omit(df.rtsc.rt.init.antag.gee)
+
+rtsc.rt.init.antag.gee <- geeglm(Initiate_yn_3s ~ RT_Antag_yn, 
+                                 family=binomial,
+                                 data=df.rtsc.rt.init.antag.gee, 
+                                 id=Dyad_Number, 
+                                 corstr = "exchangeable", 
+                                 std.err="san.se") 
+summary(rtsc.rt.init.antag.gee)
+anova(rtsc.rt.init.antag.gee)
+
+
+#Responding behaviours - GEE
+#create dataframe with complete observations
+df.rtsc.rt.resp.antag.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                          "Respond_yn_3s", 
+                                                          "RT_Antag_yn", 
+                                                          "Gender", 
+                                                          "Age_P4"))
+df.rtsc.rt.resp.antag.gee <- na.omit(df.rtsc.rt.resp.antag.gee)
+
+rtsc.rt.resp.antag.gee <- geeglm(Respond_yn_3s ~ RT_Antag_yn, 
+                                 family=binomial,
+                                 data=df.rtsc.rt.resp.antag.gee, 
+                                 id=Dyad_Number, 
+                                 corstr = "exchangeable", 
+                                 std.err="san.se") 
+summary(rtsc.rt.resp.antag.gee)
+anova(rtsc.rt.resp.antag.gee)
+```
+  
+* Does robot jce relate to robot task cooperative ability? 
+  
+```{r robot jce + robot ability}
+#Success- GEE
+#create dataframe with complete observations
+df.rtsc.rt.lat.jce.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                       "Latency_3sec_yn", 
+                                                       "RT_JCE"))
+df.rtsc.rt.lat.jce.gee <- na.omit(df.rtsc.rt.lat.jce.gee)
+
+rtsc.rt.lat.jce.gee <- geeglm(Latency_3sec_yn ~ RT_JCE, 
+                              family=binomial,
+                              data=df.rtsc.rt.lat.jce.gee, 
+                              id=Dyad_Number, 
+                              corstr = "exchangeable", 
+                              std.err="san.se") 
+summary(rtsc.rt.lat.jce.gee)
+anova(rtsc.rt.lat.jce.gee)
+exp(-0.1715) #.842
+
+#Initiating behaviours - GEE
+#create dataframe with complete observations
+df.rtsc.rt.init.jce.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                        "Initiate_yn_3s", 
+                                                        "RT_JCE", 
+                                                        "Gender"))
+df.rtsc.rt.init.jce.gee <- na.omit(df.rtsc.rt.init.jce.gee)
+
+rtsc.rt.init.jce.gee <- geeglm(Initiate_yn_3s ~ RT_JCE, 
+                               family=binomial,
+                               data=df.rtsc.rt.init.jce.gee, 
+                               id=Dyad_Number, 
+                               corstr = "exchangeable", 
+                               std.err="san.se") 
+summary(rtsc.rt.init.jce.gee)
+anova(rtsc.rt.init.jce.gee)
+exp(0.931) #2.54
+
+#Responding behaviours - GEE
+#create dataframe with complete observations
+df.rtsc.rt.resp.jce.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                        "Respond_yn_3s", 
+                                                        "RT_JCE", 
+                                                        "Gender", 
+                                                        "Age_P4"))
+df.rtsc.rt.resp.jce.gee <- na.omit(df.rtsc.rt.resp.jce.gee)
+
+rtsc.rt.resp.jce.gee <- geeglm(Respond_yn_3s ~ RT_JCE, 
+                               family=binomial,
+                               data=df.rtsc.rt.resp.jce.gee, 
+                               id=Dyad_Number, 
+                               corstr = "exchangeable", 
+                               std.err="san.se") 
+summary(rtsc.rt.resp.jce.gee)
+anova(rtsc.rt.resp.jce.gee)
+exp(1.119) #3.06
+```
+
+##### Robot Social Context + Robot Social Context
+  
+* Does robot affiliation relate to robot task interaction quality?
+  
+```{r robot siq + robot siq}
+#afill predict antag RT
+df.rtsc.rtsc.antag.afill.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                         "RT_Antag_yn", 
+                                                         "RT_Afill_yn"))
+df.rtsc.rtsc.antag.afill.gee <- na.omit(df.rtsc.rtsc.antag.afill.gee)
+
+rtsc.rtsc.antag.afill.gee <- geeglm(RT_Antag_yn ~ RT_Afill_yn, 
+                                family=binomial,
+                                data=df.rtsc.rtsc.antag.afill.gee, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(rtsc.rtsc.antag.afill.gee)
+
+#afill predict JCE RT
+
+df.rtsc.rtsc.jce.afill.glm <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                         "RT_JCE_Trans", 
+                                                         "RT_Afill_yn"))
+
+rtsc.rtsc.jce.afill.glm <- lmerTest::lmer(RT_JCE_Trans ~ RT_Afill_yn
+                        + (1|Dyad_Number),
+                    data = df.rtsc.rtsc.jce.afill.glm,
+                 na.action = na.omit,
+                 REML=FALSE)
+summary(rtsc.rtsc.jce.afill.glm)
+
+
+```
+  
+* Does robot antag relate to robot task interaction quality?
+  
+```{r robot antag siq + robot siq2}
+#antag predict afill RT
+df.rtsc.rtsc.afill.antag.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                         "RT_Antag_yn", 
+                                                         "RT_Afill_yn"))
+
+rtsc.rtsc.afill.antag.gee <- geeglm(RT_Afill_yn ~ RT_Antag_yn, 
+                                family=binomial,
+                                data=df.rtsc.rtsc.afill.antag.gee, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(rtsc.rtsc.afill.antag.gee )
+
+#antag predict JCE RT
+
+df.rtsc.rtsc.jce.antag.glm <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                         "RT_JCE_Trans", 
+                                                         "RT_Antag_yn"))
+
+rtsc.rtsc.jce.antag.glm <- lmer(RT_JCE_Trans ~ RT_Antag_yn
+                        + (1|Dyad_Number),
+                    data = df.rtsc.rtsc.jce.antag.glm,
+                 na.action = na.omit,
+                 REML=FALSE)
+summary(rtsc.rtsc.jce.antag.glm)
+```  
+
+* Does robot jce relate to robot task interaction quality?
+  
+```{r robot antag siq + robot siq}
+#JCE predict afill RT
+df.rtsc.rtsc.afill.jce.gee <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                         "RT_JCE", 
+                                                         "RT_Afill_yn"))
+
+rtsc.rtsc.afill.jce.gee <- geeglm(RT_Afill_yn ~ RT_JCE, 
+                                family=binomial,
+                                data=df.rtsc.rtsc.afill.jce.gee, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(rtsc.rtsc.afill.jce.gee)
+
+#JCE predict antag RT
+
+df.rtsc.rtsc.ja.glm <- subset(indiv.df, select = c ("Dyad_Number", 
+                                                         "RT_JCE", 
+                                                         "RT_Antag_yn"))
+rtsc.rtsc.ja.glm <- geeglm(RT_Antag_yn ~ RT_JCE, 
+                                family=binomial,
+                                data=df.rtsc.rtsc.ja.glm, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+
+summary(rtsc.rtsc.ja.glm)
+
+
+```  
+
+### Primary Research Questions - Follow Up Analyses 
+  
+The following analyses are exploratory. Due to significant effects in the models that included gender - we decided to run an additional model with gender as a moderator. None of the primary analyses met the criteria for further mediation analyses.  
+
+  
+```{r moderation models}
+#GEE model for warm up affiliation and initiating behaviours
+#with Gender as a moderator
+wu.rt.init.gee.mod <- geeglm(Initiate_yn_3s ~ WU_Afill_yn_T1 
+                         + WU_Afill_yn_T2 
+                         + Gender 
+                         + WU_Afill_yn_T1 * Gender, 
+                         family=binomial,
+                         data=df.wu.rt.init.gee, 
+                         id=Dyad_Number, 
+                         corstr = "exchangeable", 
+                         std.err="san.se") 
+summary(wu.rt.init.gee.mod)
+anova(wu.rt.init.gee.mod)
+
+#GEE model for warm up JCE and initiating behaviours
+wu.jce.rt.init.mod <- geeglm(Initiate_yn_3s~WU_JCE_T1
+                         + WU_JCE_T2 
+                         + Gender
+                         + WU_JCE_T1*Gender, 
+                         family=binomial,
+                         data=df.wu.jce.rt.init, 
+                         id=Dyad_Number, 
+                         corstr = "exchangeable", 
+                         std.err="san.se") 
+summary(wu.jce.rt.init.mod)
+anova(wu.jce.rt.init.mod)
+
+#GEE model for warm up contribution and responding behaviours
+#with Gender as a moderator
+wu.resp.rt.contrib.t2.gee.mod <- geeglm(Respond_yn_3s ~ WU_Contrib
+                                + Gender
+                                + WU_Contrib * Gender, 
+                                family=binomial,
+                                data=df.wu.resp.rt.lat.t2.gee, 
+                                id=Dyad_Number, 
+                                corstr = "exchangeable", 
+                                std.err="san.se") 
+summary(wu.resp.rt.contrib.t2.gee.mod)
+anova(wu.resp.rt.contrib.t2.gee.mod)
+mydf <- ggeffect(wu.resp.rt.contrib.t2.gee.mod, terms = c("WU_Contrib", "Gender"))
+plot(mydf)
+
+#GEE model for robot task JCE and responding behaviours
+#with Gender as a moderator
+rtsc.rt.init.jce.gee.mod <- geeglm(Initiate_yn_3s ~ RT_JCE 
+                               + Gender
+                               + Gender * RT_JCE, 
+                               family=binomial,
+                               data=df.rtsc.rt.init.jce.gee, 
+                               id=Dyad_Number, 
+                               corstr = "exchangeable", 
+                               std.err="san.se") 
+summary(rtsc.rt.init.jce.gee.mod)
+anova(rtsc.rt.init.jce.gee.mod)
+#Responding behaviours - GEE
+rtsc.rt.resp.jce.gee.mod <- geeglm(Respond_yn_3s ~ RT_JCE 
+                               + Gender 
+                               + Gender * RT_JCE, 
+                               family=binomial,
+                               data=df.rtsc.rt.resp.jce.gee, 
+                               id=Dyad_Number, 
+                               corstr = "exchangeable", 
+                               std.err="san.se") 
+summary(rtsc.rt.resp.jce.gee.mod)
+anova(rtsc.rt.resp.jce.gee.mod)
+```
+
+  
+### Research Questions - Secondary Analyses  
+  
+#### Individual Level Analyses (ALL) 
+  
+*Note. These are all individual level analyses where the ORCA and peer are treated as individual participants*
+  
+##### Warm Up Social Context
+  
+* Are there differences between T1 and T2 for all social context warm up variables? 
+  
+```{r warm up social context time sampling differences}
+#test for differences between warm up T1 and T2 averages for all social context binary variables
+
+##affiliation differences - yes
+#contingency table
+afill.wu.tab <- table(indiv.df$WU_Afill_yn_T1, indiv.df$WU_Afill_yn_T2)
+afill.wu.tab
+#chi-square test - sig
+chisq.test(afill.wu.tab)
+
+##antagonism differences - yes
+#contingency table
+antag.wu.tab <- table(indiv.df$WU_Antag_yn_T1, indiv.df$WU_Antag_yn_T2)
+antag.wu.tab
+#chi-square test - sig
+chisq.test(antag.wu.tab)
+
+##jce differences - yes
+
+#JCE subset
+## jce score - warm up
+WU.jce <- subset(indiv.df, select=c("WU_JCE_T1", "WU_JCE_T2"))
+WU.jce <- gather(WU.jce, time, score, WU_JCE_T1:WU_JCE_T2, factor_key=TRUE)
+WU.jce <- na.omit(WU.jce)
+#wilcox test
+
+wilcox.test(score ~ time, data = WU.jce, paired=FALSE)
+group_by(WU.jce, time) %>%
+  summarise(
+    count = n(),
+    median = median(score, na.rm = TRUE),
+    IQR = IQR(score, na.rm = TRUE)
+  )
+```
+  
+* Are there gender differences for warm up social context variables? 
+  
+```{r warm up social context gender differences}
+#gender differences for warm up affiliation T1 binary variable
+
+##affiliation differences - yes
+#contingency table
+afill.wu.gen.tab <- table(indiv.df$WU_Afill_yn_T1, indiv.df$Gender)
+afill.wu.gen.tab 
+#chi-square test - sig
+chisq.test(afill.wu.gen.tab)
+
+#gender differences for warm up affiliation T2 - No
+afill2.wu.gen.tab <- table(indiv.df$WU_Afill_yn_T2, indiv.df$Gender)
+afill2.wu.gen.tab 
+#chi-square test 
+chisq.test(afill2.wu.gen.tab)
+
+##gender differences for warm up antagonism T1 - No
+antag.wu.gen.tab <- table(indiv.df$WU_Antag_yn_T1, indiv.df$Gender)
+antag.wu.gen.tab 
+#chi-square test - 
+chisq.test(antag.wu.gen.tab)
+
+##gender differences for warm up antagonism T2 - No
+antag2.wu.gen.tab <- table(indiv.df$WU_Antag_yn_T2, indiv.df$Gender)
+antag2.wu.gen.tab 
+#chi-square test 
+chisq.test(antag2.wu.gen.tab)
+
+##gender differences for warm up jce T1 - no
+wilcox.test(WU_JCE_T1 ~ Gender, data = indiv.df, paired=FALSE)
+#on transformed variable - no
+t.test(WU_JCE_T1_Trans ~ Gender, data = indiv.df, paired=FALSE)
+##gender differences for warm up jce T2
+wilcox.test(WU_JCE_T2 ~ Gender, data = indiv.df, paired=FALSE)
+#on transformed variable - no
+t.test(WU_JCE_T2_Trans ~ Gender, data = indiv.df, paired=FALSE)
+##gender differences for warm up contribution
+wilcox.test(WU_Contrib ~ Gender, data = indiv.df, paired=FALSE)
+#on transformed variable - no
+t.test(WU_Contrib_Trans ~ Gender, data = indiv.df, paired=FALSE)
+```
+  
+* Is there a relationship between age and warm up social context variables? 
+```{r warm up social context age differences}
+
+#association between age and warm up affiliation t1 - no
+t.test(indiv.df$Age_P4 ~ indiv.df$WU_Afill_yn_T1)
+
+#association between age and warm up affiliation t2 - no
+t.test(indiv.df$Age_P4 ~ indiv.df$WU_Afill_yn_T2)
+
+#association between age and warm up antagonism t1 - no
+t.test(indiv.df$Age_P4 ~ indiv.df$WU_Antag_yn_T1)
+
+#association between age and warm up antagonism t2 - no
+t.test(indiv.df$Age_P4 ~ indiv.df$WU_Antag_yn_T2)
+
+#association between age and warm up jce t1 - no
+age.wu.jce.t1 <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_JCE_T1, method = 'spearman')
+age.wu.jce.t1
+
+#association between age and warm up jce t1 transformed - no
+age.wu.jce.t1.trans <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_JCE_T1_Trans, method = 'spearman')
+age.wu.jce.t1.trans
+
+
+#association between age and warm up jce t2 - no
+age.wu.jce.t2 <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_JCE_T2, method = 'spearman')
+age.wu.jce.t2
+
+#association between age and warm up jce t2 transformed - no
+age.wu.jce.t2.trans <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_JCE_T2_Trans, method = 'spearman')
+age.wu.jce.t2.trans
+
+#association between age and warm up contributions - no
+age.wu.contrib <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_Contrib, method = 'spearman')
+age.wu.contrib
+
+#association between age and warm up contributions transformed - no
+age.wu.contrib.trans <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$WU_Contrib_Trans, method = 'spearman')
+age.wu.contrib.trans
+```
+
+##### Robot Social Context
+  
+* Are there gender differences for robot social context variables? 
+  
+```{r robot social context gender differences}
+#gender differences for robot task affiliation - no
+
+afill.rt.gen.tab <- table(indiv.df$RT_Afill_yn, indiv.df$Gender)
+afill.rt.gen.tab
+#chi-square test 
+chisq.test(afill.rt.gen.tab)
+
+##gender differences for robot task antagonism - no
+antag.rt.gen.tab <- table(indiv.df$RT_Antag_yn, indiv.df$Gender)
+antag.rt.gen.tab
+#chi-square test 
+chisq.test(antag.rt.gen.tab)
+
+##gender differences for robot task jce
+wilcox.test(RT_JCE ~ Gender, data = indiv.df, paired=FALSE)
+
+##gender differences for robot task jce transformed - no
+t.test(RT_JCE_Trans ~ Gender, data = indiv.df, paired=FALSE)
+
+##gender differences for robot task jce transformed + windsorized - no
+t.test(RT_JCE_Trans_OR ~ Gender, data = indiv.df, paired=FALSE)
+```
+  
+* Is there a relationship between age and robot social context variables? 
+  
+```{r robot social context age differences}
+
+#association between age and warm robot task affiliation - no
+t.test(indiv.df$Age_P4 ~ indiv.df$RT_Afill_yn)
+
+#association between age and robot task antagonism - no
+t.test(indiv.df$Age_P4 ~ indiv.df$RT_Antag_yn)
+
+#association between age and warm up jce - no
+age.rt.jce <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$RT_JCE, method = 'spearman')
+age.rt.jce
+
+#association between age and warm up jce transformed - no
+age.rt.jce.trans <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$RT_JCE_Trans, method = 'spearman')
+age.rt.jce.trans
+
+#association between age and warm up jce transformed + windsorized - no
+age.rt.jce.trans.or <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$RT_JCE_Trans_OR, method = 'spearman')
+age.rt.jce.trans.or
+```
+  
+#### Robot Cooperative Ability
+  
+* Does participant age correlate latency to success? 
+  
+```{r correlation between age for orca and peer and latency to success}
+#association for age of peer and orca and predicting latency
+age.latency <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$Latency_3sec, method = 'pearson')
+age.latency
+
+#association for age of peer and orca and predicting latency (transcribed)
+age.latency.trans <- cor.test(x = indiv.df$Age_P4, 
+                       y = indiv.df$Latency_3sec_Trans, method = 'pearson')
+age.latency.trans
+
+#association for age of peer and orca success - latency binary
+age.latency.yn <- t.test(indiv.df$Age_P4 ~ indiv.df$Latency_3sec_yn)
+age.latency.yn
+```
+  
+* Does the age difference between the participants correlate to latency to success 
+  
+```{r correlation between age difference within the dyad and latency to success}
+#correlation between age difference and latency scores
+agediff.latency.df <- subset(dyad.df, select = c("age_p4_diff","latency_3sec", "latency_3sec_trans"))
+agediff.latency.df <- na.omit(agediff.latency.df)
+agediff.latency.corr <- cor.test(x = agediff.latency.df$age_p4_diff, 
+                       y = agediff.latency.df$latency_3sec, method = 'spearman')
+agediff.latency.corr 
+
+#transformed variable
+agediff.latency.corr.trans <- cor.test(x = agediff.latency.df$age_p4_diff, 
+                       y = agediff.latency.df$latency_3sec_trans, method = 'pearson')
+agediff.latency.corr.trans 
+
+#binary variable
+agediff.latency.yn <- t.test(dyad.df$age_p4_diff ~ dyad.df$latency_3sec_yn)
+agediff.latency.yn 
+```
+  
+* Are there age differences between groups of children who did and did NOT engage in initiating/responding behaviours? 
+  
+```{r ttest for age differences for cooperative ability behaviours}
+#because many (~100) participants DONT have a latency score, 
+#a ttest is conducted to see if there is an age effect for age 
+#on if the child engaged in any initiating/responding behaviours.
+
+#age at p4 and initiate (y/n)
+t.test(indiv.df$Age_P4~indiv.df$Initiate_yn_3s)
+
+#age at p4 and respond (y/n)
+t.test(indiv.df$Age_P4~indiv.df$Respond_yn_3s)
+```
+  
+* Are there gender differences in latency to success scores? 
+  
+```{r gender and robot latency to success}
+#gender differences for robot latency to success
+wilcox.test(latency_3sec ~ gender, data = dyad.df, paired=FALSE)
+#transformed variable
+t.test(latency_3sec_trans ~ gender, data = dyad.df, paired=FALSE)
+#binary variable
+succ.yn.gender.tab <- table(dyad.df$latency_3sec_yn, dyad.df$gender)
+succ.yn.gender.tab
+#chi-square test 
+chisq.test(succ.yn.gender.tab)
+```
+  
+* Are there gender differences between whether or not the child engaged in initating behaviours? 
+  
+```{r gender and robot initiate yn}
+#gender differences for if the child initated a cooperation sequence ever
+init.yn.gender.tab <- table(indiv.df$Initiate_yn_3s, indiv.df$Gender)
+init.yn.gender.tab
+#chi-square test 
+chisq.test(init.yn.gender.tab)
+```
+  
+* Are there gender differences between whether or not the child engaged in responding behaviours? 
+  
+```{r gender and robot respond yn}
+#gender differences for if the child responded a cooperation sequence ever
+resp.yn.gender.tab <- table(indiv.df$Respond_yn_3s, indiv.df$Gender)
+resp.yn.gender.tab
+#chi-square test 
+chisq.test(resp.yn.gender.tab)
+```
+
+### Research Questions - Exploratory Analyses  
+This section includes analyses that we may not have strong hypotheses for (due to lack of theory or previous research) but are still important to test.  
+
+#### Exploratory/Checks
+* Are there correlations between cooperative ability and social context on the robot task?
+```{r RT cooperation correlation matrix,  }
+#point-biserial correlation between a dichotomous and a continuous variable - same as pearson
+#pearson/Phi correlation for binary variables
+#create data subset
+phi.df <- subset(indiv.df, select = c ("WU_Afill_yn_T1", 
+                                       "WU_Afill_yn_T2", 
+                                       "WU_Antag_yn_T1", 
+                                       "WU_Antag_yn_T2",
+                                       "WU_JCE_T1",
+                                       "WU_JCE_T2",
+                                       "WU_Contrib",
+                                       "RT_Afill_yn",
+                                       "RT_Antag_yn",
+                                       "RT_JCE",
+                                       "Initiate_yn_3s",
+                                       "Respond_yn_3s",
+                                       "Latency_3sec_yn"))
+
+phi.cor <- rcorr(as.matrix(phi.df), type = "pearson")
+library(apaTables)
+apa.cor.table(phi.df, filename="all.corrtableM.SD.doc", table.number=1)
+
+# Extract the correlation coefficients
+phi.cor$r
+# Extract p-values
+phi.cor$P
+
+# ++++++++++++++++++++++++++++
+# flattenCorrMatrix
+# ++++++++++++++++++++++++++++
+# cormat : matrix of the correlation coefficients
+# pmat : matrix of the correlation p-values
+flattenCorrMatrix <- function(cormat, pmat) {
+  ut <- upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+    )
+}
+
+flattenCorrMatrix(phi.cor$r, phi.cor$P)
+library(corrplot)
+# Insignificant correlations are leaved blank
+corrplot(phi.cor$r, type="upper", order="hclust", 
+         p.mat = phi.cor$P, sig.level = 0.05, insig = "blank")
+```
+ 
+## Variables & Descriptions
+
+
+### Individual Level Descriptives
+
+#### Age of all participants
+* Type: Continuous  
+* Function: Control, IV 
+```{r Participant age on all P4 study in participants}
+with(indiv.df, hist(Age_P4,breaks = 20,
+                   xlab = "age (months)",
+                   main = "hist participant (N = 294) age"))
+mean(indiv.df$Age_P4, na.rm = TRUE)
+sd(indiv.df$Age_P4, na.rm = TRUE)
+median(indiv.df$Age_P4, na.rm = TRUE)
+range(indiv.df$Age_P4, na.rm = TRUE)
+#number of observations NAs removed
+sum(!is.na(indiv.df$Age_P4))
+```
+
+#### Age difference
+* Type: Continuous  
+* Function: IV  
+* Description: The difference in age (in months) between the ORCA child and peer child
+ 
+```{r Age difference in months - dyad}
+with(dyad.df, hist(age_p4_diff,breaks = 20,
+                   xlab = "Age difference",
+                   main = "hist of dyad age differences"))
+mean(dyad.df$age_p4_diff, na.rm = TRUE)
+sd(dyad.df$age_p4_diff, na.rm = TRUE)
+range(dyad.df$age_p4_diff, na.rm = TRUE)
+```
+  
+#### Gender of all participants
+* Type: Categorical  
+* Function: Control, IV  
+```{r Participant gender}
+table(indiv.df$Gender)
+#1 = male, 2 = female
+```
+#### Social Context Variables
+  
+Warm Up Social Context
+  
+**Note. Due to lack of variability and normality issues we have chosen to analyse affiliation and antagonism variables as binary. JCE is cube root transformed while contributions is square root transformed - when these variables are used as predictors, original variables are to be included in the model**
+
+```{r warm up social context individual level}
+
+#Affiliation T1
+with(indiv.df, hist(WU_Afill_yn_T1,breaks = 2,
+                   xlab = "yes or no affiliation",
+                   main = "hist of y/n afilliation \n at time 1"))
+table(indiv.df$WU_Afill_yn_T1)
+
+#Afilliation T1 original scoring mean and SD
+mean(indiv.df$WU_Afill_T1, na.rm = TRUE)
+sd(indiv.df$WU_Afill_T1, na.rm = TRUE)
+
+#Afilliation Time 2
+with(indiv.df, hist(WU_Afill_yn_T2,breaks = 2,
+                   xlab = "yes or no affiliation",
+                   main = "hist of y/n affilliation \n at time 2"))
+table(indiv.df$WU_Afill_yn_T2)
+#Original score for afill time 2
+mean(indiv.df$WU_Afill_T2, na.rm = TRUE)
+sd(indiv.df$WU_Afill_T2, na.rm = TRUE)
+
+#antagonism T1
+with(indiv.df, hist(WU_Antag_yn_T1,breaks = 2,
+                   xlab = "yes or no antagonism",
+                   main = "hist of y/n antagonism \n at time 1"))
+table(indiv.df$WU_Antag_yn_T1)
+#Original score for aantag t1
+mean(indiv.df$WU_Antag_T1, na.rm = TRUE)
+sd(indiv.df$WU_Anatg_T1, na.rm = TRUE)
+
+#Antagonism Time 2
+with(indiv.df, hist(WU_Antag_yn_T2,breaks = 2,
+                   xlab = "yes or no antagonism",
+                   main = "hist of y/n antagonism \n at time 2"))
+table(indiv.df$WU_Antag_yn_T2)
+#Original score for antag time 2
+mean(indiv.df$WU_Antag_T2, na.rm = TRUE)
+sd(indiv.df$WU_Antag_T2, na.rm = TRUE)
+
+#JCE T1 - untransformed - #!OUTLIERS PRESENT
+with(indiv.df, hist(WU_JCE_T1,breaks = 5,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$WU_JCE_T1, na.rm = TRUE)
+sd(indiv.df$WU_JCE_T1, na.rm = TRUE)
+range(indiv.df$WU_JCE_T1, na.rm = TRUE)
+sum(!is.na(indiv.df$WU_JCE_T1))
+
+#JCE T1 - cube root transformed - no outliers
+with(indiv.df, hist(WU_JCE_T1_Trans,breaks = 5,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$WU_JCE_T1_Trans, na.rm = TRUE)
+sd(indiv.df$WU_JCE_T1_Trans, na.rm = TRUE)
+range(indiv.df$WU_JCE_T1_Trans, na.rm = TRUE)
+
+
+#JCE T2 - untransformed - #!OUTLIERS PRESENT
+with(indiv.df, hist(WU_JCE_T2,breaks = 5,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$WU_JCE_T2, na.rm = TRUE)
+sd(indiv.df$WU_JCE_T2, na.rm = TRUE)
+range(indiv.df$WU_JCE_T2, na.rm = TRUE)
+sum(!is.na(indiv.df$WU_JCE_T2))
+
+#JCE T2 - cube root transformed - no outliers
+with(indiv.df, hist(WU_JCE_T2_Trans,breaks = 5,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$WU_JCE_T2_Trans, na.rm = TRUE)
+sd(indiv.df$WU_JCE_T2_Trans, na.rm = TRUE)
+range(indiv.df$WU_JCE_T2_Trans, na.rm = TRUE)
+
+#contribution scores - untransformed - no outliers
+with(indiv.df, hist(WU_Contrib,breaks = 10,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$WU_Contrib, na.rm = TRUE)
+sd(indiv.df$WU_Contrib, na.rm = TRUE)
+range(indiv.df$WU_Contrib, na.rm = TRUE)
+
+#contribution scores - square root tansformed - no outliers
+with(indiv.df, hist(WU_Contrib_Trans,breaks = 5,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$WU_Contrib_Trans, na.rm = TRUE)
+sd(indiv.df$WU_Contrib_Trans, na.rm = TRUE)
+range(indiv.df$WU_Contrib_Trans, na.rm = TRUE)
+sum(!is.na(indiv.df$WU_Contrib))
+```
+  
+Robot Task Social Context
+  
+**Note. Due to lack of variability and normality issues we have chosen to analyse affiliation and antagonism variables as binary, JCE has outliers present and normality issues. 2 new variables are created where one is cube root transformed and another is cube root transfromed AND windsorized - transformed variables will only be used when variables appear as DVs in the model.**
+
+```{r robot task social context individual level}
+#Affiliation RT
+with(indiv.df, hist(RT_Afill_yn,breaks = 2,
+                   xlab = "yes or no affiliation",
+                   main = "hist of y/n afilliation"))
+table(indiv.df$RT_Afill_yn)
+
+#Afill mean scores
+mean(indiv.df$RT_Afill, na.rm = TRUE)
+sd(indiv.df$RT_Afill, na.rm = TRUE)
+
+#Antag RT
+with(indiv.df, hist(RT_Antag_yn,breaks = 2,
+                   xlab = "yes or no antagonism",
+                   main = "hist of y/n antagonism"))
+table(indiv.df$RT_Antag_yn)
+
+#antag means 
+mean(indiv.df$RT_Antag, na.rm = TRUE)
+sd(indiv.df$RT_Antag, na.rm = TRUE)
+
+#JCE RT - untransformed - #OUTLIERS PRESENT
+with(indiv.df, hist(RT_JCE,breaks = 10,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$RT_JCE, na.rm = TRUE)
+sd(indiv.df$RT_JCE, na.rm = TRUE)
+range(indiv.df$RT_JCE, na.rm = TRUE)
+sum(!is.na(indiv.df$RT_JCE))
+
+#JCE RT - cube root transformed - #OUTLIERS PRESENT
+with(indiv.df, hist(RT_JCE_Trans,breaks = 10,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$RT_JCE_Trans, na.rm = TRUE)
+sd(indiv.df$RT_JCE_Trans, na.rm = TRUE)
+range(indiv.df$RT_JCE_Trans, na.rm = TRUE)
+
+#JCE RT - cube root transformed - outliers (> 3SD+MEAN windsorized)
+with(indiv.df, hist(RT_JCE_Trans_OR,breaks = 10,
+                   xlab = "",
+                   main = ""))
+mean(indiv.df$RT_JCE_Trans_OR, na.rm = TRUE)
+sd(indiv.df$RT_JCE_Trans_OR, na.rm = TRUE)
+range(indiv.df$RT_JCE_Trans_OR, na.rm = TRUE)
+
+```
+
+#### Length of Robot Task Interaction
+* Type: Continuous  
+* Function: IV  
+* Description: How long (in seconds) the dyad interacted with the robot task. Task began once the experimenter finished instructions ("remember you have to push both handles at the same time) and task finished once the experimenter started to say "I know lets look at a new game"
+```{r Dyad time on task - robot task}
+with(dyad.df, hist(rt_tt_sec,breaks = 20,
+                   xlab = "seconds",
+                   main = "hist of robot task length"))
+mean(dyad.df$rt_tt_sec, na.rm = TRUE)
+sd(dyad.df$rt_tt_sec, na.rm = TRUE)
+range(dyad.df$rt_tt_sec, na.rm = TRUE)
+```
+  
+#### Latency to first success  
+* Type: Continuous  
+* Function: DV  
+* Description: Between-dyad variable (joint measure of cooperation). How long did it take for the dyad to hold the handles completely down within 3s of one another  CALCULATED VIA INTERACT  
+```{r Latency to success - dyad - untransformed}
+with(dyad.df, hist(latency_3sec,breaks = 20,
+                   xlab = "Latency to success in seconds",
+                   main = "hist dyad latency"))
+mean(dyad.df$latency_3sec, na.rm = TRUE)
+sd(dyad.df$latency_3sec, na.rm = TRUE)
+range(dyad.df$latency_3sec, na.rm = TRUE)
+#number of observations NAs removed
+sum(!is.na(dyad.df$latency_3sec))
+```
+  
+* Because the data is heavily skewed, a cube root transformation may be appropriate - this is also appropriate for variables contianing 0 values. (see McElwain et al., 2016)
+
+```{r latency to success cube transformed}
+
+with(dyad.df, hist(latency_3sec_trans, breaks = 5,
+                   xlab = "Latency to success in cube root seconds",
+                   main = "hist dyad latency - \n cube root transformed"))
+```
+
+* As so few dyads achieved the goal (< 50/140) and thus obtained a latency to success score, we have created a binary variable based upon the latency score. If the child achieved the goal and thus had a valid latency score - they scored a 1 and if they did not achieve the goal and thus did not earn a latency score they scored a 0. This variable may be refered to as "success" (y/n)
+  
+```{r latency to success yn}
+
+with(dyad.df, hist(latency_3sec_yn, breaks = 2,
+                   xlab = "Goal success",
+                   main = "hist dyad success - \n i.e. goal achieved"))
+table(dyad.df$latency_3sec_yn)
+```
+  
+#### Frequency of cooperative action sequences  
+* Type: Continuous  
+* Function: DV  
+* Description: Between-dyad variable (joint measure of cooperation). How many times did the dyad hold the handles completely down within 3s of one another  CALCULATED VIA INTERACT  
+```{r Freq CA sequences dyad}
+with(dyad.df, hist(Freq_CA_p4,breaks = 10,
+                   xlab = "# cooperative action sequences",
+                   main = "hist dyad cooperative actions"))
+mean(dyad.df$Freq_CA_p4, na.rm = TRUE)
+sd(dyad.df$Freq_CA_p4, na.rm = TRUE)
+range(dyad.df$Freq_CA_p4, na.rm = TRUE)
+table(dyad.df$Freq_CA_p4)
+#number of observations NAs removed
+sum(!is.na(dyad.df$Freq_CA_p4))
+```
+
+#### Descriptive Statistics for entire dataset - indiv structure
+  
+Means and SD for initiating behaviours (3sec)
+  
+**Despite the strongest transformation for both variables, normality issues still present. Therefore we have chosen to classify as a binary variable (y/n)**
+```{r Initiating behaviours entire sample -3s}
+#Untransformed
+with(indiv.df, hist(Initiate_freq_3s ,breaks = 5,
+                   xlab = "# initiating behaviours",
+                   main = "hist dyad initiating actions"))
+mean(indiv.df$Initiate_freq_3s, na.rm = TRUE)
+sd(indiv.df$Initiate_freq_3s, na.rm = TRUE)
+
+
+#Transformed
+with(indiv.df, hist(Initiate_freq_3s_LogTrans ,breaks = 5,
+                   xlab = "# log initiating behaviours",
+                   main = "hist dyad initiating actions log"))
+mean(indiv.df$Initiate_freq_3s_LogTrans, na.rm = TRUE)
+sd(indiv.df$Initiate_freq_3s_LogTrans, na.rm = TRUE)
+
+
+#Binary
+with(indiv.df, hist(Initiate_yn_3s ,breaks = 2,
+                   xlab = "# y or n initiating behaviours",
+                   main = "hist dyad initiating actions yes or no"))
+table(indiv.df$Initiate_yn_3s)
+```
+  
+Means and SD for responding behaviours (3sec)
+  
+```{r Responding behaviours entire sample -3s}
+#Untransformed
+with(indiv.df, hist((Respond_freq_3s),breaks = 22,
+                   xlab = "# responding behaviours",
+                   main = "hist dyad responding actions",
+                   xlim=c(0,22),
+                   ylim=c(0,200)))
+mean(indiv.df$Respond_freq_3s, na.rm = TRUE)
+sd(indiv.df$Respond_freq_3s, na.rm = TRUE)
+table(indiv.df$Respond_freq_3s)
+
+#Transformed
+with(indiv.df, hist(Respond_freq_3s_LogTrans,breaks = 10,
+                   xlab = "# responding behaviours",
+                   main = "hist dyad responding actions"))
+mean(indiv.df$Respond_freq_3s_LogTrans, na.rm = TRUE)
+sd(indiv.df$Respond_freq_3s_LogTrans, na.rm = TRUE)
+
+#Binary
+with(indiv.df, hist(Respond_yn_3s ,breaks = 2,
+                   xlab = "# y or n responding behaviours",
+                   main = "hist dyad responding actions yes or no"))
+table(indiv.df$Respond_yn_3s)
+```
+
+Means and SD for initiating behaviours (0sec)
+```{r Initiating behaviours entire sample -0s}
+mean(pp.data$Initiate_freq_0s, na.rm = TRUE)
+sd(pp.data$Initiate_freq_0s, na.rm = TRUE)
+```
+Means and SD for responding behaviours (0sec)
+```{r Responding behaviours entire sample -0s}
+mean(pp.data$Respond_freq_0s, na.rm = TRUE)
+sd(pp.data$Respond_freq_0s, na.rm = TRUE)
+```
+  
+### Sample Demographic data
+  
+#### Child Ethnicity
+* Type: Categorical  
+* Function: Descriptive 
+```{r ethnicity}
+table(so.demo.df$Eth_CatLabel)
+#2+ and missing is combined.
+#21 are missing so 29 = 2+ eth.
+```
+ 
+
+#### SES   
+* Type: Categorical  
+* Function: Descriptive 
+* Description: Groups based upon parent highest level of education - 1 = no high school completion, 2 = completed high school, 3 = completed something beyond high school  
+```{r SES}
+table(so.demo.df$Edu.all_label)
+```
+
